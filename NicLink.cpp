@@ -14,6 +14,5 @@ PYBIND11_MODULE(NicLink, m)
 
     m.def("add", &add, "A function to add");
 
-    m.def("connect", &cl_connect, "connect to chess board device with hid even if the device is not connected, it will automatically connect when the device is plugged into the computer");
-
+    m.def("connect", &cl_connect, "connect to chess board device with hid even if the device is not connected,\nit will automatically connect when the device is plugged into the computer");
 }
