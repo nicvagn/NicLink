@@ -1,10 +1,11 @@
+#include <python3.12/Python.h>
 #include <pybind11/pybind11.h>
-#include <pybind11/iostream.h>
+//#include <pybind11/iostream.h>
 #include "EasyLink.h"
 #include <string>
 #include <iostream>
 
-namespace py = pybind11;
+//namespace py = pybind11;
 
 //the link to the board
 shared_ptr<ChessLink> chessLink = nullptr;
@@ -25,20 +26,33 @@ void connect()
 
     chessLink = ChessLink::fromHidConnect();
 
+    if( !(chessLink -> switchUploadMode()) )
+    {
+        cout << "ERROR: CAN NOT SWITCH TO UPLOAD MODE." << endl;
+    }
+
+    chessLink -> connect();
+
+    chessLink -> beep();
+
     //will be true on a sucess else false
     if( chessLink -> switchUploadMode() )
     {
-
+        printf("Switch upload mode a success");
         chessLink -> setRealTimeCallback(
             [](string s) {
                 //keep the current fen up to date
                 currentFen = s;
+                cout << s;
             });
     }
     else
     {
         printf("ERROR: CAN NOT SWITCH TO OUTPUT MODE.");
     }
+
+    chessLink -> switchRealTimeMode();
+    cout << "connect out, chessboard in realtime mode" << endl;
 }
 
 //disconnect
@@ -64,20 +78,19 @@ void disconect()
 
 void testChess() {
   {
+    printf("test chess entered \n");
 
     connect();
-
-    
-    cout << chessLink->switchUploadMode() << endl;
-
-
+   
     chessLink->beep();
+
+    chessLink->switchRealTimeMode();
 
     // cout << ch->getMcuVersion() << endl;
 
     // cout << ch->getBleVersion() << endl;
 
-    // cout << ch->getBattery() << endl;
+    cout << chessLink ->getBattery() << endl;
 
     // cout << ch->getFileCount() << endl;
 
@@ -118,6 +131,7 @@ void testChess() {
           ll[(i + 7) % 8],
       });
       this_thread::sleep_for(chrono::seconds(1));
+      cout << currentFen;
       i++;
     }
 
@@ -152,14 +166,13 @@ string getFEN()
         
     //return the fen
     return currentFen;
-
 }
+
 
 int main()
 {
     /* connect to the board */
     connect();
-    return 0;
 }
 
 
