@@ -13,8 +13,6 @@ shared_ptr<ChessLink> chessLink = nullptr;
 //the current FEN
 string currentFen;
 
-
-
 int add(int i, int j)
 {
     return i + j;
@@ -31,10 +29,9 @@ void connect()
     }
 
     chessLink -> connect();
-
     chessLink -> beep();
 
-    //will be true on a sucess else false
+    //will be true on a sucess else false. Shitch to upload mode
     if( chessLink -> switchUploadMode() )
     {
         cout << "Switch upload mode a success" << endl;
@@ -51,12 +48,41 @@ void connect()
 
     chessLink -> switchRealTimeMode();
     this_thread::sleep_for(chrono::seconds(2));
-
     cout << "connect out, chessboard in realtime mode" << endl;
 }
-
-//disconnect
+/**
+ * dissconect from the chessboard over usb
+ */
 void disconnect()
+{
+    if(chessLink == nullptr)
+    {
+        cerr << "chesslink is not connected." << endl;
+        return;
+    }
+    //make sure we are in upload mode
+    chessLink -> switchUploadMode();
+
+    //turn off all the lights
+    chessLink -> setLed({
+        bitset<8>("00000000"), //
+        bitset<8>("00000000"), //
+        bitset<8>("00000000"), //
+        bitset<8>("00000000"), //
+        bitset<8>("00000000"), //
+        bitset<8>("00000000"), //
+        bitset<8>("00000000"), //
+        bitset<8>("00000000"), //
+    });
+
+    //and shut the door
+    chessLink -> disconnect();    
+}
+
+/**
+ * turn off all the lights on the chessboard
+ */
+void lightsOut()
 {
     if(chessLink == nullptr)
     {
@@ -75,13 +101,11 @@ void disconnect()
         bitset<8>("00000000"), //
         bitset<8>("00000000"), //
     });
-
-    //and shut the door
-    chessLink -> disconnect();    
 }
 
-
-//get the current fen of the board
+/**
+ * get the current fen of the board
+ */
 string getFEN()
 {
     //if we have not connected throw error and return
@@ -95,7 +119,11 @@ string getFEN()
     return currentFen;
 }
 
-//set an led on the chessboard
+/**
+ * set an led on the chessboard. Will switch to upload mode
+ * @param x, y: interegers in the 0 - 7 range
+ * @param LEDsetting: boolean of the desired setting of the led
+ */
 void setLED(int x, int y, bool LEDsetting)
 {
     //if we have not connected throw error and return
@@ -104,7 +132,6 @@ void setLED(int x, int y, bool LEDsetting)
         cerr << "bChessLink is nullptr. Are you sure you are connected to board?" << endl;
         return;
     }
-
     if(x > 7 || x < 0)
     {
         cerr << "x must be 0 - 7, x is: " << x << endl;
@@ -115,7 +142,7 @@ void setLED(int x, int y, bool LEDsetting)
         cerr << "y must be 0 - 7, y is: " << y << endl;
         return;
     }
-
+    chessLink -> switchUploadMode();
     chessLink -> setLed((uint8_t) x, (uint8_t) y, LEDsetting);
 }
 
@@ -128,7 +155,11 @@ int main()
     chessLink -> ChessLink::setLed((uint8_t) 4, (uint8_t) 4, true);
 }
 
-
+/**
+ * the python bindings, for more info look up pyBind11
+ * @param NickLink - Name
+ * @param m - variable for our module
+ */
 PYBIND11_MODULE(NicLink, m)
 {
     //test shit
@@ -155,7 +186,6 @@ PYBIND11_MODULE(NicLink, m)
     // switch modes
     m.def("uploadMode", &ChessLink::switchUploadMode, "Switch to upload mode.");
     m.def("realTimeMode", &ChessLink::switchRealTimeMode, "Switch to realtime mode.");
-
     // seters
     m.def("setLED", &setLED, "Set a LED on the chessboard.");
     // getters
