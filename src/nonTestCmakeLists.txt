@@ -45,8 +45,6 @@ link_libraries(easylink hidapi::hidapi spdlog::spdlog pybind11::headers ${PYTHON
 # C++ standard 11
 # add the pibind module
 
-# target_sources(NicLink PRIVATE NicLink.cpp)
-
-add_executable(testNicLink testNicLink.cpp)
+target_sources(NicLink PRIVATE NicLink.cpp)
 
 pybind11_add_module(NicLink NicLink.cpp)

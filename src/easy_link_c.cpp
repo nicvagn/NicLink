@@ -128,7 +128,7 @@ int cl_get_file_count() {
   return bChessLink->getFileCount();
 }
 
-int cl_get_file(char *data, int len) {
+int cl_get_file(char *data, unsigned int len) {
   if (bChessLink == nullptr) {
     return -1;
   }
@@ -160,12 +160,13 @@ void testChess() {
 
     auto ch = ChessLink::fromHidConnect();
 
+    ch->connect();
+
     cout << ch->switchUploadMode() << endl;
 
     ch->setRealTimeCallback(
         [](string s) { cout << "real time callback call " << s << endl; });
 
-    ch->connect();
 
     ch->beep();
 
@@ -175,8 +176,9 @@ void testChess() {
 
     // cout << ch->getBattery() << endl;
 
-    cout << ch->getFileCount() << endl;
+    // cout << ch->getFileCount() << endl;
 
+    /*
     while (true) {
       auto s = ch->getFile(true);
 
@@ -186,8 +188,8 @@ void testChess() {
         return;
       }
     }
+    */
 
-    return;
 
     bitset<8> ll[8] = {
         bitset<8>("10000000"), //
@@ -201,7 +203,7 @@ void testChess() {
     };
 
     int i = 0;
-    while (true) {
+    while(i < 10) {
       ch->setLed({
           ll[i % 8],
           ll[(i + 1) % 8],
@@ -212,12 +214,12 @@ void testChess() {
           ll[(i + 6) % 8],
           ll[(i + 7) % 8],
       });
+      this_thread::sleep_for(chrono::seconds(1));
       i++;
     }
 
     ch->disconnect();
   }
-  this_thread::sleep_for(chrono::seconds(1000));
 
   // unsigned char buf[] = {0x21, 0x01, 0x00};
   // auto r = ch.write(buf, sizeof(buf));
