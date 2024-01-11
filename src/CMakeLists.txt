@@ -38,13 +38,13 @@ include_directories(PUBLIC /usr/include/python3.12)
 set(SOURCE_FILES EasyLink.h EasyLink.cpp easy_link_c.cpp easy_link_c.h)
 add_library(easylink SHARED ${SOURCE_FILES})
 
-add_executable(NicLink)
+#add_executable(NicLink)
 
 # link it with the libraies
-target_link_libraries(NicLink easylink hidapi::hidapi spdlog::spdlog pybind11::headers ${PYTHON_LIBRARIES})
+link_libraries(easylink hidapi::hidapi spdlog::spdlog pybind11::headers ${PYTHON_LIBRARIES})
 # C++ standard 11
 # add the pibind module
 
-target_sources(NicLink PRIVATE NicLink.cpp)
+#target_sources(NicLink PRIVATE NicLink.cpp)
 
-pybind11_add_module(nicLink)
+pybind11_add_module(NicLink NicLink.cpp)
