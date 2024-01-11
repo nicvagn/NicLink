@@ -1,3 +1,4 @@
+#include <python3.12/Python.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/iostream.h>
 #include "EasyLink.h"
@@ -12,8 +13,6 @@ shared_ptr<ChessLink> chessLink = nullptr;
 //the current FEN
 string currentFen;
 
-
-
 int add(int i, int j)
 {
     return i + j;
@@ -22,13 +21,20 @@ int add(int i, int j)
 //set up connection, and set up real time callback
 void connect()
 {
-
     chessLink = ChessLink::fromHidConnect();
 
-    //will be true on a sucess else false
+    if( !(chessLink -> switchUploadMode()) )
+    {
+        cerr << "ERROR: CAN NOT SWITCH TO UPLOAD MODE." << endl;
+    }
+
+    chessLink -> connect();
+    chessLink -> beep();
+
+    //will be true on a sucess else false. Shitch to upload mode
     if( chessLink -> switchUploadMode() )
     {
-
+        cout << "Switch upload mode a success" << endl;
         chessLink -> setRealTimeCallback(
             [](string s) {
                 //keep the current fen up to date
@@ -37,14 +43,25 @@ void connect()
     }
     else
     {
-        printf("ERROR: CAN NOT SWITCH TO OUTPUT MODE.");
+        cerr << "ERROR: CAN NOT SWITCH TO OUTPUT MODE." << endl;
     }
-}
 
-//disconnect
-void disconect()
+    chessLink -> switchRealTimeMode();
+    this_thread::sleep_for(chrono::seconds(2));
+    cout << "connect out, chessboard in realtime mode" << endl;
+}
+/**
+ * dissconect from the chessboard over usb
+ */
+void disconnect()
 {
-    
+    if(chessLink == nullptr)
+    {
+        cerr << "chesslink is not connected." << endl;
+        return;
+    }
+    //make sure we are in upload mode
+    chessLink -> switchUploadMode();
 
     //turn off all the lights
     chessLink -> setLed({
@@ -62,107 +79,87 @@ void disconect()
     chessLink -> disconnect();    
 }
 
-void testChess() {
-  {
-
-    connect();
-
-    
-    cout << chessLink->switchUploadMode() << endl;
-
-
-    chessLink->beep();
-
-    // cout << ch->getMcuVersion() << endl;
-
-    // cout << ch->getBleVersion() << endl;
-
-    // cout << ch->getBattery() << endl;
-
-    // cout << ch->getFileCount() << endl;
-
-    /*
-    while (true) {
-      auto s = ch->getFile(true);
-
-      cout << s.size() << endl;
-
-      if (s.size() == 0) {
+/**
+ * turn off all the lights on the chessboard
+ */
+void lightsOut()
+{
+    if(chessLink == nullptr)
+    {
+        cerr << "chesslink is not connected." << endl;
         return;
-      }
-    }
-    */
-
-
-    bitset<8> ll[8] = {
-        bitset<8>("10000000"), //
-        bitset<8>("01000000"), //
-        bitset<8>("00100000"), //
-        bitset<8>("00010000"), //
-        bitset<8>("00001000"), //
-        bitset<8>("00000100"), //
-        bitset<8>("00000010"), //
-        bitset<8>("00000001"), //
-    };
-
-    int i = 0;
-    while(i < 10) {
-      chessLink->setLed({
-          ll[i % 8],
-          ll[(i + 1) % 8],
-          ll[(i + 2) % 8],
-          ll[(i + 3) % 8],
-          ll[(i + 4) % 8],
-          ll[(i + 5) % 8],
-          ll[(i + 6) % 8],
-          ll[(i + 7) % 8],
-      });
-      this_thread::sleep_for(chrono::seconds(1));
-      i++;
     }
 
-    chessLink->disconnect();
-  }
-
-  // unsigned char buf[] = {0x21, 0x01, 0x00};
-  // auto r = ch.write(buf, sizeof(buf));
-
-  // while (true) {
-  //   unsigned char readBuf[65] = {0};
-  //   auto l = ch.read(readBuf, 65);
-  //   for (int i = 0; i < sizeof(readBuf); i++) {
-  //     cout << hex << " " << int(readBuf[i]);
-  //   }
-  //   cout << endl;
-  //   cout << l << endl;
-  // }
-
-  // cout << ch->switchRealTimeMode() << endl;
+    //turn off all the lights
+    chessLink -> setLed({
+        bitset<8>("00000000"), //
+        bitset<8>("00000000"), //
+        bitset<8>("00000000"), //
+        bitset<8>("00000000"), //
+        bitset<8>("00000000"), //
+        bitset<8>("00000000"), //
+        bitset<8>("00000000"), //
+        bitset<8>("00000000"), //
+    });
 }
 
-//get the current fen of the board
+/**
+ * get the current fen of the board
+ */
 string getFEN()
 {
     //if we have not connected throw error and return
     if( chessLink == nullptr )
     {
-        fprintf(stderr, "bChessLink is nullptr. Are you sure you are connected to board?");
+        cerr << "bChessLink is nullptr. Are you sure you are connected to board?" << endl;
         return "ERROR: no connection.";
     }
         
     //return the fen
     return currentFen;
-
 }
+
+/**
+ * set an led on the chessboard. Will switch to upload mode
+ * @param x, y: interegers in the 0 - 7 range
+ * @param LEDsetting: boolean of the desired setting of the led
+ */
+void setLED(int x, int y, bool LEDsetting)
+{
+    //if we have not connected throw error and return
+    if( chessLink == nullptr )
+    {
+        cerr << "bChessLink is nullptr. Are you sure you are connected to board?" << endl;
+        return;
+    }
+    if(x > 7 || x < 0)
+    {
+        cerr << "x must be 0 - 7, x is: " << x << endl;
+        return;
+    }
+    if(y > 7 || y < 0)
+    {
+        cerr << "y must be 0 - 7, y is: " << y << endl;
+        return;
+    }
+    chessLink -> switchUploadMode();
+    chessLink -> setLed((uint8_t) x, (uint8_t) y, LEDsetting);
+}
+
+
 
 int main()
 {
     /* connect to the board */
     connect();
-    return 0;
+    chessLink -> ChessLink::setLed((uint8_t) 4, (uint8_t) 4, true);
 }
 
-
+/**
+ * the python bindings, for more info look up pyBind11
+ * @param NickLink - Name
+ * @param m - variable for our module
+ */
 PYBIND11_MODULE(NicLink, m)
 {
     //test shit
@@ -172,16 +169,27 @@ PYBIND11_MODULE(NicLink, m)
     // connect with a redirected out to py
     m.def("connect", []() { 
         py::scoped_ostream_redirect stream(
-            std::cout,                                // std::ostream&
+            std::cerr,                                // std::ostream&
             py::module_::import("sys").attr("stdout") //python output
         );
         connect();
     }, "connect to chess board device with hid even if the device is not connected,\nit will automatically connect when the device is plugged into the computer");
     
-    m.def("disconnect", &disconect, "Disconect from the chessboard.");
+    m.def("disconnect", []() {
+            py::scoped_ostream_redirect stream(
+            std::cerr,                                // std::ostream&
+            py::module_::import("sys").attr("stdout") //python output
+        );
+        disconnect();
+    }, "disconnect from the chessboard.");
 
+    // switch modes
     m.def("uploadMode", &ChessLink::switchUploadMode, "Switch to upload mode.");
     m.def("realTimeMode", &ChessLink::switchRealTimeMode, "Switch to realtime mode.");
-
-    m.def("testChess", &testChess, "test chess");
+    // seters
+    m.def("setLED", &setLED, "Set a LED on the chessboard.");
+    // getters
+    m.def("getFEN", &getFEN, "Get the FEN for the chessboard's cur position.");
 }
+
+
