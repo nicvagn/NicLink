@@ -18,10 +18,17 @@ int add(int i, int j)
     return i + j;
 }
 
-//set up connection, and set up real time callback
-void connect()
+/**
+ * Set up connection, and set up real time callback
+ * @returns the created shared pointer<Chesslink>
+ */
+shared_ptr<ChessLink> connect()
 {
     chessLink = ChessLink::fromHidConnect();
+
+    //because, I don't know how to do async coding in two languages
+    this_thread::sleep_for(chrono::seconds(2));
+
 
     if( !(chessLink -> switchUploadMode()) )
     {
@@ -47,8 +54,9 @@ void connect()
     }
 
     chessLink -> switchRealTimeMode();
-    this_thread::sleep_for(chrono::seconds(2));
     cout << "connect out, chessboard in realtime mode" << endl;
+
+    return chessLink;
 }
 /**
  * dissconect from the chessboard over usb
@@ -105,6 +113,7 @@ void lightsOut()
 
 /**
  * get the current fen of the board
+ * @return the current fen oy the position on the board
  */
 string getFEN()
 {
@@ -145,6 +154,20 @@ void setLED(int x, int y, bool LEDsetting)
     chessLink -> switchUploadMode();
     chessLink -> setLed((uint8_t) x, (uint8_t) y, LEDsetting);
 }
+/**
+ * get the board to beep
+*/
+void beep()
+{
+    //if we have not connected throw error and return
+    if( chessLink == nullptr )
+    {
+        cerr << "bChessLink is nullptr. Are you sure you are connected to board?" << endl;
+        return;
+    }
+    //do the thing
+    chessLink -> beep();
+}
 
 
 
@@ -164,7 +187,7 @@ PYBIND11_MODULE(NicLink, m)
 {
     //test shit
     m.doc() = "no you";
-    m.def("add", &add, "A function to add");
+    m.def("add", &add, py::return_value_policy::copy, "A function to add");
 
     // connect with a redirected out to py
     m.def("connect", []() { 
@@ -184,12 +207,13 @@ PYBIND11_MODULE(NicLink, m)
     }, "disconnect from the chessboard.");
 
     // switch modes
-    m.def("uploadMode", &ChessLink::switchUploadMode, "Switch to upload mode.");
-    m.def("realTimeMode", &ChessLink::switchRealTimeMode, "Switch to realtime mode.");
-    // seters
+    m.def("uploadMode", &ChessLink::switchUploadMode, py::return_value_policy::copy, "Switch to upload mode.");
+    m.def("realTimeMode", &ChessLink::switchRealTimeMode, py::return_value_policy::copy, "Switch to realtime mode.");
+    // doers
     m.def("setLED", &setLED, "Set a LED on the chessboard.");
+    m.def("beep", &beep, "Cause the chessboard to beep.");
     // getters
-    m.def("getFEN", &getFEN, "Get the FEN for the chessboard's cur position.");
+    m.def("getFEN", &getFEN, py::return_value_policy::copy, "Get the FEN for the chessboard's cur position.");
 }
 
 
