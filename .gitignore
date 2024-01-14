@@ -1,4 +1,5 @@
-build
+lichess_token/token
 build/*
 /src/pybind11
 EasyLinkSDK
+etc

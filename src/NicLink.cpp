@@ -33,6 +33,7 @@ shared_ptr<ChessLink> connect()
     if( !(chessLink -> switchUploadMode()) )
     {
         cerr << "ERROR: CAN NOT SWITCH TO UPLOAD MODE." << endl;
+        throw  "ERROR: Can not connect to chessboard.";
     }
 
     chessLink -> connect();
@@ -51,6 +52,7 @@ shared_ptr<ChessLink> connect()
     else
     {
         cerr << "ERROR: CAN NOT SWITCH TO OUTPUT MODE." << endl;
+        throw "ERROR: CAN NOT SWITCH TO OUTPUT MODE.";
     }
 
     chessLink -> switchRealTimeMode();
@@ -70,25 +72,13 @@ void disconnect()
     }
     //make sure we are in upload mode
     chessLink -> switchUploadMode();
-
-    //turn off all the lights
-    chessLink -> setLed({
-        bitset<8>("00000000"), //
-        bitset<8>("00000000"), //
-        bitset<8>("00000000"), //
-        bitset<8>("00000000"), //
-        bitset<8>("00000000"), //
-        bitset<8>("00000000"), //
-        bitset<8>("00000000"), //
-        bitset<8>("00000000"), //
-    });
-
     //and shut the door
     chessLink -> disconnect();    
 }
 
 /**
- * turn off all the lights on the chessboard
+ * turn off all the lights on the chessboard. The chessboard will be in
+ * upload mode after the function is called
  */
 void lightsOut()
 {
@@ -97,6 +87,8 @@ void lightsOut()
         cerr << "chesslink is not connected." << endl;
         return;
     }
+
+    chessLink -> switchUploadMode();
 
     //turn off all the lights
     chessLink -> setLed({
@@ -169,8 +161,6 @@ void beep()
     chessLink -> beep();
 }
 
-
-
 int main()
 {
     /* connect to the board */
@@ -185,23 +175,23 @@ int main()
  */
 PYBIND11_MODULE(NicLink, m)
 {
-    //test shit
+    // test shit
     m.doc() = "no you";
     m.def("add", &add, py::return_value_policy::copy, "A function to add");
 
     // connect with a redirected out to py
     m.def("connect", []() { 
         py::scoped_ostream_redirect stream(
-            std::cerr,                                // std::ostream&
-            py::module_::import("sys").attr("stdout") //python output
+            std::cerr,
+            py::module_::import("sys").attr("stdout")
         );
         connect();
     }, "connect to chess board device with hid even if the device is not connected,\nit will automatically connect when the device is plugged into the computer");
     
     m.def("disconnect", []() {
             py::scoped_ostream_redirect stream(
-            std::cerr,                                // std::ostream&
-            py::module_::import("sys").attr("stdout") //python output
+            std::cerr,
+            py::module_::import("sys").attr("stdout")
         );
         disconnect();
     }, "disconnect from the chessboard.");

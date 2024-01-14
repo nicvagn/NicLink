@@ -1,9 +1,14 @@
+#ifdef _DEBUG_FLAG
+#include "spdlog/fmt/bin_to_hex.h"
+#include "spdlog/spdlog.h"
+#endif
 #include <hidapi/hidapi.h>
 #include <array>
 #include <atomic>
 #include <bitset>
 #include <chrono>
 #include <cmath>
+#include <condition_variable>
 #include <cstdint>
 #include <iostream>
 #include <memory>
@@ -14,7 +19,6 @@
 #include <string>
 #include <thread>
 #include <vector>
-#include <condition_variable>
 
 using namespace std;
 
