@@ -42,7 +42,7 @@ shared_ptr<ChessLink> connect()
     //will be true on a sucess else false. Shitch to upload mode
     if( chessLink -> switchUploadMode() )
     {
-        cout << "Switch upload mode a success" << endl;
+        cerr << "Switch upload mode a success" << endl;
         chessLink -> setRealTimeCallback(
             [](string s) {
                 //keep the current fen up to date
