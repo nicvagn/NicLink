@@ -166,6 +166,11 @@ int main()
     /* connect to the board */
     connect();
     chessLink -> ChessLink::setLed((uint8_t) 4, (uint8_t) 4, true);
+
+    while( true )
+    {
+        cout << getFEN();
+    }
 }
 
 /**
