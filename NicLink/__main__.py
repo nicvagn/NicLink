@@ -13,8 +13,9 @@ import chess
 
 
 
-REFRESH_DELAY = 3 #The time between checks of board for move
-active_colour = 'w'
+REFRESH_DELAY = 7 #The time between checks of board for move
+
+game_board = chess.Board()
 
 
 
@@ -26,21 +27,23 @@ def init_chessboard():
     print(f"initial fen: { NicLink.getFEN() }")
     print("Board initialized")
 
-def find_move_from_fen_change( initial_fen, new_fen ):
+def find_move_from_fen_change( new_FEN ):
+    """ get the move that occured to change one fen into another """
+    global game_board
 
-    """ get the move that occured to change one fen into another """ 
-    board = chess.Board(initial_fen)
-    legal_moves = list(board.legal_moves)
+    # get a list of the legal moves
+    legal_moves = list(game_board.legal_moves)
 
-    print(f"board we are using to check legal moves: \n{board}")
+    print(f"board now: \n{ game_board }")
+    print(f"board we are using to check legal moves: \n{game_board}")
 
     for move in legal_moves:
         print(move)
-        breakpoint()
-        board.push(move)  # Make the move on the board
-        if board.board_fen() == new_fen:  # Check if the board's FEN matches the new FEN
+        #breakpoint()
+        game_board.push(move)  # Make the move on the board
+        if game_board.board_fen() == new_FEN:  # Check if the board's FEN matches the new FEN
             return move  # Return the move in Coordinate notation 
-        board.pop()  # Undo the move
+        game_board.pop()  # Undo the move
 
     raise RuntimeError("a valid move was not made")
 
@@ -48,31 +51,35 @@ def find_move_from_fen_change( initial_fen, new_fen ):
 
 def check_for_move():
     """ check if there has been a move on the chessboard, and see if it is valid """
-    global pastFEN, currentFEN
+    global game_board
 
     # ensure the move was valid
+
+    # get current FEN on the external board
     tmpFEN = NicLink.getFEN()
+
     if(tmpFEN == None):
         raise RuntimeError("No FEN from chessboard")
 
-    currentFEN = tmpFEN
-    print(f"board now: \n {chess.Board(currentFEN)}")
-    find_move_from_fen_change(pastFEN, currentFEN)
+    new_FEN = tmpFEN
     
-    if( pastFEN != currentFEN and currentFEN != ''):
+    if( new_FEN != game_board.board_fen ):
         # a change has occured on the chessboard
         print("CHANGE")
-        print(f"past fen: \n {pastFEN}\n")
-        print(f"current fen: \n {currentFEN}\n")
+        print(f"board now: \n{game_board}\n")
 
         #check if move is valid
-        move = find_move_from_fen_change(pastFEN, currentFEN)
+        move = find_move_from_fen_change( new_FEN )
         if( move != None and move != ''):
             # if it is a valid move, return true
-            print(move)
-            #the last fen becomes the current FEN
-            pastFEN = currentFEN
+            print(f"{move} is it the move")
+            # the last fen becomes the current FEN
+            pastFEN = new_FEN
+            # change the active colour
+            
             return True
+    else:
+        print("no change")
     return False
 
 def print_FEN( FEN ):
@@ -81,27 +88,22 @@ def print_FEN( FEN ):
     chess.Board.set_board_fen( board, fen=FEN)
     print( board )
 
+
 # initialize the chessboard, this must be done first, before chattering at it
 init_chessboard()
 
 # initial values for fen's
-currentFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"
-pastFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"
+newFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"
 
 while( True ):
-    print("print FEN test")
-    print_FEN( "rnbqkbnr/pppppppp/8/8/8/4P3/PPPP1PPP/RNBQKBNR")
+    #print_FEN( "rnbqkbnr/pppppppp/8/8/8/4P3/PPPP1PPP/RNBQKBNR")
     try:
         if( check_for_move() ):
             print("change in board.")
-            print(f"past fen: \n {pastFEN}\n")
-            print(f"current fen: \n {currentFEN}\n")
+            print(f"new fen: \n {newFEN}\n")
 
-            if(pastFEN == ''):
-                #print("pastFEN is ''")
-                pass
-            elif(currentFEN == ''):
-                #print("currentFEN is ''")
+            if(newFEN == '' or newFEN == None):
+                print("pastFEN is None")
                 pass
             else:
                 move = find_move_from_fen_change( pastFEN, currentFEN )
@@ -109,20 +111,8 @@ while( True ):
 
     except (RuntimeError, ValueError) as err:
         print(err)
-        continue # pass onto the next loop iteration, skipping the rest of the loop 
 
-    pastFEN = currentFEN
     
-    print(f"====== {currentFEN} ======")
+    # print(f"====== {currentFEN} ======")
     time.sleep(REFRESH_DELAY)
-
-
-
-"""
-initial_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-new_fen = "rnbqkbnr/pppppppp/8/8/8/4P3/PPPP1PPP/RNBQKBNR b KQkq - 0 1"  # Example of a new FEN after 1. e4
-
-move_san = find_move_from_fen_change(initial_fen, new_fen)
-print(f"The move was: {move_san}")
-time.sleep(REFRESH_DELAY)
-"""
+    NicLink.beep()

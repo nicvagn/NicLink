@@ -170,6 +170,8 @@ int main()
     while( true )
     {
         cout << getFEN();
+        this_thread::sleep_for(chrono::seconds(2));
+
     }
 }
 
