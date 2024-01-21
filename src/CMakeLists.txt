@@ -34,6 +34,7 @@ find_package(spdlog REQUIRED)
 include_directories(PUBLIC ${PYBIND11_INCLUDE_DIRS})
 include_directories(PUBLIC ${Python_INCLUDE_DIRS})
 include_directories(PUBLIC /usr/include/python3.12)
+
 # setup and build the easylink library
 set(SOURCE_FILES EasyLink.h EasyLink.cpp easy_link_c.cpp easy_link_c.h)
 add_library(easylink SHARED ${SOURCE_FILES})
@@ -46,5 +47,6 @@ link_libraries(easylink hidapi::hidapi spdlog::spdlog pybind11::headers ${PYTHON
 # add the pibind module
 
 add_executable(NicLinkcpp NicLink.cpp)
-
 pybind11_add_module(NicLink NicLink.cpp)
+
+
