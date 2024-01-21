@@ -1,10 +1,9 @@
-#    This file is part of NicLink.
 #
-#    NicLink is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+#  NicLink is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 #
-#    NicLink is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#  NicLink is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #
-#    You should have received a copy of the GNU General Public License along with NicLink. If not, see <https://www.gnu.org/licenses/>. 
+#  You should have received a copy of the GNU General Public License along with NicLink. If not, see <https://www.gnu.org/licenses/>. 
 
 import NicLink
 from NicLink import *
@@ -38,7 +37,7 @@ def find_move_from_fen_change( new_FEN ):
     print(f"board we are using to check legal moves: \n{game_board}")
 
     for move in legal_moves:
-        print(move)
+        #print(move)
         #breakpoint()
         game_board.push(move)  # Make the move on the board
         if game_board.board_fen() == new_FEN:  # Check if the board's FEN matches the new FEN
@@ -73,46 +72,48 @@ def check_for_move():
         if( move != None and move != ''):
             # if it is a valid move, return true
             print(f"{move} is it the move")
-            # the last fen becomes the current FEN
-            pastFEN = new_FEN
-            # change the active colour
             
             return True
     else:
         print("no change")
     return False
 
-def print_FEN( FEN ):
-    """ print a FEN on on a chessboard """
+def set_FEN_on_board( board, FEN ):
+    """ set a board up according to a FEN """
     board = chess.Board()
     chess.Board.set_board_fen( board, fen=FEN)
+       
+def show_FEN_on_board( FEN ):
+    """ print a FEN on on a chessboard """
+    board = chess.Board()
+    set_FEN_on_board( board, FEN )
     print( board )
 
+# if module is on "top level" ie: run directly
+if __name__ == '__main__':
+    # initialize the chessboard, this must be done first, before chattering at it
+    init_chessboard()
 
-# initialize the chessboard, this must be done first, before chattering at it
-init_chessboard()
+    # initial values for fen's
+    newFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"
 
-# initial values for fen's
-newFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"
+    while( True ):
+        #show_FEN_on_board( "rnbqkbnr/pppppppp/8/8/8/4P3/PPPP1PPP/RNBQKBNR")
+        try:
+            if( check_for_move() ):
+                print("change in board.")
+                print(f"new fen: \n {newFEN}\n")
 
-while( True ):
-    #print_FEN( "rnbqkbnr/pppppppp/8/8/8/4P3/PPPP1PPP/RNBQKBNR")
-    try:
-        if( check_for_move() ):
-            print("change in board.")
-            print(f"new fen: \n {newFEN}\n")
+                if(newFEN == '' or newFEN == None):
+                    print("pastFEN is None")
+                    pass
+                else:
+                    move = find_move_from_fen_change( new_FEN=newFEN )
+                    print(f"==== MOVE WAS: {move} ====")
 
-            if(newFEN == '' or newFEN == None):
-                print("pastFEN is None")
-                pass
-            else:
-                move = find_move_from_fen_change( pastFEN, currentFEN )
-                print(f"Move was: {move}.")
+        except (RuntimeError, ValueError) as err:
+            print(err)
 
-    except (RuntimeError, ValueError) as err:
-        print(err)
-
-    
-    # print(f"====== {currentFEN} ======")
-    time.sleep(REFRESH_DELAY)
-    NicLink.beep()
+        # print(f"====== {currentFEN} ======")
+        time.sleep(REFRESH_DELAY)
+        NicLink.beep()
