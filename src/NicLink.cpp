@@ -149,7 +149,7 @@ void setLED(int x, int y, bool LEDsetting)
 /**
  * get the board to beep
 */
-void beep()
+void BEEP()
 {
     //if we have not connected throw error and return
     if( chessLink == nullptr )
@@ -180,7 +180,7 @@ int main()
  * @param NickLink - Name
  * @param m - variable for our module
  */
-PYBIND11_MODULE(NicLink, m)
+PYBIND11_MODULE(_niclink, m)
 {
     // test shit
     m.doc() = "no you";
@@ -208,7 +208,7 @@ PYBIND11_MODULE(NicLink, m)
     m.def("realTimeMode", &ChessLink::switchRealTimeMode, py::return_value_policy::copy, "Switch to realtime mode.");
     // doers
     m.def("setLED", &setLED, "Set a LED on the chessboard.");
-    m.def("beep", &beep, "Cause the chessboard to beep.");
+    m.def("beep", &BEEP, "Cause the chessboard to beep.");
     // getters
     m.def("getFEN", &getFEN, py::return_value_policy::copy, "Get the FEN for the chessboard's cur position.");
 }
