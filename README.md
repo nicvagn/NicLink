@@ -1,4 +1,4 @@
-# pyLink
+# NicLink
 A python interface for the Chessnut Air. 
 
 The plan is to use this interface together with the berserk API to play on lichess
