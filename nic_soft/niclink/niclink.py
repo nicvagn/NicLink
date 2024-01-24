@@ -36,13 +36,14 @@ class NicLink:
         """ make the chessboard beep """
         _niclink.beep()
 
-    def getFEN():
+    def get_FEN():
         """ get the FEN from chessboard """
         return _niclink.getFEN();
 
 
-    def find_move_from_fen_change( self, new_FEN ):
-        """ get the move that occured to change the game_board fen into a given FEN """
+    def find_move_from_FEN_change( self, new_FEN ):
+        """ get the move that occured to change the game_board fen into a given FEN. 
+            move returned in coordinate notation """
 
         # get a list of the legal moves
         legal_moves = list(self.game_board.legal_moves)
@@ -77,7 +78,6 @@ class NicLink:
         
         if( new_FEN != self.game_board.board_fen ):
             # a change has occured on the chessboard
-            print("move done")
             print(f"board prior to move: \n{self.game_board}\n")
             return True
 
@@ -85,10 +85,15 @@ class NicLink:
             print("no change")
         return False
 
+    def make_move_game_board( self, move ):
+        """ make a move on the internal rep. of the game_board, move in long algebraic notation """
+        self.game_board.push_uci( move )
+        print( "made move on internal board\n BOARD POST MOVE: \n" )
+        print( self.game_board )
 
-    def set_FEN_on_board( self, board, FEN ):
+
+    def set_board_FEN( self, board, FEN ):
         """ set a board up according to a FEN """
-        board = chess.Board()
         chess.Board.set_board_fen( board, fen=FEN)
 
 
@@ -106,9 +111,29 @@ if __name__ == '__main__':
     leave = 'n' 
     while( leave == 'n' ):
         if( nl_instance.check_for_move() ):
-            print("move")            
+            # beep to indicate a move was made
+            nl_instance.beep()
+
+            # get the new board FEN
+            post_move_FEN = nl_instance.get_FEN()
+
+            # show new fen on board
+            print( "post move fen on board" )
+            nl_instance.show_FEN_on_board( post_move_FEN )
+
+            try:
+                # find move from the FEN change
+                move = nl_instance.find_move_from_FEN_change( post_move_FEN )
+
+            except RuntimeError as re:   
+                print( re + " reset the board to the privios position an try again" )
+            
+            # make the move on the game board
+            nl_instance.make_move_game_board( move )
+            
+            print( "=========================================" )
             
 
-        print("leave? (n for no, != 'n' yes: ")
+        print("leave? ('n for no, != 'n' yes: ")
         leave = readchar.readkey()
 
