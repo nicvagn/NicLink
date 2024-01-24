@@ -3,3 +3,4 @@ build/*
 /src/pybind11
 EasyLinkSDK
 etc
+**/__pycache__

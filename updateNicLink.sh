@@ -16,3 +16,5 @@ make
 
 # move into the niclink module
 cp -f _nic*.so ../nic_soft/niclink
+
+echo "Moved _niclinkCPYTHONNONSENSE.so to niclink"
