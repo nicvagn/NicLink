@@ -5,7 +5,6 @@
 #
 #  You should have received a copy of the GNU General Public License along with NicLink. If not, see <https://www.gnu.org/licenses/>. 
 import _niclink
-from _niclink import connect, disconnect, uploadMode, realTimeMode, getFEN, setLED, beep
 import time
 import chess
 import copy
