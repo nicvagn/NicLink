@@ -22,7 +22,9 @@ class NicLink:
         self.connect()
         # this instances game board
         self.game_board = chess.Board()
-
+        # the last move the user has played
+        self.last_move = None
+        
     def connect( self ):
         """ connect to the chessboard """
         # connect with the external board
@@ -34,7 +36,7 @@ class NicLink:
         testFEN = _niclink.getFEN()
         if( testFEN == '' or None ):
             exceptionMessage = "Board initialization error. Is the board connected and turned on?"
-            raise RuntimeError(exceptionMessage)
+            raise RuntimeError( exceptionMessage )
         
         print(f"initial fen: { testFEN }")
         print("Board initialized")
@@ -69,38 +71,54 @@ class NicLink:
             tmp_board.push( move )  # Make the move on the board
             if tmp_board.board_fen() == new_FEN:  # Check if the board's FEN matches the new FEN
                 print( move )
-                return move  # Return the move in Coordinate notation 
+                self.last_move = move
+                return move  # Return the last move
             tmp_board.pop()  # Undo the move
 
-        raise RuntimeError("a valid move was not made")
+        raise RuntimeError( "a valid move was not made" )
 
 
     def check_for_move( self ):
-        """ check if there has been a move on the chessboard, and see if it is valid """
+        """ check if there has been a move on the chessboard, and see if it is valid. If so update self.last_move """
 
         # ensure the move was valid
 
         # get current FEN on the external board
-        tmpFEN = _niclink.getFEN()
+        new_FEN = _niclink.getFEN()
 
-        if(tmpFEN is None):
+        if(new_FEN is None):
             raise RuntimeError("No FEN from chessboard")
 
-        new_FEN = tmpFEN
-        
         if( new_FEN != self.game_board.board_fen ):
             # a change has occured on the chessboard
+
+            # check if the move is valid, and set last move
+            try:
+                self.last_move = self.find_move_from_FEN_change( new_FEN )
+            except RuntimeError:
+                print("move not valid, undue it and try again. When you have done that, press a key.")
+                readchar.readchar()
+                # recursion 
+                return self.check_for_move()
+            
             return True
 
         else:
             print("no change")
+
         return False
+    
+    def get_last_move( self ):
+        """ get the last move played on the chessboard """
+        if( self.last_move is None ):
+            raise RuntimeError("ERROR: last move is None")
+
+        return self.last_move
 
     def make_move_game_board( self, move ):
         """ make a move on the internal rep. of the game_board """
-        breakpoint()
         self.game_board.push( move )
-        print( "made move on internal board\n BOARD POST MOVE:\n", self.game_board )
+        print( f"made move on internal board \nBOARD POST MOVE:\n{ self.game_board }")
 
     def set_board_FEN( self, board, FEN ):
         """ set a board up according to a FEN """
@@ -108,7 +126,6 @@ class NicLink:
 
     def show_FEN_on_board( self, FEN ):
         """ print a FEN on on a chessboard """
-        breakpoint()
         board = chess.Board()
         self.set_board_FEN( board, FEN )
         print( board )
@@ -133,13 +150,13 @@ if __name__ == '__main__':
 
             try:
                 # find move from the FEN change
-                move = nl_instance.find_move_from_FEN_change( post_move_FEN )
+                move = nl_instance.get_last_move()
 
             except RuntimeError as re:   
                 print( re ) 
                 print( "reset the board to the privios position an try again" )
             
-                print("leave? ('n for no, != 'n' yes: ")
+                print( "leave? ('n for no, != 'n' yes: " )
                 leave = readchar.readkey()
 
                 continue # as move will not be defined
