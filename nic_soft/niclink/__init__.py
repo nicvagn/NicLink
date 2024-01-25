@@ -1,2 +1,2 @@
-import _niclink
-import niclink
+from . import _niclink
+from . import niclink

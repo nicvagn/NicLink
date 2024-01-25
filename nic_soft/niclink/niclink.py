@@ -4,8 +4,7 @@
 #  NicLink is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License along with NicLink. If not, see <https://www.gnu.org/licenses/>. 
-import _niclink
-from _niclink import connect, disconnect, uploadMode, realTimeMode, getFEN, setLED, beep
+from . import _niclink
 import time
 import chess
 import copy
@@ -153,9 +152,8 @@ if __name__ == '__main__':
                 move = nl_instance.get_last_move()
 
             except RuntimeError as re:   
-                print( re ) 
-                print( "reset the board to the privios position an try again" )
-            
+                print( f"{re} reset the board to the previous position an try again" )
+                print( f"previous position: \n{nl_instance.game_board}" ) 
                 print( "leave? ('n for no, != 'n' yes: " )
                 leave = readchar.readkey()
 
