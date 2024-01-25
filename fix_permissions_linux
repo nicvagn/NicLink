@@ -8,11 +8,11 @@ This can be done through a udev rule.
 create a 99-chessnutair.rules file: /etc/udev/rules.d/99-chessnutair.rules,
 with the following:
 
-SUBSYSTEM=="usb", ATTRS{idVendor}:="0x2d80", /
-ATTRS{idProduct}:="0x8002", GROUP="wheel", MODE="0660"
+SUBSYSTEM=="usb", ATTRS{idVendor}:="2d80", /
+ATTRS{idProduct}:="8002", GROUP="wheel", MODE="0660"
 
 # set the permissions for device files
-KERNEL=="hidraw2", GROUP="wheel", MODE="0660"
+KERNEL=="hidraw*", GROUP="wheel", MODE="0660"
 
 ======== end =========
 
@@ -23,3 +23,6 @@ ID:  {vendor id} 2d80 : {product id} 8002
 mount poin: /dev/hidraw2
 
 Good luck.
+
+This gives wheel group access to all of your hidraw devices,
+but wheel usualy has sudo access so they have that anyway with sudo
