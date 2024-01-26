@@ -1,4 +1,4 @@
-use with gnu/linux
+use with gnu/linux:
 
 In order to use NicLink as a user in the wheel group 
 ( group can be arbitrary )
@@ -8,19 +8,19 @@ This can be done through a udev rule.
 create a 99-chessnutair.rules file: /etc/udev/rules.d/99-chessnutair.rules,
 with the following:
 
-SUBSYSTEM=="usb", ATTRS{idVendor}:="2d80", /
-ATTRS{idProduct}:="8002", GROUP="wheel", MODE="0660"
+    SUBSYSTEM=="usb", ATTRS{idVendor}:="2d80", /
+    ATTRS{idProduct}:="8002", GROUP="wheel", MODE="0660"
 
-# set the permissions for device files
-KERNEL=="hidraw*", GROUP="wheel", MODE="0660"
+    # set the permissions for device files
+    KERNEL=="hidraw*", GROUP="wheel", MODE="0660"
 
-======== end =========
+======== mid =========
 
 my chessnutair has the following properties, if your's differs, adjust.
 
-ID:  {vendor id} 2d80 : {product id} 8002
+    ID:  {vendor id} 2d80 : {product id} 8002
 
-mount poin: /dev/hidraw2
+    mount poin: /dev/hidraw2
 
 Good luck.
 

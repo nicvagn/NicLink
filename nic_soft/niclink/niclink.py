@@ -4,10 +4,9 @@
 #  NicLink is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License along with NicLink. If not, see <https://www.gnu.org/licenses/>. 
-from . import _niclink
+import _niclink
 import time
 import chess
-import copy
 import readchar
 
 
@@ -33,6 +32,7 @@ class NicLink:
         time.sleep(2)     
         # make sure getFEN is working
         testFEN = _niclink.getFEN()
+        
         if( testFEN == '' or None ):
             exceptionMessage = "Board initialization error. Is the board connected and turned on?"
             raise RuntimeError( exceptionMessage )
