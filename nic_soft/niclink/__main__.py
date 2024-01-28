@@ -8,7 +8,9 @@
 import _niclink
 import niclink
 
-nl_instance = NicLink( 2 )
+import readchar
+
+nl_instance = niclink.NicLink( 2 )
 
 leave = 'n'
 while( leave == 'n' ):
