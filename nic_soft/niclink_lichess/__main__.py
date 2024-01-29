@@ -19,7 +19,7 @@ import chess.pgn
 import chess
 import berserk
 
-#NicLink shit
+# NicLink shit
 import niclink
 
 parser = argparse.ArgumentParser()
@@ -31,11 +31,6 @@ parser.add_argument( "--quiet", action="store_true" )
 parser.add_argument( "--debug", action="store_true" )
 args = parser.parse_args()
 
-
-TOKEN_FILE='./lichess_token/token'
-if args.tokenfile is not None:
-    TOKEN_FILE = args.tokenfile
-
 correspondence = False
 if args.correspondence:
     correspondence = True
@@ -44,9 +39,18 @@ DEBUG=True # for testing
 if args.debug:
     DEBUG = True
 
+DEV=True
+
+TOKEN_FILE='./lichess_token/token'
+if args.tokenfile is not None:
+    TOKEN_FILE = args.tokenfile
+
+if DEV:
+    TOKEN_FILE = './lichess_token/dev_token'
+
 logger = logging.getLogger()
 logger.setLevel( logging.DEBUG )
-formatter = logging.Formatter( '%( asctime )s %( levelname )s %( module )s %( message )s' )
+formatter = logging.Formatter( '%(asctime)s %(levelname)s %(module)s %(message)s' )
 
 if not args.quiet:
     consoleHandler = logging.StreamHandler()
@@ -62,49 +66,79 @@ sys.excepthook = my_excepthook
 logging.info( "NicLink_lichess startup" )
 
 class Game( threading.Thread ):
-    def __init__( self, client, niclink, game_id, **kwargs ):
+    """ a game on lichess """
+    def __init__( self, board_client, nl_inst, game_id, **kwargs ):
+        """ Game, the client.board, niclink instance, the game id on lila, idk fam"""
         super().__init__( **kwargs )
-        self.niclink = niclink
+        # NicLink instance
+        self.nl_inst = nl_inst
+        # berserk board_client
+        self.board_client = board_client
+        # id of the game we are playing
+        self.game_id = game_id
+        # incoming board stream
+        self.stream = board_client.stream_game_state( game_id )
+        # current state from stream
         self.current_state = next( self.stream )
+        logging.info( f"game init w id: { game_id }" )
+ 
 
-    def run( self ):
+    def run( self ) -> None:
         for event in self.stream:
             if event['type'] == 'gameState':
                 self.handle_state_change( event )
             elif event['type'] == 'chatLine':
                 self.handle_chat_line( event )
 
-    def make_move:
+    def make_move( self, move ):
         """ make a move in a lichess game """
+        logging.info( f"move made: { move }" )
+
+        self.board_client.make_move( self.game_id, move )
 
 
-    def handle_state_change( self, game_state ):
+    def handle_state_change( self, game_state ) -> None:
+        """ Handle a state change in the lichess game. """
         # {'type': 'gameState', 'moves': 'd2d3 e7e6 b1c3', 'wtime': datetime.datetime( 1970, 1, 25, 20, 31, 23, 647000, tzinfo=datetime.timezone.utc ), 'btime': datetime.datetime( 1970, 1, 25, 20, 31, 23, 647000, tzinfo=datetime.timezone.utc ), 'winc': datetime.datetime( 1970, 1, 1, 0, 0, tzinfo=datetime.timezone.utc ), 'binc': datetime.datetime( 1970, 1, 1, 0, 0, tzinfo=datetime.timezone.utc ), 'bdraw': False, 'wdraw': False}
 
-        print( game_state )
+        logging.info( game_state )
+
+        # tmp_chessboard is used to get the current game state from API and parse it into something we can use
         tmp_chessboard = chess.Board()
         moves = game_state['moves'].split( ' ' )
-        self.niclink.set_game_board_FEN( chess.STARTING_BOARD_FEN )
         for move in moves:
-            self.niclink.make_move_game_board( move )
-            print( move )
-        if tmp_chessboard.turn == niclink.get_color():
+            # make the maves on a board    
+            tmp_chessboard.push_uci( move )
+        
+        # set this board as NicLink game board
+        self.nl_inst.set_game_board( tmp_chessboard )
+        
+        logging.info( f"board before move: \n{ self.nl_inst.show_game_board() }" )
+        
+        # tmp_chessboard.turn == True when white, false when black
+        if (tmp_chessboard.turn == self.nl_inst.is_white()):
             logging.info( 'it is our turn' )
-            logging.info( f'our move: {moves}' )
+
+            self.nl_inst.await_move() # get the move from niclink
+
+            move = self.nl_inst.get_last_move()
+            logging.info( f"move from chessboard { move }" )
+   
+            logging.info( f'our move: {move}' )
             for attempt in range( 3 ):
                 try:
-                    self.niclink.await_move()
+                    breakpoint()
+                    # make the move
+                    self.make_move( move  )
                     break
                 except:
-                    e = sys.exc_info(  )[0]
+                    e = sys.exc_info()[0]
                     logging.info( f'exception on make_move: {e}' )
                 if attempt > 1:
                     logging.debug( f'sleeping before retry' )
                     time.sleep( 3 )
 
-            # get the move from niclink        
-            move = self.niclink.get_last_move()
-            # make the move
+
 
     def handle_chat_line( self, chat_line ):
         print( chat_line )
@@ -117,7 +151,7 @@ def main():
         print( f'ERROR: simplejson is installed. The berserk lichess client will not work with simplejson. Please remove the module. Aborting.' )
         sys.exit(-1 )
 
-    niclink = niclink.niclink.NicLink( refresh_delay=2 )
+    nl_inst = niclink.NicLink( refresh_delay=2 )
     
     try:
         logging.info( f'reading token from {TOKEN_FILE}' )
@@ -139,7 +173,7 @@ def main():
         sys.exit( -1 )
 
     try:
-        if args.devmode:
+        if DEBUG:
             client = berserk.Client( session, base_url="https://lichess.dev" )
         else:
             client = berserk.Client( session )
@@ -162,6 +196,7 @@ def main():
             return False
         return False
 
+    # main program loop
     while True:
         try:
             logging.debug( f'==== board event loop ====' )
@@ -181,9 +216,9 @@ def main():
                             continue
 
                     try:
-                        game = Game( client, niclink, game_data['id'] )
+                        game = Game( client.board, nl_inst, game_data['id'] )
                         game.daemon = True
-                        game.start()
+                        game.start() # start the game thread
                     except berserk.exceptions.ResponseError as e:
                         if 'This game cannot be played with the Board API' in str( e ):
                             print( 'cannot play this game via board api' )

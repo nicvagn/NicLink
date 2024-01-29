@@ -21,9 +21,9 @@ class NicLink:
         self.game_board = chess.Board()
         # the last move the user has played
         self.last_move = None
-
         # are we white?
-        self.playing_white = None
+        self.playing_white = True # for now
+
         
     def connect( self ):
         """ connect to the chessboard """
@@ -51,13 +51,13 @@ class NicLink:
         """ make the chessboard beep """
         _niclink.beep()
 
-    def get_FEN( self ): -> str
+    def get_FEN( self ) -> str:
         """ get the FEN from chessboard """
         return _niclink.getFEN()
 
-    def is_white( self ): -> bool
+    def is_white( self ) -> bool:
         """ our we white in this game? """
-        return playing_white; 
+        return self.playing_white; 
 
     def find_move_from_FEN_change( self, new_FEN ) -> str: # a move in quardinate notation
         """ get the move that occured to change the game_board fen into a given FEN. 
@@ -100,7 +100,10 @@ class NicLink:
             try:
                 self.last_move = self.find_move_from_FEN_change( new_FEN )
             except RuntimeError:
-                print("move not valid, undue it and try again. When you have done that, press a key.")
+                print( "move not valid, undue it and try again. When you have done that, press a key." )
+                print( "board I see:" )
+                self.show_FEN_on_board( new_FEN )
+                self.show_game_board()
                 readchar.readchar()
                 # recursion 
                 return self.check_for_move()
@@ -112,46 +115,52 @@ class NicLink:
 
         return False
 
-    def await_move(): -> None
+    def await_move( self ) -> str:
         """ wait for a legal move, and return it in coordinate notation """
         # loop until we get a valid move 
         while True:
-            if( check_for_move( self )):
+            if( self.check_for_move() ):
                 # a move has been played
+                return self.last_move
 
             # if no move has been played, sleep and check again
             time.sleep( self.refresh_delay )
         
     
-    def get_last_move( self ):
+    def get_last_move( self ) -> str:
         """ get the last move played on the chessboard """
         if( self.last_move is None ):
             raise RuntimeError("ERROR: last move is None")
 
         return self.last_move
 
-    def make_move_game_board( self, move ):
+    def make_move_game_board( self, move ) -> None:
         """ make a move on the internal rep. of the game_board """
         self.game_board.push( move )
         print( f"made move on internal board \nBOARD POST MOVE:\n{ self.game_board }")
 
-    def set_board_FEN( self, board, FEN ): -> None
+    def set_board_FEN( self, board, FEN ) -> None:
         """ set a board up according to a FEN """
         chess.Board.set_board_fen( board, fen=FEN)
 
-    def set_game_board_FEN( self, FEN ): -> None
+    def set_game_board_FEN( self, FEN ) -> None:
         """ set the internal game board FEN """
         self.set_board_FEN( self.game_board, FEN )
 
-    def show_FEN_on_board( self, FEN ):
+    def show_FEN_on_board( self, FEN ) -> None:
         """ print a FEN on on a chessboard """
         board = chess.Board()
         self.set_board_FEN( board, FEN )
         print( board )
 
-    def show_game_board( self ):
+    def show_game_board( self ) -> None:
         """ print the internal game_board """
         print( "game board:\n", self.game_board )
+
+    def set_game_board( self, board ) -> None:
+        """ set the game board """
+        self.game_board = board
+        self.last_move = None
 
 
 # if module is on "top level" ie: run directly
