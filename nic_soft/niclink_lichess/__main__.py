@@ -25,8 +25,6 @@ import niclink
 parser = argparse.ArgumentParser()
 parser.add_argument( "--port" )
 parser.add_argument( "--tokenfile" )
-parser.add_argument( "--calibrate", action="store_true" )
-parser.add_argument( "--addpiece", action="store_true" )
 parser.add_argument( "--correspondence", action="store_true" )
 parser.add_argument( "--devmode", action="store_true" )
 parser.add_argument( "--quiet", action="store_true" )
@@ -66,10 +64,7 @@ logging.info( "NicLink_lichess startup" )
 class Game( threading.Thread ):
     def __init__( self, client, niclink, game_id, **kwargs ):
         super().__init__( **kwargs )
-        self.game_id = game_id
         self.niclink = niclink
-        self.client = client
-        self.stream = client.board.stream_game_state( game_id )
         self.current_state = next( self.stream )
 
     def run( self ):
@@ -79,6 +74,9 @@ class Game( threading.Thread ):
             elif event['type'] == 'chatLine':
                 self.handle_chat_line( event )
 
+    def make_move:
+        """ make a move in a lichess game """
+
 
     def handle_state_change( self, game_state ):
         # {'type': 'gameState', 'moves': 'd2d3 e7e6 b1c3', 'wtime': datetime.datetime( 1970, 1, 25, 20, 31, 23, 647000, tzinfo=datetime.timezone.utc ), 'btime': datetime.datetime( 1970, 1, 25, 20, 31, 23, 647000, tzinfo=datetime.timezone.utc ), 'winc': datetime.datetime( 1970, 1, 1, 0, 0, tzinfo=datetime.timezone.utc ), 'binc': datetime.datetime( 1970, 1, 1, 0, 0, tzinfo=datetime.timezone.utc ), 'bdraw': False, 'wdraw': False}
@@ -86,18 +84,16 @@ class Game( threading.Thread ):
         print( game_state )
         tmp_chessboard = chess.Board()
         moves = game_state['moves'].split( ' ' )
+        self.niclink.set_game_board_FEN( chess.STARTING_BOARD_FEN )
         for move in moves:
-            tmp_chessboard.push_uci( move )
-            # print( move )
-            self.certabo.set_board_from_fen( tmp_chessboard.fen(  ) )
-        if tmp_chessboard.turn == self.get_color():
+            self.niclink.make_move_game_board( move )
+            print( move )
+        if tmp_chessboard.turn == niclink.get_color():
             logging.info( 'it is our turn' )
-            moves = self.certabo.get_user_move()
             logging.info( f'our move: {moves}' )
             for attempt in range( 3 ):
                 try:
-
-                    self.niclink.
+                    self.niclink.await_move()
                     break
                 except:
                     e = sys.exc_info(  )[0]
@@ -106,6 +102,9 @@ class Game( threading.Thread ):
                     logging.debug( f'sleeping before retry' )
                     time.sleep( 3 )
 
+            # get the move from niclink        
+            move = self.niclink.get_last_move()
+            # make the move
 
     def handle_chat_line( self, chat_line ):
         print( chat_line )
@@ -182,7 +181,7 @@ def main():
                             continue
 
                     try:
-                        game = Game( client, mycertabo, game_data['id'] )
+                        game = Game( client, niclink, game_data['id'] )
                         game.daemon = True
                         game.start()
                     except berserk.exceptions.ResponseError as e:

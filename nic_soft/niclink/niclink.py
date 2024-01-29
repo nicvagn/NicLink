@@ -21,6 +21,9 @@ class NicLink:
         self.game_board = chess.Board()
         # the last move the user has played
         self.last_move = None
+
+        # are we white?
+        self.playing_white = None
         
     def connect( self ):
         """ connect to the chessboard """
@@ -39,21 +42,24 @@ class NicLink:
         print(f"initial fen: { testFEN }")
         print("Board initialized")
 
-    def disconnect( self ):
+    def disconnect( self ) -> None:
         """ disconnect from the chessboard """
         _niclink.disconnect()
         print("Board disconnect")
 
-    def beep( self ):
+    def beep( self ) -> None:
         """ make the chessboard beep """
         _niclink.beep()
 
-    def get_FEN( self ):
+    def get_FEN( self ): -> str
         """ get the FEN from chessboard """
         return _niclink.getFEN()
 
+    def is_white( self ): -> bool
+        """ our we white in this game? """
+        return playing_white; 
 
-    def find_move_from_FEN_change( self, new_FEN ):
+    def find_move_from_FEN_change( self, new_FEN ) -> str: # a move in quardinate notation
         """ get the move that occured to change the game_board fen into a given FEN. 
             move returned in coordinate notation """
 
@@ -76,7 +82,7 @@ class NicLink:
         raise RuntimeError( "a valid move was not made" )
 
 
-    def check_for_move( self ):
+    def check_for_move( self ) -> bool:
         """ check if there has been a move on the chessboard, and see if it is valid. If so update self.last_move """
 
         # ensure the move was valid
@@ -105,6 +111,17 @@ class NicLink:
             print("no change")
 
         return False
+
+    def await_move(): -> None
+        """ wait for a legal move, and return it in coordinate notation """
+        # loop until we get a valid move 
+        while True:
+            if( check_for_move( self )):
+                # a move has been played
+
+            # if no move has been played, sleep and check again
+            time.sleep( self.refresh_delay )
+        
     
     def get_last_move( self ):
         """ get the last move played on the chessboard """
@@ -118,9 +135,13 @@ class NicLink:
         self.game_board.push( move )
         print( f"made move on internal board \nBOARD POST MOVE:\n{ self.game_board }")
 
-    def set_board_FEN( self, board, FEN ):
+    def set_board_FEN( self, board, FEN ): -> None
         """ set a board up according to a FEN """
         chess.Board.set_board_fen( board, fen=FEN)
+
+    def set_game_board_FEN( self, FEN ): -> None
+        """ set the internal game board FEN """
+        self.set_board_FEN( self.game_board, FEN )
 
     def show_FEN_on_board( self, FEN ):
         """ print a FEN on on a chessboard """

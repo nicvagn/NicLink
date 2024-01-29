@@ -4,3 +4,4 @@ build/*
 EasyLinkSDK
 etc
 **/__pycache__
+nic_soft/niclink_lichess/niclink
