@@ -40,6 +40,17 @@
     This gives wheel group access to all of your hidraw devices,
     but wheel usualy has sudo access so they have that anyway with sudo
 
+# Using the board on lichess with the board api
+        
+    In the ROOT/nic_soft/niclink_lichess dir create a dir called lichess_token.
+    in this dir create a file called token. This will be a plain text file containing
+    only the text of your lichess auth token.
+
+    ie: filename: token
+         content: lip_5PIkq4soaF3XyFGvelx
+
+   then cd .. and run python niclink_lichess      
+
 # Good luck.
 
 

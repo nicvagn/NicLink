@@ -23,10 +23,8 @@ import berserk
 import niclink
 
 parser = argparse.ArgumentParser()
-parser.add_argument( "--port" )
 parser.add_argument( "--tokenfile" )
 parser.add_argument( "--correspondence", action="store_true" )
-parser.add_argument( "--devmode", action="store_true" )
 parser.add_argument( "--quiet", action="store_true" )
 parser.add_argument( "--debug", action="store_true" )
 args = parser.parse_args()
@@ -39,14 +37,12 @@ DEBUG=True # for testing
 if args.debug:
     DEBUG = True
 
-DEV=True
-
-TOKEN_FILE='./lichess_token/token'
+TOKEN_FILE = os.path.join(os.path.dirname(__file__), "lichess_token/token")
 if args.tokenfile is not None:
     TOKEN_FILE = args.tokenfile
 
-if DEV:
-    TOKEN_FILE = './lichess_token/dev_token'
+if DEBUG:
+    TOKEN_FILE = os.path.join(os.path.dirname(__file__), "lichess_token/dev_token")
 
 logger = logging.getLogger()
 logger.setLevel( logging.DEBUG )
@@ -81,7 +77,6 @@ class Game( threading.Thread ):
         # current state from stream
         self.current_state = next( self.stream )
         logging.info( f"game init w id: { game_id }" )
- 
 
     def run( self ) -> None:
         for event in self.stream:
@@ -107,7 +102,7 @@ class Game( threading.Thread ):
         tmp_chessboard = chess.Board()
         moves = game_state['moves'].split( ' ' )
         for move in moves:
-            # make the maves on a board    
+            # make the moves on a board
             tmp_chessboard.push_uci( move )
         
         # set this board as NicLink game board
@@ -166,7 +161,7 @@ def main():
     try:
         session = berserk.TokenSession( token )
     except:
-        e = sys.exc_info(  )[0]
+        e = sys.exc_info()[0]
         print( f"cannot create session: {e}" )
         logging.info( f'cannot create session {e}' )
         sys.exit( -1 )
