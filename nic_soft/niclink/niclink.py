@@ -100,10 +100,12 @@ class NicLink:
             try:
                 self.last_move = self.find_move_from_FEN_change( new_FEN )
             except RuntimeError:
-                print( "move not valid, undue it and try again. When you have done that, press a key." )
-                print( "board I see:" )
+                print( "move not valid, undue it and try again." )
+                print( "external board I see:" )
                 self.show_FEN_on_board( new_FEN )
+                print( "internal board:")
                 self.show_game_board()
+                print( "press a key to when a legal move is on the board" )
                 readchar.readchar()
                 # recursion 
                 return self.check_for_move()
@@ -155,7 +157,7 @@ class NicLink:
 
     def show_game_board( self ) -> None:
         """ print the internal game_board """
-        print( "game board:\n", self.game_board )
+        print( f"game board:\n{ self.game_board }" )
 
     def set_game_board( self, board ) -> None:
         """ set the game board """

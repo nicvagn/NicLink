@@ -127,7 +127,6 @@ class Game( threading.Thread ):
             logging.info( f'our move: {move}' )
             for attempt in range( 3 ):
                 try:
-                    breakpoint()
                     # make the move
                     self.make_move( move  )
                     break
