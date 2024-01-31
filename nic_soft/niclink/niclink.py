@@ -21,8 +21,6 @@ class NicLink:
         self.game_board = chess.Board()
         # the last move the user has played
         self.last_move = None
-        # are we white?
-        self.playing_white = True # for now
 
         
     def connect( self ):
@@ -54,10 +52,6 @@ class NicLink:
     def get_FEN( self ) -> str:
         """ get the FEN from chessboard """
         return _niclink.getFEN()
-
-    def is_white( self ) -> bool:
-        """ our we white in this game? """
-        return self.playing_white; 
 
     def find_move_from_FEN_change( self, new_FEN ) -> str: # a move in quardinate notation
         """ get the move that occured to change the game_board fen into a given FEN. 
@@ -163,8 +157,17 @@ class NicLink:
         """ set the game board """
         self.game_board = board
         self.last_move = None
+'''
+    def set_is_white( self, is_white:bool ):
+        """ set is white player """
+        self.is_white = is_white
 
 
+    def is_white( self ) -> bool:
+        """ our we white in this game? """
+        return self.playing_white;
+
+'''
 # if module is on "top level" ie: run directly
 if __name__ == '__main__':
     nl_instance = NicLink( 2 )
@@ -193,7 +196,7 @@ if __name__ == '__main__':
             # make the move on the game board
             nl_instance.make_move_game_board( move )
             
-            print( "=========================================" )
+            print( "\n=========================================\n" )
             
 
         print("leave? ('n for no, != 'n' yes: ")

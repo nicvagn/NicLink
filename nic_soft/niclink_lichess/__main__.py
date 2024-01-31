@@ -33,7 +33,7 @@ correspondence = False
 if args.correspondence:
     correspondence = True
 
-DEBUG=True # for testing
+DEBUG=False # for testing
 if args.debug:
     DEBUG = True
 
@@ -59,24 +59,29 @@ def my_excepthook( excType, excValue, traceback, logger=logger ):
                  exc_info=( excType, excValue, traceback ) )
 sys.excepthook = my_excepthook
 
-logging.info( "NicLink_lichess startup" )
+logging.info( "\n\n========================== \n NicLink_lichess startup\n==========================\n\n")
 
 class Game( threading.Thread ):
     """ a game on lichess """
-    def __init__( self, board_client, nl_inst, game_id, **kwargs ):
+    def __init__( self, game_id, playing_white, **kwargs ):
         """ Game, the client.board, niclink instance, the game id on lila, idk fam"""
+        global client, nl_inst
         super().__init__( **kwargs )
-        # NicLink instance
-        self.nl_inst = nl_inst
         # berserk board_client
-        self.board_client = board_client
+        self.board_client = client.board
         # id of the game we are playing
         self.game_id = game_id
         # incoming board stream
-        self.stream = board_client.stream_game_state( game_id )
+        self.stream = self.board_client.stream_game_state( game_id )
+
         # current state from stream
         self.current_state = next( self.stream )
+
+        self.playing_white = playing_white 
+       
+
         logging.info( f"game init w id: { game_id }" )
+        logging.info( client.games.get_ongoing() )
 
     def run( self ) -> None:
         for event in self.stream:
@@ -85,7 +90,7 @@ class Game( threading.Thread ):
             elif event['type'] == 'chatLine':
                 self.handle_chat_line( event )
 
-    def make_move( self, move ):
+    def make_move( self, move ) -> None:
         """ make a move in a lichess game """
         logging.info( f"move made: { move }" )
 
@@ -94,6 +99,7 @@ class Game( threading.Thread ):
 
     def handle_state_change( self, game_state ) -> None:
         """ Handle a state change in the lichess game. """
+        global nl_inst
         # {'type': 'gameState', 'moves': 'd2d3 e7e6 b1c3', 'wtime': datetime.datetime( 1970, 1, 25, 20, 31, 23, 647000, tzinfo=datetime.timezone.utc ), 'btime': datetime.datetime( 1970, 1, 25, 20, 31, 23, 647000, tzinfo=datetime.timezone.utc ), 'winc': datetime.datetime( 1970, 1, 1, 0, 0, tzinfo=datetime.timezone.utc ), 'binc': datetime.datetime( 1970, 1, 1, 0, 0, tzinfo=datetime.timezone.utc ), 'bdraw': False, 'wdraw': False}
 
         logging.info( game_state )
@@ -106,17 +112,17 @@ class Game( threading.Thread ):
             tmp_chessboard.push_uci( move )
         
         # set this board as NicLink game board
-        self.nl_inst.set_game_board( tmp_chessboard )
+        nl_inst.set_game_board( tmp_chessboard )
         
-        logging.info( f"board before move: \n{ self.nl_inst.show_game_board() }" )
+        logging.info( f"board before move: \n{ nl_inst.show_game_board() }" )
         
         # tmp_chessboard.turn == True when white, false when black
-        if (tmp_chessboard.turn == self.nl_inst.is_white()):
+        if (tmp_chessboard.turn == self.playing_white ):
             logging.info( 'it is our turn' )
 
-            self.nl_inst.await_move() # get the move from niclink
+            nl_inst.await_move() # get the move from niclink
 
-            move = self.nl_inst.get_last_move()
+            move = nl_inst.get_last_move()
             logging.info( f"move from chessboard { move }" )
    
             logging.info( f'our move: {move}' )
@@ -134,12 +140,57 @@ class Game( threading.Thread ):
 
 
 
-    def handle_chat_line( self, chat_line ):
+    def handle_chat_line( self, chat_line ) -> None:
         print( chat_line )
         pass
 
+def handle_game_start( event ) -> None:
+    """ handle game start event """
+    global client
+    # {'type': 'gameStart', 'game': {'id': 'pCHwBReX'}}
+    game_data = event['game']
+    
+    breakpoint()
+    logging.info( f"game start received: {game_data['id']}" )
+    # check if game speed is correspondence, skip those if --correspondence argument is not set
+    if not correspondence:
+        if is_correspondence( game_data['id'] ):
+            logging.info( f"skipping corespondence game: {game_data['id']}" )
+            return
 
+    try:
+        game = Game( game_data['id'], ( game_data['color'] == "white" ))
+        game.daemon = True
+        game.start() # start the game thread
+
+    except berserk.exceptions.ResponseError as e:
+        if 'This game cannot be played with the Board API' in str( e ):
+            print( 'cannot play this game via board api' )
+        logging.info( f'ERROR: {e}' )
+        return
+
+    
+
+def is_correspondence( gameId ) -> bool:
+    """ is the game a correspondence game? """
+    global client
+    try:
+        for game in client.games.get_ongoing():
+            if game['gameId'] == gameId:
+                if game['speed'] == "correspondence":
+                    return True
+    except:
+        e = sys.exc_info()[0]
+        print( f"cannot determine game speed: {e}" )
+        logging.info( f'cannot determine if game is correspondence: {e}' )
+        return False
+    return False
+
+# globals, because why not
+client = None
+nl_inst = None
 def main():
+    global client, nl_inst
     simplejson_spec = importlib.util.find_spec( "simplejson" )
     if simplejson_spec is not None:
         print( f'ERROR: simplejson is installed. The berserk lichess client will not work with simplejson. Please remove the module. Aborting.' )
@@ -177,47 +228,47 @@ def main():
         print( f"cannot create lichess client: {e}" )
         sys.exit( -1 )
 
-    def is_correspondence( gameId ):
-        try:
-            for game in client.games.get_ongoing(  ):
-                if game['gameId'] == gameId:
-                    if game['speed'] == "correspondence":
-                        return True
-        except:
-            e = sys.exc_info()[0]
-            print( f"cannot determine game speed: {e}" )
-            logging.info( f'cannot determine if game is correspondence: {e}' )
-            return False
-        return False
+    # get username
+    try:
+        account_info = client.account.get()
+        username = account_info["username"]
+        print( f"\nUSERNAME: { username }\n" )
+    except:
+        e = sys.exc_info()[0]
+        logging.info( f'cannot get lichess acount info: {e}' )
+        print( f"cannot get lichess acount info: {e}" )
+        sys.exit( -1 )
 
     # main program loop
     while True:
         try:
-            logging.debug( f'==== board event loop ====' )
+            logging.debug( f'\n==== event loop ====\n' )
             for event in client.board.stream_incoming_events():
                 if event['type'] == 'challenge':
                     print( "Challenge received" )
                     print( event )
                 elif event['type'] == 'gameStart':
-                    # {'type': 'gameStart', 'game': {'id': 'pCHwBReX'}}
-                    game_data = event['game']
-                    logging.info( f"game start received: {game_data['id']}" )
-
-                    # check if game speed is correspondence, skip those if --correspondence argument is not set
-                    if not correspondence:
-                        if is_correspondence( game_data['id'] ):
-                            logging.info( f"skipping corespondence game: {game_data['id']}" )
-                            continue
-
-                    try:
-                        game = Game( client.board, nl_inst, game_data['id'] )
-                        game.daemon = True
-                        game.start() # start the game thread
-                    except berserk.exceptions.ResponseError as e:
-                        if 'This game cannot be played with the Board API' in str( e ):
-                            print( 'cannot play this game via board api' )
-                        logging.info( f'ERROR: {e}' )
-                        continue
+                    # a game is starting
+                    handle_game_start( event )
+ #                   # {'type': 'gameStart', 'game': {'id': 'pCHwBReX'}}
+ #                   game_data = event['game']
+ #                   logging.info( f"game start received: {game_data['id']}" )
+ #                   
+ #                   # check if game speed is correspondence, skip those if --correspondence argument is not set
+ #                   if not correspondence:
+ #                       if is_correspondence( game_data['id'] ):
+ #                           logging.info( f"skipping corespondence game: {game_data['id']}" )
+ #                           continue
+ #
+ #                   try:
+ #                      game = Game( client, nl_inst, game_data['id'] )
+ #                       game.daemon = True
+ #                       game.start() # start the game thread
+ #                   except berserk.exceptions.ResponseError as e:
+ #                       if 'This game cannot be played with the Board API' in str( e ):
+ #                           print( 'cannot play this game via board api' )
+ #                       logging.info( f'ERROR: {e}' )
+ #                       continue
 
 
         except berserk.exceptions.ResponseError as e:
