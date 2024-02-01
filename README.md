@@ -1,38 +1,85 @@
-# NicLink
-A python interface for the Chessnut Air. 
+# NicLink - A python interface for the Chessnut Air
 
-The plan is to use this interface together with the berserk API to play on lichess
+    pyBind should be installed via pip.
+    ie: pip install pybind11
 
-Uses https://pybind11.readthedocs.io/en/stable/index.html 
+# only tested on gnu/linux with a chessnut air. In order to connect with the chessnut air under gnu/linux:
 
-pyBind should be installed via pip.
-ie: pip install pybind11
+    In order to use NicLink as a user in the wheel group 
+    ( group can be arbitrary )
+    You must give the user read and write permissions for the Chessnut air.
+    This can be done through a udev rule.
 
-use with gnu/linux:
+    create a 99-chessnutair.rules file: /etc/udev/rules.d/99-chessnutair.rules,
+    with the following:
 
-In order to use NicLink as a user in the wheel group 
-( group can be arbitrary )
-You must give the user read and write permissions for the Chessnut air.
-This can be done through a udev rule.
+        SUBSYSTEM=="usb", ATTRS{idVendor}:="2d80", /
+        ATTRS{idProduct}:="8002", GROUP="wheel", MODE="0660"
 
-create a 99-chessnutair.rules file: /etc/udev/rules.d/99-chessnutair.rules,
-with the following:
+        # set the permissions for device files
+        KERNEL=="hidraw*", GROUP="wheel", MODE="0660"
 
-    SUBSYSTEM=="usb", ATTRS{idVendor}:="2d80", /
-    ATTRS{idProduct}:="8002", GROUP="wheel", MODE="0660"
+    ======== mid =========
 
-    # set the permissions for device files
-    KERNEL=="hidraw*", GROUP="wheel", MODE="0660"
+    my chessnutair has the following properties, if your's differs, adjust.
 
-======== mid =========
+        ID:  {vendor id} 2d80 : {product id} 8002
 
-my chessnutair has the following properties, if your's differs, adjust.
+        mount poin: /dev/hidraw2
+
+    This gives wheel group access to all of your hidraw devices,
+    but wheel usualy has sudo access so they have that anyway with sudo
+
+# my chessnutair has the following properties, if your's differs, adjust above
 
     ID:  {vendor id} 2d80 : {product id} 8002
 
-    mount poin: /dev/hidraw2
+    mount poin: /dev/hidraw(0-7)
 
-Good luck.
 
-This gives wheel group access to all of your hidraw devices,
-but wheel usualy has sudo access so they have that anyway with sudo
+    This gives wheel group access to all of your hidraw devices,
+    but wheel usualy has sudo access so they have that anyway with sudo
+
+# Using the board on lichess with the board api
+        
+    In the ROOT/nic_soft/niclink_lichess dir create a dir called lichess_token.
+    in this dir create a file called token. This will be a plain text file containing
+    only the text of your lichess auth token.
+
+    example:
+         filename: nic_sof/niclink_lichess/token
+         content: lip_5PIkq4soaF3XyFGvelx
+
+
+   then cd .. and run python niclink_lichess      
+
+# use with gnu/linux:
+
+    In order to use NicLink as a user in the wheel group 
+    ( group can be arbitrary )
+    You must give the user read and write permissions for the Chessnut air.
+    This can be done through a udev rule.
+
+    create a 99-chessnutair.rules file: /etc/udev/rules.d/99-chessnutair.rules,
+    with the following:
+
+        SUBSYSTEM=="usb", ATTRS{idVendor}:="2d80", /
+        ATTRS{idProduct}:="8002", GROUP="wheel", MODE="0660"
+
+        # set the permissions for device files
+        KERNEL=="hidraw*", GROUP="wheel", MODE="0660"
+
+    ======== mid =========
+
+    my chessnutair has the following properties, if your's differs, adjust.
+
+        ID:  {vendor id} 2d80 : {product id} 8002
+
+        mount poin: /dev/hidraw2
+
+    Good luck.
+
+    This gives wheel group access to all of your hidraw devices,
+    but wheel usualy has sudo access so they have that anyway with sudo
+
+# good luck

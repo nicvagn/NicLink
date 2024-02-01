@@ -1,6 +1,7 @@
-lichess_token/token
+**/lichess_token/*
 build/*
 /src/pybind11
 EasyLinkSDK
 etc
 **/__pycache__
+nic_soft/niclink_lichess/niclink
