@@ -121,7 +121,7 @@ string getFEN()
 }
 
 /**
- * set an led on the chessboard. Will switch to upload mode
+ * set an led on the chessb aoard. Will switch to upload mode
  * @param x, y: interegers in the 0 - 7 range
  * @param LEDsetting: boolean of the desired setting of the led
  */

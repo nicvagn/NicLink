@@ -46,8 +46,10 @@
     in this dir create a file called token. This will be a plain text file containing
     only the text of your lichess auth token.
 
-    ie: filename: token
+    example:
+         filename: nic_sof/niclink_lichess/token
          content: lip_5PIkq4soaF3XyFGvelx
+
 
    then cd .. and run python niclink_lichess      
 

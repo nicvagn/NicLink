@@ -5,6 +5,8 @@
 #
 #  You should have received a copy of the GNU General Public License along with NicLink. If not, see <https://www.gnu.org/licenses/>. 
  
+# a basic test of NicLink through python interface
+
 import niclink
 import readchar
 
@@ -24,8 +26,8 @@ while( leave == 'n' ):
             move = nl_instance.get_last_move()
 
         except RuntimeError as re:   
-            print( f"{re} reset the board to the previous position an try again" )
-            print( f"previous position: \n{nl_instance.game_board}" ) 
+            print( f" Invalid move: {re} \nreset the board to the previous position an try again\n" )
+            print( f"previous position: \n{nl_instance.game_board}\n" ) 
             print( "leave? ('n for no, != 'n' yes: " )
             leave = readchar.readkey()
 

@@ -7,6 +7,7 @@ import _niclink
 import time
 import chess
 import readchar
+import sys
 
 
 class NicLink:
@@ -48,6 +49,28 @@ class NicLink:
     def beep( self ) -> None:
         """ make the chessboard beep """
         _niclink.beep()
+
+    def set_led( self, square, status ):
+        """ set an LED at a given square to a status (square: a1, e4 etc) """
+
+        # find the file number by itteration 
+        files = [ "a", 'b', 'c', 'd', 'e', 'f', 'g', 'h' ]
+        found = False
+        letter = square[ 0 ]
+        file_num = 0
+        while( file_num < len(files) ):
+            if letter ==  files[ file_num ]:
+                found = True
+                break
+            file_num += 1
+
+        # find the number by straight conversion, and some math.
+        num = int(square[1]) - 1 # it's 0 based  
+
+        if( not found ):
+            raise ValueError( f'{ square[1] } is not a valid file' )
+        # this is supper fucked, but the chessboard interaly starts counting at h8
+        _niclink.setLED( 7 - file_num, 7 - num, status)
 
     def get_FEN( self ) -> str:
         """ get the FEN from chessboard """
@@ -93,21 +116,27 @@ class NicLink:
             # check if the move is valid, and set last move
             try:
                 self.last_move = self.find_move_from_FEN_change( new_FEN )
+            except KeyboardInterrupt:
+                print("KeyboardInterrupt: bye")
+                sys.exit( 0 )
             except RuntimeError:
                 print( "move not valid, undue it and try again." )
                 print( "external board I see:" )
                 self.show_FEN_on_board( new_FEN )
                 print( "internal board:")
                 self.show_game_board()
-                print( "press a key to when a legal move is on the board" )
-                readchar.readchar()
+                print( "press a key to when a legal move is on the board. press x to quit." )
+                exit = readchar.readchar()
+                if( exit == 'x' or exit == 'X'):
+                    print( "x pressed, exiting. Bye!" )
+                    raise KeyboardInterrupt("X for exit pressed")
                 # recursion 
                 return self.check_for_move()
             
             return True
 
         else:
-            print("no change")
+            print("no change.")
 
         return False
 
@@ -157,17 +186,7 @@ class NicLink:
         """ set the game board """
         self.game_board = board
         self.last_move = None
-'''
-    def set_is_white( self, is_white:bool ):
-        """ set is white player """
-        self.is_white = is_white
 
-
-    def is_white( self ) -> bool:
-        """ our we white in this game? """
-        return self.playing_white;
-
-'''
 # if module is on "top level" ie: run directly
 if __name__ == '__main__':
     nl_instance = NicLink( 2 )
@@ -185,9 +204,12 @@ if __name__ == '__main__':
                 # find move from the FEN change
                 move = nl_instance.get_last_move()
 
+            except KeyboardInterrupt:
+                print("KeyboardInterrupt: bye")
+                sys.exit( 0 )
             except RuntimeError as re:   
                 print( f"{re} reset the board to the previous position an try again" )
-                print( f"previous position: \n{nl_instance.game_board}" ) 
+                # print( f"previous position: \n{nl_instance.game_board}" ) 
                 print( "leave? ('n for no, != 'n' yes: " )
                 leave = readchar.readkey()
 
@@ -199,6 +221,6 @@ if __name__ == '__main__':
             print( "\n=========================================\n" )
             
 
-        print("leave? ('n for no, != 'n' yes: ")
-        leave = readchar.readkey()
+            print("leave? ('n for no, != 'n' yes: ")
+            leave = readchar.readkey()
 
