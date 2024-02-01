@@ -19,17 +19,6 @@
         # set the permissions for device files
         KERNEL=="hidraw*", GROUP="wheel", MODE="0660"
 
-    ======== mid =========
-
-    my chessnutair has the following properties, if your's differs, adjust.
-
-        ID:  {vendor id} 2d80 : {product id} 8002
-
-        mount poin: /dev/hidraw2
-
-    This gives wheel group access to all of your hidraw devices,
-    but wheel usualy has sudo access so they have that anyway with sudo
-
 # my chessnutair has the following properties, if your's differs, adjust above
 
     ID:  {vendor id} 2d80 : {product id} 8002
@@ -76,8 +65,6 @@
         ID:  {vendor id} 2d80 : {product id} 8002
 
         mount poin: /dev/hidraw2
-
-    Good luck.
 
     This gives wheel group access to all of your hidraw devices,
     but wheel usualy has sudo access so they have that anyway with sudo
