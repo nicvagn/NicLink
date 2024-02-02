@@ -1,0 +1,11 @@
+LICENSE
+README.md
+pyproject.toml
+nic_soft.egg-info/PKG-INFO
+nic_soft.egg-info/SOURCES.txt
+nic_soft.egg-info/dependency_links.txt
+nic_soft.egg-info/top_level.txt
+niclink/__init__.py
+niclink/__main__.py
+niclink_lichess/__init__.py
+niclink_lichess/__main__.py

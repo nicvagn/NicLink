@@ -1,0 +1,6 @@
+[project]
+name = "nic_soft"
+version = "0.1.0"
+
+[tool.setuptools.packages]
+find = {} # defaults

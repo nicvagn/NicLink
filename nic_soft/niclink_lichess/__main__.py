@@ -21,7 +21,8 @@ import chess
 import berserk
 
 # NicLink shit
-import niclink
+from niclink import NicLinkManager
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument( "--tokenfile" )
@@ -108,12 +109,22 @@ class Game( threading.Thread ):
         # tmp_chessboard is used to get the current game state from API and parse it into something we can use
         tmp_chessboard = chess.Board()
         moves = game_state['moves'].split( ' ' )
+        last_move = None
         for move in moves:
             # make the moves on a board
             tmp_chessboard.push_uci( move )
+            last_move = move
         
         # set this board as NicLink game board
         nl_inst.set_game_board( tmp_chessboard )
+
+        # turn off led's
+        nl_inst.turn_off_all_leds()
+        
+        if( last_move != None ):
+            # highlight the last move
+            nl_inst.set_led( last_move[:2] ) # source
+            nl_inst.set_led( last_move[:-2] ) # dest
         
         
         # tmp_chessboard.turn == True when white, false when black playing_white is same
@@ -227,7 +238,7 @@ def main():
         print( f'ERROR: simplejson is installed. The berserk lichess client will not work with simplejson. Please remove the module. Aborting.' )
         sys.exit(-1 )
 
-    nl_inst = niclink.NicLink( refresh_delay=2 )
+    nl_inst = NicLinkManager( refresh_delay=2 )
     
     
     try:

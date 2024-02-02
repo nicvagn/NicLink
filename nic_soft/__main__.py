@@ -10,7 +10,7 @@
 import niclink
 import readchar
 
-nl_instance = niclink.niclink.NicLink( 2 )
+nl_instance = niclink.NicLinkManager( 2 )
 
 leave = 'n'
 while( leave == 'n' ):
