@@ -208,6 +208,7 @@ PYBIND11_MODULE(_niclink, m)
     m.def("realTimeMode", &ChessLink::switchRealTimeMode, py::return_value_policy::copy, "Switch to realtime mode.");
     // doers
     m.def("setLED", &setLED, "Set a LED on the chessboard.");
+    m.def("lightsOut", &lightsOut, "turn of all the lights");
     m.def("beep", &BEEP, "Cause the chessboard to beep.");
     // getters
     m.def("getFEN", &getFEN, py::return_value_policy::copy, "Get the FEN for the chessboard's cur position.");

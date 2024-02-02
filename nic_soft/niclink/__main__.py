@@ -72,7 +72,7 @@ class NicLinkManager:
         # this is supper fucked, but the chessboard interaly starts counting at h8
         _niclink.setLED( 7 - num, 7 - file_num, status)
 
-    def turn_of_all_leds( self ):
+    def turn_off_all_leds( self ):
         _niclink.lightsOut()
 
     def get_FEN( self ) -> str:
