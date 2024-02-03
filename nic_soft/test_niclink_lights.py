@@ -10,7 +10,7 @@ import time
 print( "\n\n====== NicLink test script ====== \n")
 
 
-# connet to the board
+# connect to the board
 nl = NicLinkManager( 1 )
 
 print( "all the lights should come on, starting with a1 finishing with h8" )
@@ -22,7 +22,7 @@ for x in range(1, 9):
         print( square + " on" )
         nl.set_led( square, True)
 
-        time.sleep( (0.1) )
+        time.sleep( (0.01) )
 
 
 for x in range(1, 9):
@@ -31,4 +31,4 @@ for x in range(1, 9):
         print( square + " off" )
         nl.set_led( square, False)
 
-        time.sleep( (0.1) )
+        time.sleep( (0.01) )

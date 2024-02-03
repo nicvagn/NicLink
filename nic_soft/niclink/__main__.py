@@ -5,7 +5,7 @@
 #  You should have received a copy of the GNU General Public License along with NicLink. If not, see <https://www.gnu.org/licenses/>. 
 import _niclink
 import time
-import chess
+import chess 
 import readchar
 import sys
 
@@ -21,7 +21,8 @@ class NicLinkManager:
             self.logger = logger
         else:
             self.logger = logging.getLogger()
-            self.logger.setLevel( logging.DEBUG )
+        #self.logger.setLevel( logging.DEBUG )
+        self.logger.setLevel( logging.WARN )
         self.refresh_delay = refresh_delay
         # initialize the chessboard, this must be done first, before chattering at it
         self.connect()
@@ -95,7 +96,9 @@ class NicLinkManager:
         legal_moves = list(self.game_board.legal_moves)
         
         tmp_board = self.game_board.copy()
-        logging.info(f"board we are using to check legal moves: \n{self.game_board}")
+        logging.info(f"+++ find_move_from_FEN_change(...) called +++\n\
+board we are using to check legal moves: \n{self.game_board}")
+
 
         for move in legal_moves:
             #logging.info(move)
@@ -133,12 +136,14 @@ class NicLinkManager:
                 sys.exit( 0 )
             except RuntimeError:
                 logging.warning( "\n===== move not valid, undue it and try again. =====\n" )
-               
+                logging.info( f"external board as I see it:\n" )
+                self.show_FEN_on_board( new_FEN )
+                """               
                 logging.info( "internal board:")
                 self.show_game_board()
-                logging.info( "external board I see:" )
+                logging.info( "external board I see:\n" )
                 self.show_FEN_on_board( f"\n{ new_FEN }" )
-
+                """
 
                 print( "press a key to when a legal move is on the board. press x to quit." )
                 exit = readchar.readchar()
@@ -159,10 +164,18 @@ class NicLinkManager:
 
     def set_move_LEDs(self, last_move ) -> None:
          """ highlight the last move. Light up the origin and destination LED """
+
+         # make sure last move is of type str
+         if( type( last_move ) !=  str ):
+            try:
+                 last_move = last_move.uci()
+            except:
+                logging.error( f"exception on trying to convert move { last_move } to uci." )
+            
          logging.info( f"led on(origin): { last_move[:2] }" ) 
-         nl_inst.set_led( last_move[:2], True )  # source
+         self.set_led( last_move[:2], True )  # source
          logging.info( f"led on(dest): { last_move[2:4] }" ) 
-         nl_inst.set_led( last_move[2:4], True ) # dest
+         self.set_led( last_move[2:4], True ) # dest
         
 
     def await_move( self ) -> str:
@@ -201,7 +214,7 @@ class NicLinkManager:
         """ print a FEN on on a chessboard """
         board = chess.Board()
         self.set_board_FEN( board, FEN )
-        logging.info( board )
+        print( board )
 
     def show_game_board( self ) -> None:
         """ print the internal game_board """
@@ -237,17 +250,12 @@ if __name__ == '__main__':
             except RuntimeError as re:   
                 print( f"{re} reset the board to the previous position an try again" )
                 # print( f"previous position: \n{nl_instance.game_board}" ) 
-                print( "leave? ('n for no, != 'n' yes: " )
-                leave = readchar.readkey()
+                # print( "leave? ('n for no, != 'n' yes: " )
+                # leave = readchar.readkey()
 
                 continue # as move will not be defined
 
             # make the move on the game board
             nl_instance.make_move_game_board( move )
             
-            print( "\n=========================================\n" )
-            
-
-            print("leave? ('n for no, != 'n' yes: ")
-            leave = readchar.readkey()
-
+            # go again

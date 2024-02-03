@@ -1,3 +1,4 @@
 #!/bin/bash
 
-rm -r /home/nrv/dev/NicLink/build/*
+SCRIPT_DIR=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
+rm -r $SCRIPT_DIR/build/*

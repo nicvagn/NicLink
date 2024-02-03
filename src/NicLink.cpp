@@ -29,8 +29,8 @@ void connect()
     // if this is false, we did not connect right
     if ( !chessLink )
     {
-        cerr << "ERROR: Cannot conect to chessboard" << endl;
-        throw "ERROR: Cannot conect to chessboard";
+        cerr << "ERROR: Cannot connect to chessboard" << endl;
+        throw "ERROR: Cannot connect to chessboard";
     }
 
 
@@ -61,7 +61,7 @@ void connect()
 }
 
 /**
- * dissconect from the chessboard over usb
+ * disconnect from the chessboard over usb
  */
 void disconnect()
 {
@@ -73,7 +73,7 @@ void disconnect()
     //make sure we are in upload mode
     chessLink -> switchUploadMode();
     //and shut the door
-    chessLink -> disconnect();    
+    chessLink -> disconnect();
 }
 
 /**
@@ -123,7 +123,7 @@ string getFEN()
 
 /**
  * set an led on the chess board.
- * @param x, y: interegers in the 0 - 7 range
+ * @param x, y: integers in the 0 - 7 range
  * @param LEDsetting: boolean of the desired setting of the led
  */
 void setLED(int x, int y, bool LEDsetting)
@@ -144,7 +144,7 @@ void setLED(int x, int y, bool LEDsetting)
         cerr << "y must be 0 - 7, y is: " << y << endl;
         return;
     }
-    chessLink -> switchUploadMode();
+    // chessLink -> switchUploadMode();
     chessLink -> setLed((uint8_t) x, (uint8_t) y, LEDsetting);
     // set back to realTimeMode
     chessLink -> switchRealTimeMode();
@@ -154,7 +154,7 @@ void setLED(int x, int y, bool LEDsetting)
  */
 void beep()
 {
-    chessLink -> switchUploadMode();
+    // chessLink -> switchUploadMode();
     //if we have not connected throw error and return
     if( chessLink == nullptr )
     {
@@ -163,7 +163,7 @@ void beep()
     }
     //do the thing
     chessLink -> beep();
-    chessLink -> switchRealTimeMode();
+    // chessLink -> switchRealTimeMode();
 }
 
 int main()
@@ -189,18 +189,17 @@ int main()
  */
 PYBIND11_MODULE(_niclink, m)
 {
-    m.doc() = "A pasthrogh between the C++ chessnut EasyLink SDK and python";
+    m.doc() = "A passthrough between the C++ Chessnut EasyLink SDK and python";
 
     // test shit
     m.def("add", &add, py::return_value_policy::copy, "A function to add");
 
     // connect with a redirected out to py
     /* =======================================
-     * connect does not return the chessptr, but stores it in the cpp memory. This should be called before any other functions
-     * that use chessptr.
+     * connect does not return the chess ptr, but stores it in the cpp memory. This should be called before any other functions
+     * that use chess ptr.
      * ======================================*/
     m.def("connect", &connect, "connect to chess board device with hid even if the device is not connected,\nit will automatically connect when the device is plugged into the computer");
-    
     m.def("disconnect", &disconnect, "disconnect from the chessboard.");
 
     // switch modes
@@ -213,5 +212,4 @@ PYBIND11_MODULE(_niclink, m)
     // getters
     m.def("getFEN", &getFEN, py::return_value_policy::copy, "Get the FEN for the chessboard's cur position. [[ () ]]");
 }
-
 
