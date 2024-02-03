@@ -9,12 +9,19 @@ import chess
 import readchar
 import sys
 
+import logging
+
 
 class NicLinkManager:
     """ manage Chessnut air external board """
     
-    def __init__( self, refresh_delay ):
+    def __init__( self, refresh_delay, logger = None ):
         """ initialize the link to the chessboard, and set up NicLink """
+        if( logger != None ):
+            self.logger = logger
+        else:
+            self.logger = logging.getLogger()
+            self.logger.setLevel( logging.DEBUG )
         self.refresh_delay = refresh_delay
         # initialize the chessboard, this must be done first, before chattering at it
         self.connect()
@@ -26,6 +33,7 @@ class NicLinkManager:
         
     def connect( self ):
         """ connect to the chessboard """
+
         # connect with the external board
         _niclink.connect()
         # because async programming is hard
@@ -35,16 +43,16 @@ class NicLinkManager:
         testFEN = _niclink.getFEN()
         
         if( testFEN == '' or None ):
-            exceptionMessage = "Board initialization error. Is the board connected and turned on?"
+            exceptionMessage = "Board initialization error. '' or None for FEN. Is the board connected and turned on?"
             raise RuntimeError( exceptionMessage )
         
-        print(f"initial fen: { testFEN }")
-        print("Board initialized")
+        logging.info(f"initial fen: { testFEN }")
+        logging.info("Board initialized")
 
     def disconnect( self ) -> None:
         """ disconnect from the chessboard """
         _niclink.disconnect()
-        print("Board disconnect")
+        logging.info("Board disconnect")
 
     def beep( self ) -> None:
         """ make the chessboard beep """
@@ -81,23 +89,24 @@ class NicLinkManager:
 
     def find_move_from_FEN_change( self, new_FEN ) -> str: # a move in quardinate notation
         """ get the move that occured to change the game_board fen into a given FEN. 
-            move returned in coordinate notation """
+            return hhe move in coordinate notation, and light up the move destination and source """
 
         # get a list of the legal moves
         legal_moves = list(self.game_board.legal_moves)
         
         tmp_board = self.game_board.copy()
-        print(f"board we are using to check legal moves: \n{self.game_board}")
+        logging.info(f"board we are using to check legal moves: \n{self.game_board}")
 
         for move in legal_moves:
-            #print(move)
+            #logging.info(move)
             #breakpoint()
             tmp_board.push( move )  # Make the move on the board
             if tmp_board.board_fen() == new_FEN:  # Check if the board's FEN matches the new FEN
-                print( move )
+                logging.info( move )
                 self.last_move = move
                 return move  # Return the last move
             tmp_board.pop()  # Undo the move
+        
 
         raise RuntimeError( "a valid move was not made" )
 
@@ -120,14 +129,17 @@ class NicLinkManager:
             try:
                 self.last_move = self.find_move_from_FEN_change( new_FEN )
             except KeyboardInterrupt:
-                print("KeyboardInterrupt: bye")
+                logging.info("KeyboardInterrupt: bye")
                 sys.exit( 0 )
             except RuntimeError:
-                print( "move not valid, undue it and try again." )
-                print( "external board I see:" )
-                self.show_FEN_on_board( new_FEN )
-                print( "internal board:")
+                logging.warning( "\n===== move not valid, undue it and try again. =====\n" )
+               
+                logging.info( "internal board:")
                 self.show_game_board()
+                logging.info( "external board I see:" )
+                self.show_FEN_on_board( f"\n{ new_FEN }" )
+
+
                 print( "press a key to when a legal move is on the board. press x to quit." )
                 exit = readchar.readchar()
                 if( exit == 'x' or exit == 'X'):
@@ -135,13 +147,23 @@ class NicLinkManager:
                     raise KeyboardInterrupt("X for exit pressed")
                 # recursion 
                 return self.check_for_move()
-            
+
+            # set the move led's to the last computer move
+            self.set_move_LEDs( self.last_move )
             return True
 
         else:
-            print("no change.")
+            logging.info("no change.")
 
         return False
+
+    def set_move_LEDs(self, last_move ) -> None:
+         """ highlight the last move. Light up the origin and destination LED """
+         logging.info( f"led on(origin): { last_move[:2] }" ) 
+         nl_inst.set_led( last_move[:2], True )  # source
+         logging.info( f"led on(dest): { last_move[2:4] }" ) 
+         nl_inst.set_led( last_move[2:4], True ) # dest
+        
 
     def await_move( self ) -> str:
         """ wait for a legal move, and return it in coordinate notation """
@@ -165,7 +187,7 @@ class NicLinkManager:
     def make_move_game_board( self, move ) -> None:
         """ make a move on the internal rep. of the game_board """
         self.game_board.push( move )
-        print( f"made move on internal board \nBOARD POST MOVE:\n{ self.game_board }")
+        logging.info( f"made move on internal board \nBOARD POST MOVE:\n{ self.game_board }")
 
     def set_board_FEN( self, board, FEN ) -> None:
         """ set a board up according to a FEN """
@@ -179,7 +201,7 @@ class NicLinkManager:
         """ print a FEN on on a chessboard """
         board = chess.Board()
         self.set_board_FEN( board, FEN )
-        print( board )
+        logging.info( board )
 
     def show_game_board( self ) -> None:
         """ print the internal game_board """
@@ -192,7 +214,7 @@ class NicLinkManager:
 
 # if module is on "top level" ie: run directly
 if __name__ == '__main__':
-    nl_instance = NicLink( 2 )
+    nl_instance = NicLinkManager( 2 )
 
     leave = 'n' 
     while( leave == 'n' ):
@@ -202,6 +224,8 @@ if __name__ == '__main__':
 
             # get the new board FEN
             post_move_FEN = nl_instance.get_FEN()
+
+            logging.info( "new FEN:" + post_move_FEN)
 
             try:
                 # find move from the FEN change

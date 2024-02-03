@@ -20,46 +20,46 @@ int add(int i, int j)
 
 /**
  * Set up connection, and set up real time callback
- * @returns the created shared pointer<Chesslink>
+ * creates the shared_ptr<ChessLink> for use by other NicLink stuff
  */
-shared_ptr<ChessLink> connect()
+void connect()
 {
     chessLink = ChessLink::fromHidConnect();
 
-    //because, I don't know how to do async coding in two languages
+    // if this is false, we did not connect right
+    if ( !chessLink )
+    {
+        cerr << "ERROR: Cannot conect to chessboard" << endl;
+        throw "ERROR: Cannot conect to chessboard";
+    }
+
+
+    // because, I don't know how to do async coding in two languages
     this_thread::sleep_for(chrono::seconds(2));
 
+    // try to switchUploadMode, test connection
+    bool successfulConnect = chessLink -> switchUploadMode();
 
-    if( !(chessLink -> switchUploadMode()) )
+    if( !successfulConnect )
     {
         cerr << "ERROR: CAN NOT SWITCH TO UPLOAD MODE." << endl;
-        throw  "ERROR: Can not connect to chessboard.";
+        throw "ERROR: CAN NOT SWITCH TO UPLOAD MODE.";
     }
 
     chessLink -> connect();
     chessLink -> beep();
 
-    //will be true on a sucess else false. Shitch to upload mode
-    if( chessLink -> switchUploadMode() )
-    {
-        cerr << "Switch upload mode a success" << endl;
-        chessLink -> setRealTimeCallback(
-            [](string s) {
-                //keep the current fen up to date
-                currentFen = s;
-            });
-    }
-    else
-    {
-        cerr << "ERROR: CAN NOT SWITCH TO OUTPUT MODE." << endl;
-        throw "ERROR: CAN NOT SWITCH TO OUTPUT MODE.";
-    }
+    cout << "Switch upload mode a success, setting callback for updating currentFen." << endl;
+    chessLink -> setRealTimeCallback(
+          [](string s) {
+              //keep the current fen up to date
+              currentFen = s;
+      });
 
     chessLink -> switchRealTimeMode();
     cout << "connect out, chessboard in realtime mode" << endl;
-
-    return chessLink;
 }
+
 /**
  * dissconect from the chessboard over usb
  */
@@ -101,6 +101,7 @@ void lightsOut()
         bitset<8>("00000000"), //
         bitset<8>("00000000"), //
     });
+    chessLink -> switchRealTimeMode();
 }
 
 /**
@@ -121,7 +122,7 @@ string getFEN()
 }
 
 /**
- * set an led on the chessb aoard. Will switch to upload mode
+ * set an led on the chess board.
  * @param x, y: interegers in the 0 - 7 range
  * @param LEDsetting: boolean of the desired setting of the led
  */
@@ -145,12 +146,15 @@ void setLED(int x, int y, bool LEDsetting)
     }
     chessLink -> switchUploadMode();
     chessLink -> setLed((uint8_t) x, (uint8_t) y, LEDsetting);
+    // set back to realTimeMode
+    chessLink -> switchRealTimeMode();
 }
 /**
- * get the board to beep
-*/
-void BEEP()
+ * get the board to beep, switches to uploadMode and leaves the board in realTimeMode 
+ */
+void beep()
 {
+    chessLink -> switchUploadMode();
     //if we have not connected throw error and return
     if( chessLink == nullptr )
     {
@@ -159,6 +163,7 @@ void BEEP()
     }
     //do the thing
     chessLink -> beep();
+    chessLink -> switchRealTimeMode();
 }
 
 int main()
@@ -175,6 +180,8 @@ int main()
     }
 }
 
+
+
 /**
  * the python bindings, for more info look up pyBind11
  * @param NickLink - Name
@@ -182,36 +189,29 @@ int main()
  */
 PYBIND11_MODULE(_niclink, m)
 {
+    m.doc() = "A pasthrogh between the C++ chessnut EasyLink SDK and python";
+
     // test shit
-    m.doc() = "no you";
     m.def("add", &add, py::return_value_policy::copy, "A function to add");
 
     // connect with a redirected out to py
-    m.def("connect", []() { 
-        py::scoped_ostream_redirect stream(
-            std::cerr,
-            py::module_::import("sys").attr("stdout")
-        );
-        connect();
-    }, "connect to chess board device with hid even if the device is not connected,\nit will automatically connect when the device is plugged into the computer");
+    /* =======================================
+     * connect does not return the chessptr, but stores it in the cpp memory. This should be called before any other functions
+     * that use chessptr.
+     * ======================================*/
+    m.def("connect", &connect, "connect to chess board device with hid even if the device is not connected,\nit will automatically connect when the device is plugged into the computer");
     
-    m.def("disconnect", []() {
-            py::scoped_ostream_redirect stream(
-            std::cerr,
-            py::module_::import("sys").attr("stdout")
-        );
-        disconnect();
-    }, "disconnect from the chessboard.");
+    m.def("disconnect", &disconnect, "disconnect from the chessboard.");
 
     // switch modes
     m.def("uploadMode", &ChessLink::switchUploadMode, py::return_value_policy::copy, "Switch to upload mode.");
     m.def("realTimeMode", &ChessLink::switchRealTimeMode, py::return_value_policy::copy, "Switch to realtime mode.");
     // doers
-    m.def("setLED", &setLED, "Set a LED on the chessboard.");
-    m.def("lightsOut", &lightsOut, "turn of all the lights");
-    m.def("beep", &BEEP, "Cause the chessboard to beep.");
+    m.def("setLED", &setLED, "Set a LED on the chessboard. [[ void setLED(int x, int y, bool LEDsetting)]]");
+    m.def("lightsOut", &lightsOut, "turn of all the lights [[ () ]]");
+    m.def("beep", &beep, "Cause the chessboard to beep. [[ () ]]");
     // getters
-    m.def("getFEN", &getFEN, py::return_value_policy::copy, "Get the FEN for the chessboard's cur position.");
+    m.def("getFEN", &getFEN, py::return_value_policy::copy, "Get the FEN for the chessboard's cur position. [[ () ]]");
 }
 
 

@@ -23,7 +23,6 @@ import berserk
 # NicLink shit
 from niclink import NicLinkManager
 
-
 parser = argparse.ArgumentParser()
 parser.add_argument( "--tokenfile" )
 parser.add_argument( "--correspondence", action="store_true" )
@@ -118,15 +117,6 @@ class Game( threading.Thread ):
         # set this board as NicLink game board
         nl_inst.set_game_board( tmp_chessboard )
 
-        # turn off led's
-        nl_inst.turn_off_all_leds()
-        
-        if( last_move != None ):
-            # highlight the last move
-            nl_inst.set_led( last_move[:2] ) # source
-            nl_inst.set_led( last_move[:-2] ) # dest
-        
-        
         # tmp_chessboard.turn == True when white, false when black playing_white is same
         if (tmp_chessboard.turn == self.playing_white ):
             logging.info( 'it is our turn' )
