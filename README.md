@@ -9,6 +9,9 @@
 
     - see the python requirements.txt for external requirements
     - only tested on gnu/linux with a chessnut air.
+    - branches:
+        - master: behind the times. More likely to be solid
+        - dev: the wild west of new features
 
 ## Using the board on lichess with the board api
         
@@ -51,6 +54,7 @@
 ## have something to add/suggest?
 
 contact me:
+
 [nicolasvaagen@gmail.com](nicolasvaagen@gmail.com)
 
 or, make a pull request!
