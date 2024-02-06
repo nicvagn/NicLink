@@ -2,21 +2,20 @@
 #
 #  NicLink is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #
-#  You should have received a copy of the GNU General Public License along with NicLink. If not, see <https://www.gnu.org/licenses/>. 
+#  You should have received a copy of the GNU General Public License along with NicLink. If not, see <https://www.gnu.org/licenses/>.
 
 
 from niclink import NicLinkManager
 
 import readchar
 
-nl_inst = NicLinkManager( 1 )
+nl_inst = NicLinkManager(1)
 
-print( "\n+++++ niclink test: FEN reading ++++\n" )
+print("\n+++++ niclink test: FEN reading ++++\n")
 
-exit = 'n'
-while( exit == 'n' ):
+exit = "n"
+while exit == "n":
     currentFEN = nl_inst.get_FEN()
-    nl_inst.show_FEN_on_board( currentFEN )
-    print( "do you want to exit? 'n' for no \n" )
+    nl_inst.show_FEN_on_board(currentFEN)
+    print("do you want to exit? 'n' for no \n")
     exit = readchar.readchar()
-

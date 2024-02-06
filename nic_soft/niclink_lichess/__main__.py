@@ -2,7 +2,7 @@
 #
 #  NicLink-lichess is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #
-#  You should have received a copy of the GNU General Public License along with NicLink. If not, see <https://www.gnu.org/licenses/>. 
+#  You should have received a copy of the GNU General Public License along with NicLink. If not, see <https://www.gnu.org/licenses/>.
 
 # sys stuff
 import sys
@@ -24,17 +24,17 @@ import berserk
 from niclink import NicLinkManager
 
 parser = argparse.ArgumentParser()
-parser.add_argument( "--tokenfile" )
-parser.add_argument( "--correspondence", action="store_true" )
-parser.add_argument( "--quiet", action="store_true" )
-parser.add_argument( "--debug", action="store_true" )
+parser.add_argument("--tokenfile")
+parser.add_argument("--correspondence", action="store_true")
+parser.add_argument("--quiet", action="store_true")
+parser.add_argument("--debug", action="store_true")
 args = parser.parse_args()
 
 correspondence = False
 if args.correspondence:
     correspondence = True
 
-DEBUG=False
+DEBUG = False
 if args.debug:
     DEBUG = True
 
@@ -46,174 +46,186 @@ if DEBUG:
     TOKEN_FILE = os.path.join(os.path.dirname(__file__), "lichess_token/dev_token")
 
 logger = logging.getLogger()
-logger.setLevel( logging.DEBUG )
-formatter = logging.Formatter( '%(asctime)s %(levelname)s %(module)s %(message)s' )
+logger.setLevel(logging.DEBUG)
+formatter = logging.Formatter("%(asctime)s %(levelname)s %(module)s %(message)s")
 
 if not args.quiet:
     consoleHandler = logging.StreamHandler()
-    consoleHandler.setFormatter( formatter )
-    logger.addHandler( consoleHandler )
+    consoleHandler.setFormatter(formatter)
+    logger.addHandler(consoleHandler)
+
 
 # log unhandled exceptions to the log file
-def my_excepthook( excType, excValue, traceback, logger=logger ):
-    logger.error( "Uncaught exception",
-                 exc_info=( excType, excValue, traceback ) )
+def my_excepthook(excType, excValue, traceback, logger=logger):
+    logger.error("Uncaught exception", exc_info=(excType, excValue, traceback))
+
+
 sys.excepthook = my_excepthook
 
-logging.info( "\n\n========================== \n NicLink_lichess startup\n==========================\n\n")
+logging.info(
+    "\n\n========================== \n NicLink_lichess startup\n==========================\n\n"
+)
 
-class Game( threading.Thread ):
-    """ a game on lichess """
-    def __init__( self, game_id, playing_white, **kwargs ):
-        """ Game, the client.board, niclink instance, the game id on lila, idk fam"""
+
+class Game(threading.Thread):
+    """a game on lichess"""
+
+    def __init__(self, game_id, playing_white, **kwargs):
+        """Game, the client.board, niclink instance, the game id on lila, idk fam"""
         global client, nl_inst
-        super().__init__( **kwargs )
+        super().__init__(**kwargs)
         # berserk board_client
         self.board_client = client.board
         # id of the game we are playing
         self.game_id = game_id
         # incoming board stream
-        self.stream = self.board_client.stream_game_state( game_id )
+        self.stream = self.board_client.stream_game_state(game_id)
 
         # current state from stream
-        self.current_state = next( self.stream )
+        self.current_state = next(self.stream)
 
-        self.playing_white = playing_white 
-       
+        self.playing_white = playing_white
 
-        logging.info( f"game init w id: { game_id }" )
-        logging.info( client.games.get_ongoing() )
+        logging.info(f"game init w id: { game_id }")
+        logging.info(client.games.get_ongoing())
 
-    def run( self ) -> None:
+    def run(self) -> None:
         for event in self.stream:
-            if event['type'] == 'gameState':
-                self.handle_state_change( event )
-            elif event['type'] == 'chatLine':
-                self.handle_chat_line( event )
+            if event["type"] == "gameState":
+                self.handle_state_change(event)
+            elif event["type"] == "chatLine":
+                self.handle_chat_line(event)
 
-    def make_move( self, move ) -> None:
-        """ make a move in a lichess game """
-        logging.info( f"move made: { move }" )
+    def make_move(self, move) -> None:
+        """make a move in a lichess game"""
+        logging.info(f"move made: { move }")
 
-        self.board_client.make_move( self.game_id, move )
+        self.board_client.make_move(self.game_id, move)
 
-
-    def handle_state_change( self, game_state ) -> None:
-        """ Handle a state change in the lichess game. """
+    def handle_state_change(self, game_state) -> None:
+        """Handle a state change in the lichess game."""
         global nl_inst
         # {'type': 'gameState', 'moves': 'd2d3 e7e6 b1c3', 'wtime': datetime.datetime( 1970, 1, 25, 20, 31, 23, 647000, tzinfo=datetime.timezone.utc ), 'btime': datetime.datetime( 1970, 1, 25, 20, 31, 23, 647000, tzinfo=datetime.timezone.utc ), 'winc': datetime.datetime( 1970, 1, 1, 0, 0, tzinfo=datetime.timezone.utc ), 'binc': datetime.datetime( 1970, 1, 1, 0, 0, tzinfo=datetime.timezone.utc ), 'bdraw': False, 'wdraw': False}
 
-        logging.info( game_state )
+        logging.info(game_state)
 
         # tmp_chessboard is used to get the current game state from API and parse it into something we can use
         tmp_chessboard = chess.Board()
-        moves = game_state['moves'].split( ' ' )
+        moves = game_state["moves"].split(" ")
         last_move = None
         for move in moves:
             # make the moves on a board
-            tmp_chessboard.push_uci( move )
+            tmp_chessboard.push_uci(move)
             last_move = move
-        
+
         # set this board as NicLink game board
-        nl_inst.set_game_board( tmp_chessboard )
+        nl_inst.set_game_board(tmp_chessboard)
 
         # tmp_chessboard.turn == True when white, false when black playing_white is same
-        if (tmp_chessboard.turn == self.playing_white ):
-            logging.info( 'it is our turn' )
+        if tmp_chessboard.turn == self.playing_white:
+            logging.info("it is our turn")
 
-            nl_inst.await_move() # await move from e-board the move from niclink
+            nl_inst.await_move()  # await move from e-board the move from niclink
 
             move = nl_inst.get_last_move()
 
-            logging.info( f"move from chessboard { move }" )
-   
-            for attempt in range( 3 ):
+            logging.info(f"move from chessboard { move }")
+
+            for attempt in range(3):
                 try:
                     # make the move
-                    self.make_move( move  )
+                    self.make_move(move)
                     break
                 except KeyboardInterrupt:
-                    print("KeyboardInterrupt: bye")                
-                    sys.exit( 0 )                                  
+                    print("KeyboardInterrupt: bye")
+                    sys.exit(0)
                 except:
                     e = sys.exc_info()[0]
-                    logging.info( f'exception on make_move: {e}' )
- 
-                if attempt > 1:
-                    logging.debug( f'sleeping before retry' )
-                    time.sleep( 3 )
+                    logging.info(f"exception on make_move: {e}")
 
-    def handle_chat_line( self, chat_line ) -> None:
+                if attempt > 1:
+                    logging.debug(f"sleeping before retry")
+                    time.sleep(3)
+
+    def handle_chat_line(self, chat_line) -> None:
         nl_inst.beep()
-        print( chat_line )
+        print(chat_line)
         pass
 
-def show_FEN_on_board( FEN ) -> None:
-    """ show board FEN on an ascii chessboard """
+
+def show_FEN_on_board(FEN) -> None:
+    """show board FEN on an ascii chessboard"""
     tmp_chessboard = chess.Board()
-    tmp_chessboard.set_fen( FEN )
-    print( tmp_chessboard )
+    tmp_chessboard.set_fen(FEN)
+    print(tmp_chessboard)
 
-def handle_game_start( event ) -> None:
-    """ handle game start event """
+
+def handle_game_start(event) -> None:
+    """handle game start event"""
     global client
-    game_data = event['game']
+    game_data = event["game"]
 
-    playing_white =  ( game_data['color'] == "white" )
+    playing_white = game_data["color"] == "white"
 
-    logging.info( f"\ngame start received: { game_data['id']}\n you play: { game_data['color'] }" )
+    logging.info(
+        f"\ngame start received: { game_data['id']}\n you play: { game_data['color'] }"
+    )
 
-    print( f"\ngame board: { show_FEN_on_board(game_data['fen']) }\n turn: { game_data['color'] }\n" )
+    print(
+        f"\ngame board: { show_FEN_on_board(game_data['fen']) }\n turn: { game_data['color'] }\n"
+    )
 
-    
     # check if game speed is correspondence, skip those if --correspondence argument is not set
     if not correspondence:
-        if is_correspondence( game_data['id'] ):
-            logging.info( f"skipping correspondence game: {game_data['id']}" )
+        if is_correspondence(game_data["id"]):
+            logging.info(f"skipping correspondence game: {game_data['id']}")
             return
-    if( game_data["hasMoved"] ):
-        """ handle ongoing game """
-        handle_ongoing_game( game_data )
+    if game_data["hasMoved"]:
+        """handle ongoing game"""
+        handle_ongoing_game(game_data)
 
     try:
-        game = Game( game_data['id'], playing_white) # ( game_data['color'] == "white" ) is used to set is_white bool
+        game = Game(
+            game_data["id"], playing_white
+        )  # ( game_data['color'] == "white" ) is used to set is_white bool
         game.daemon = True
-        game.start() # start the game thread
+        game.start()  # start the game thread
 
     except berserk.exceptions.ResponseError as e:
-        if 'This game cannot be played with the Board API' in str( e ):
-            print( 'cannot play this game via board api' )
-        logging.info( f'ERROR: {e}' )
+        if "This game cannot be played with the Board API" in str(e):
+            print("cannot play this game via board api")
+        logging.info(f"ERROR: {e}")
         return
     except KeyboardInterrupt:
         print("KeyboardInterrupt: bye")
-        sys.exit( 0 )
-
-def handle_ongoing_game( game_data ):
-    ''' handle joining a game that is alredy underway '''
-
-    print( "\n+++ joining game in progress +++\n" )
-    print( f"Playing: { game_data['color'] }" )
-    print( "current state of board: \n" )
-
-    show_FEN_on_board( game_data['fen'] )
+        sys.exit(0)
 
 
-def is_correspondence( gameId ) -> bool:
-    """ is the game a correspondence game? """
+def handle_ongoing_game(game_data):
+    """handle joining a game that is alredy underway"""
+
+    print("\n+++ joining game in progress +++\n")
+    print(f"Playing: { game_data['color'] }")
+    print("current state of board: \n")
+
+    show_FEN_on_board(game_data["fen"])
+
+
+def is_correspondence(gameId) -> bool:
+    """is the game a correspondence game?"""
     global client
     try:
         for game in client.games.get_ongoing():
-            if game['gameId'] == gameId:
-                if game['speed'] == "correspondence":
+            if game["gameId"] == gameId:
+                if game["speed"] == "correspondence":
                     return True
     except KeyboardInterrupt:
         print("KeyboardInterrupt: bye")
-        sys.exit( 0 )
+        sys.exit(0)
     except:
         e = sys.exc_info()[0]
-        print( f"cannot determine game speed: {e}" )
-        logging.info( f'cannot determine if game is correspondence: {e}' )
+        print(f"cannot determine game speed: {e}")
+        logging.info(f"cannot determine if game is correspondence: {e}")
         return False
     return False
 
@@ -221,86 +233,89 @@ def is_correspondence( gameId ) -> bool:
 # globals, because why not
 client = None
 nl_inst = None
+
+
 def main():
     global client, nl_inst
-    simplejson_spec = importlib.util.find_spec( "simplejson" )
+    simplejson_spec = importlib.util.find_spec("simplejson")
     if simplejson_spec is not None:
-        print( f'ERROR: simplejson is installed. The berserk lichess client will not work with simplejson. Please remove the module. Aborting.' )
-        sys.exit(-1 )
+        print(
+            f"ERROR: simplejson is installed. The berserk lichess client will not work with simplejson. Please remove the module. Aborting."
+        )
+        sys.exit(-1)
 
-    nl_inst = NicLinkManager( refresh_delay=2 )
-    
-    
+    nl_inst = NicLinkManager(refresh_delay=2)
+
     try:
-        logging.info( f'reading token from {TOKEN_FILE}' )
-        with open( TOKEN_FILE ) as f:
+        logging.info(f"reading token from {TOKEN_FILE}")
+        with open(TOKEN_FILE) as f:
             token = f.read().strip()
     except FileNotFoundError:
-        print( f'ERROR: cannot find token file' )
-        sys.exit( -1 )
+        print(f"ERROR: cannot find token file")
+        sys.exit(-1)
     except PermissionError:
-        print( f'ERROR: permission denied on token file' )
-        sys.exit( -1 )
+        print(f"ERROR: permission denied on token file")
+        sys.exit(-1)
 
     try:
-        session = berserk.TokenSession( token )
+        session = berserk.TokenSession(token)
     except:
         e = sys.exc_info()[0]
-        print( f"cannot create session: {e}" )
-        logging.info( f'cannot create session {e}' )
-        sys.exit( -1 )
+        print(f"cannot create session: {e}")
+        logging.info(f"cannot create session {e}")
+        sys.exit(-1)
 
     try:
-        if( DEBUG ):
-            client = berserk.Client( session, base_url="https://lichess.dev" )
+        if DEBUG:
+            client = berserk.Client(session, base_url="https://lichess.dev")
             return
-        
-        client = berserk.Client( session )
+
+        client = berserk.Client(session)
     except KeyboardInterrupt:
-        print("KeyboardInterrupt: bye")    
-        sys.exit( 0 )
+        print("KeyboardInterrupt: bye")
+        sys.exit(0)
     except:
         e = sys.exc_info()[0]
-        logging.info( f'cannot create lichess client: {e}' )
-        print( f"cannot create lichess client: {e}" )
-        sys.exit( -1 )
+        logging.info(f"cannot create lichess client: {e}")
+        print(f"cannot create lichess client: {e}")
+        sys.exit(-1)
 
     # get username
     try:
         account_info = client.account.get()
         username = account_info["username"]
-        print( f"\nUSERNAME: { username }\n" )
+        print(f"\nUSERNAME: { username }\n")
     except KeyboardInterrupt:
         print("KeyboardInterrupt: bye")
-        sys.exit( 0 )
+        sys.exit(0)
     except:
         e = sys.exc_info()[0]
-        logging.info( f'cannot get lichess acount info: {e}' )
-        print( f"cannot get lichess acount info: {e}" )
-        sys.exit( -1 )
+        logging.info(f"cannot get lichess acount info: {e}")
+        print(f"cannot get lichess acount info: {e}")
+        sys.exit(-1)
 
     # main program loop
     while True:
         try:
-            logging.debug( f'\n==== event loop ====\n' )
+            logging.debug(f"\n==== event loop ====\n")
             for event in client.board.stream_incoming_events():
                 breakpoint()
-                if event['type'] == 'challenge':
-                    print( "\n==== Challenge received ====\n" )
-                    print( event )
-                elif event['type'] == 'gameStart':
-                    # a game is starting, it is handled by a function 
-                    handle_game_start( event )
+                if event["type"] == "challenge":
+                    print("\n==== Challenge received ====\n")
+                    print(event)
+                elif event["type"] == "gameStart":
+                    # a game is starting, it is handled by a function
+                    handle_game_start(event)
 
         except KeyboardInterrupt:
             print("KeyboardInterrupt: bye")
-            sys.exit( 0 )
+            sys.exit(0)
         except berserk.exceptions.ResponseError as e:
-            print( f'ERROR: Invalid server response: {e}' )
-            logging.info( 'Invalid server response: {e}' )
-            if 'Too Many Requests for url' in str( e ):
-                time.sleep( 10 )
+            print(f"ERROR: Invalid server response: {e}")
+            logging.info("Invalid server response: {e}")
+            if "Too Many Requests for url" in str(e):
+                time.sleep(10)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
-

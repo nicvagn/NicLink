@@ -3,18 +3,18 @@
 #
 #  NicLink is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #
-#  You should have received a copy of the GNU General Public License along with NicLink. If not, see <https://www.gnu.org/licenses/>. 
- 
+#  You should have received a copy of the GNU General Public License along with NicLink. If not, see <https://www.gnu.org/licenses/>.
+
 # a basic test of NicLink through python interface
 
 import niclink
 import readchar
 
-nl_instance = niclink.NicLinkManager( 2 )
+nl_instance = niclink.NicLinkManager(2)
 
-leave = 'n'
-while( leave == 'n' ):
-    if( nl_instance.check_for_move() ):
+leave = "n"
+while leave == "n":
+    if nl_instance.check_for_move():
         # beep to indicate a move was made
         nl_instance.beep()
 
@@ -24,21 +24,21 @@ while( leave == 'n' ):
         try:
             # find move from the FEN change
             move = nl_instance.get_last_move()
-
-        except RuntimeError as re:   
-            print( f" Invalid move: {re} \nreset the board to the previous position an try again\n" )
-            print( f"previous position: \n{nl_instance.game_board}\n" ) 
-            print( "leave? ('n for no, != 'n' yes: " )
+            breakpoint()
+        except RuntimeError as re:
+            print(
+                f" Invalid move: {re} \nreset the board to the previous position an try again\n"
+            )
+            print(f"previous position: \n{nl_instance.game_board}\n")
+            print("leave? ('n' for no, != 'n' yes: ")
             leave = readchar.readkey()
 
-            continue # as move will not be defined
+            continue  # as move will not be defined
 
         # make the move on the game board
-        nl_instance.make_move_game_board( move )
-        
-        print( "=========================================" )
-        
+        nl_instance.make_move_game_board(move)
+
+        print("=========================================")
 
     print("leave? ('n for no, != 'n' yes: ")
     leave = readchar.readkey()
-
