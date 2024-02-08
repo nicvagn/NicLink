@@ -34,7 +34,7 @@ correspondence = False
 if args.correspondence:
     correspondence = True
 
-DEBUG = False
+DEBUG = True
 if args.debug:
     DEBUG = True
 
@@ -75,11 +75,11 @@ class Game(threading.Thread):
         global client, nl_inst
         super().__init__(**kwargs)
         # berserk board_client
-        self.board_client = client.board
+        self.berserk_board_client = client.board
         # id of the game we are playing
         self.game_id = game_id
         # incoming board stream
-        self.stream = self.board_client.stream_game_state(game_id)
+        self.stream = self.berserk_board_client.stream_game_state(game_id)
 
         # current state from stream
         self.current_state = next(self.stream)
@@ -100,7 +100,7 @@ class Game(threading.Thread):
         """make a move in a lichess game"""
         logging.info(f"move made: { move }")
 
-        self.board_client.make_move(self.game_id, move)
+        self.berserk_board_client.make_move(self.game_id, move)
 
     def handle_state_change(self, game_state) -> None:
         """Handle a state change in the lichess game."""
@@ -172,7 +172,7 @@ def handle_game_start(event) -> None:
     )
 
     print(
-        f"\ngame board: { show_FEN_on_board(game_data['fen']) }\n turn: { game_data['color'] }\n"
+        f"\ngame board: { show_FEN_on_board(game_data['fen']) }\n your turn?: { game_data['isMyTurn'] }\n"
     )
 
     # check if game speed is correspondence, skip those if --correspondence argument is not set
@@ -206,9 +206,12 @@ def handle_ongoing_game(game_data):
 
     print("\n+++ joining game in progress +++\n")
     print(f"Playing: { game_data['color'] }")
-    print("current state of board: \n")
 
-    show_FEN_on_board(game_data["fen"])
+    if(game_data["isMyTurn"]):
+        print( "it is your turn. make a move." )
+    else:
+        print( "it is your opponents turn.")
+    
 
 
 def is_correspondence(gameId) -> bool:
@@ -234,7 +237,6 @@ def is_correspondence(gameId) -> bool:
 client = None
 nl_inst = None
 
-
 def main():
     global client, nl_inst
     simplejson_spec = importlib.util.find_spec("simplejson")
@@ -244,12 +246,14 @@ def main():
         )
         sys.exit(-1)
 
+
     nl_inst = NicLinkManager(refresh_delay=2)
 
     try:
         logging.info(f"reading token from {TOKEN_FILE}")
         with open(TOKEN_FILE) as f:
             token = f.read().strip()
+            
     except FileNotFoundError:
         print(f"ERROR: cannot find token file")
         sys.exit(-1)
@@ -268,9 +272,9 @@ def main():
     try:
         if DEBUG:
             client = berserk.Client(session, base_url="https://lichess.dev")
-            return
 
-        client = berserk.Client(session)
+        else:
+            client = berserk.Client(session)
     except KeyboardInterrupt:
         print("KeyboardInterrupt: bye")
         sys.exit(0)
@@ -299,7 +303,6 @@ def main():
         try:
             logging.debug(f"\n==== event loop ====\n")
             for event in client.board.stream_incoming_events():
-                breakpoint()
                 if event["type"] == "challenge":
                     print("\n==== Challenge received ====\n")
                     print(event)

@@ -21,8 +21,8 @@ class NicLinkManager:
             self.logger = logger
         else:
             self.logger = logging.getLogger()
-        # self.logger.setLevel( logging.DEBUG )
-        self.logger.setLevel(logging.WARN)
+        self.logger.setLevel( logging.DEBUG )
+        # self.logger.setLevel(logging.WARN)
         self.refresh_delay = refresh_delay
         # initialize the chessboard, this must be done first, before chattering at it
         self.connect()
@@ -31,7 +31,14 @@ class NicLinkManager:
         # the last move the user has played
         self.last_move = None
         # the status of the leds. We have to keep track of this
-        self.led_status = [0, 0, 0, 0, 0, 0, 0, 0] * 8 
+        self.led_status = [[0, 0, 0, 0, 0, 0, 0, 0],
+                           [0, 0, 0, 0, 0, 0, 0, 0],
+                           [0, 0, 0, 0, 0, 0, 0, 0],
+                           [0, 0, 0, 0, 0, 0, 0, 0],
+                           [0, 0, 0, 0, 0, 0, 0, 0],
+                           [0, 0, 0, 0, 0, 0, 0, 0],
+                           [0, 0, 0, 0, 0, 0, 0, 0],
+                           [0, 0, 0, 0, 0, 0, 0, 0]]
 
 
     def connect(self):
@@ -80,6 +87,19 @@ class NicLinkManager:
 
         if not found:
             raise ValueError(f"{ square[1] } is not a valid file")
+        
+        # modify the led map to reflect this change
+        if( status ):
+            led = 1
+        else:
+            led = 0
+        self.led_status[7 - num][7 - file_num] = led    # we already took one away from num
+
+        # log the led status
+        logging.info("led status after change:")
+        for i in range(7):
+            logging.info(self.led_status[i])
+
         # this is supper fucked, but the chessboard interaly starts counting at h8
         _niclink.setLED(7 - num, 7 - file_num, status)
 
@@ -146,31 +166,14 @@ board we are using to check legal moves: \n{self.game_board}"
                 )
                 logging.info(f"external board as I see it:\n")
                 self.show_FEN_on_board(new_FEN)
-                """ 
-                logging.info( "internal board:")
-                self.show_game_board()
-                logging.info( "external board I see:\n" )
-                self.show_FEN_on_board( f"\n{ new_FEN }" )
-                """
 
-                print(
-                    "press a key to when a legal move is on the board. press x to quit."
-                )
-                exit = readchar.readchar()
-                if exit == "x" or exit == "X":
-                    print("x pressed, exiting. Bye!")
-                    raise KeyboardInterrupt("X for exit pressed")
-                # recursion
-                return self.check_for_move()
-
-            # set the move led's to the last computer move
-            self.set_move_LEDs(self.last_move)
             return True
 
         else:
             logging.info("no change.")
 
         return False
+
 
     def set_move_LEDs(self, last_move) -> None:
         """highlight the last move. Light up the origin and destination LED"""
