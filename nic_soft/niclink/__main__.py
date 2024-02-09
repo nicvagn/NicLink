@@ -105,6 +105,7 @@ class NicLinkManager:
         _niclink.setLED(7 - num, 7 - file_num, status)
 
     def turn_off_all_leds(self):
+        """ turn off all the leds """
         _niclink.lightsOut()
 
     def get_FEN(self) -> str:
@@ -251,7 +252,6 @@ board we are using to check legal moves: \n{self.game_board}"
         self.last_move = None
 
 
-# if module is on "top level" ie: run directly
 if __name__ == "__main__":
     nl_instance = NicLinkManager(2)
 
