@@ -24,7 +24,7 @@
          content: lip_5PIkq4soaF3XyFGvelx
 
 
-   then cd .. and run python niclink_lichess      
+   then cd .. and run python niclink_lichess
 
 ## Use with gnu/linux:
 

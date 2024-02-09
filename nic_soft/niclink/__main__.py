@@ -115,7 +115,7 @@ class NicLinkManager:
         self, new_FEN
     ) -> str:  # a move in quardinate notation
         """get the move that occured to change the game_board fen into a given FEN.
-        return the move in coordinate notation, and light up the move destination and source
+        return the move in coordinate notation
         """
 
         # get a list of the legal moves
@@ -136,8 +136,7 @@ board we are using to check legal moves: \n{self.game_board}"
             ):  # Check if the board's FEN matches the new FEN
                 logging.info(move)
                 self.last_move = move
-                # set the move led
-                self.set_move_LEDs(move)
+                
                 return move  # Return the last move
             tmp_board.pop()  # Undo the move
 
@@ -200,12 +199,16 @@ board we are using to check legal moves: \n{self.game_board}"
         self.set_led(last_move[2:4], True)  # dest
 
     def await_move(self) -> str:
-        """wait for a legal move, and return it in coordinate notation"""
+        """wait for a legal move, and return it in coordinate notation after making it on internal board """
         # loop until we get a valid move
         while True:
             if self.check_for_move():
                 # a move has been played
-                return self.get_last_move()
+                
+                move = self.get_last_move()
+
+                self.make_move_game_board( move )
+                return move
 
             # if no move has been played, sleep and check again
             time.sleep(self.refresh_delay)
