@@ -21,8 +21,8 @@ class NicLinkManager:
             self.logger = logger
         else:
             self.logger = logging.getLogger()
-        self.logger.setLevel( logging.DEBUG )
-        # self.logger.setLevel(logging.WARN)
+        #self.logger.setLevel( logging.DEBUG )
+        self.logger.setLevel(logging.WARN)
         self.refresh_delay = refresh_delay
         # initialize the chessboard, this must be done first, before chattering at it
         self.connect()
@@ -75,6 +75,7 @@ class NicLinkManager:
         files = ["a", "b", "c", "d", "e", "f", "g", "h"]
         found = False
         letter = square[0]
+
         file_num = 0
         while file_num < len(files):
             if letter == files[file_num]:
@@ -93,11 +94,11 @@ class NicLinkManager:
             led = 1
         else:
             led = 0
-        self.led_status[7 - num][7 - file_num] = led    # we already took one away from num
+        self.led_status[7 - num][file_num] = led
 
         # log the led status
         logging.info("led status after change:")
-        for i in range(7):
+        for i in range(8):
             logging.info(self.led_status[i])
 
         # this is supper fucked, but the chessboard interaly starts counting at h8
@@ -135,6 +136,8 @@ board we are using to check legal moves: \n{self.game_board}"
             ):  # Check if the board's FEN matches the new FEN
                 logging.info(move)
                 self.last_move = move
+                # set the move led
+                self.set_move_LEDs(move)
                 return move  # Return the last move
             tmp_board.pop()  # Undo the move
 
@@ -166,6 +169,9 @@ board we are using to check legal moves: \n{self.game_board}"
                 )
                 logging.info(f"external board as I see it:\n")
                 self.show_FEN_on_board(new_FEN)
+            except ValueError:
+                logging.warn( "last move is None")
+                return False
 
             return True
 
@@ -177,7 +183,8 @@ board we are using to check legal moves: \n{self.game_board}"
 
     def set_move_LEDs(self, last_move) -> None:
         """highlight the last move. Light up the origin and destination LED"""
-
+        #turn out move led's 
+        self.turn_off_all_leds()
         # make sure last move is of type str
         if type(last_move) != str:
             try:
@@ -198,7 +205,7 @@ board we are using to check legal moves: \n{self.game_board}"
         while True:
             if self.check_for_move():
                 # a move has been played
-                return self.last_move
+                return self.get_last_move()
 
             # if no move has been played, sleep and check again
             time.sleep(self.refresh_delay)
@@ -206,7 +213,7 @@ board we are using to check legal moves: \n{self.game_board}"
     def get_last_move(self) -> str:
         """get the last move played on the chessboard"""
         if self.last_move is None:
-            raise RuntimeError("ERROR: last move is None")
+            raise ValueError("ERROR: last move is None")
 
         return self.last_move
 

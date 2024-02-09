@@ -9,21 +9,28 @@ from niclink import NicLinkManager
 import readchar
 import sys
 import chess
+import time
 
 nl_inst = NicLinkManager(1)
 
 
 print("\n=====================\n Test Move Parsing \n=====================\n")
 
-exit = "n"
+leave = "n"
 move_board = chess.Board()
 nl_inst.set_game_board(move_board)
 
-while exit == "n":
+while leave == "n":
     print("make a legal move:\n")
 
     # wait for a move
-    nl_inst.await_move()
+    try:
+        nl_inst.await_move()
+    except ValueError:
+        print( "No move, pausing for 3 seconds and trying again" )
+
+        time.sleep(3)
+        continue
 
     if nl_inst.check_for_move():
         # beep to indicate a move was made
@@ -31,6 +38,9 @@ while exit == "n":
         print("\n_________ move detected ________\n")
         # get the new board FEN
         post_move_FEN = nl_inst.get_FEN()
+
+        # show the post move fen on a board
+        nl_inst.show_FEN_on_board(post_move_FEN)
 
         try:
             # find move from the FEN change
@@ -50,6 +60,6 @@ while exit == "n":
         # make the move on the game board
         nl_inst.make_move_game_board(move)
 
-        print("\n=================================\n")
-        print("leave? 'n' for no, != 'n' yes: ")
-        leave = readchar.readkey()
+    print("\n=================================\n")
+    print("leave? 'n' for no, != 'n' yes: ")
+    leave = readchar.readkey()
