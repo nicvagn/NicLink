@@ -2,3 +2,4 @@ berserk==0.13.2
 chess==1.10.0
 prompt_toolkit==3.0.39
 readchar==4.0.5
+stockfish==3.28.0
