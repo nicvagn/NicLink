@@ -1,5 +1,5 @@
 # NicLink Python API to EasyLink SDK
-
+>This is not going to be perfectly updated, so it is always best to read the src
     The main gateway that you will interact with is a class called NicLinkManeger
 
     it takes one required param ( refresh delay ) and one optional ( logger )
