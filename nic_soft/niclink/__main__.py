@@ -165,7 +165,8 @@ board we are using to check legal moves: \n{self.game_board}"
                 sys.exit(0)
             except RuntimeError:
                 logging.warning(
-                    "\n===== move not valid, undue it and try again. =====\n"
+                    f"\n===== move not valid, undue it and try again. =====\n \
+board we are using to check for moves:\n{ self.game_board }"
                 )
                 logging.info(f"external board as I see it:\n")
                 self.show_FEN_on_board(new_FEN)
@@ -244,12 +245,32 @@ board we are using to check legal moves: \n{self.game_board}"
 
     def show_game_board(self) -> None:
         """print the internal game_board"""
-        print(f"game board:\n{ self.game_board }")
+        print( self.game_board )
 
     def set_game_board(self, board) -> None:
         """set the game board"""
         self.game_board = board
         self.last_move = None
+
+    def get_game_FEN(self) -> str:
+        """get the game board FEN"""
+        return self.game_board.fen()
+
+    def is_game_over(self) -> {"over": bool, "winner": str or False, "reason": str} or False:
+        """is the internal game over?"""
+        if self.game_board.is_checkmate():
+            return { "over": True, "winner": self.game_board.turn, "reason": "checkmate"}
+        if self.game_board.is_stalemate(): 
+            return { "over": True, "winner": False, "reason": "Is a stalemate" }
+        if self.game_board.is_insufficient_material():
+            return { "over": True, "winner": False, "reason": "Is insufficient material" }
+        if self.game_board.is_fivefold_repetition():
+            return { "over": True, "winner": False, "reason": "Is fivefold repetition." }
+        if self.game_board.is_seventyfive_moves():
+            return { "over": True, "winner": False, "reason": "A game is automatically \
+    drawn if the half-move clock since a capture or pawn move is equal to or greater than 150. Other means to end a game take precedence." }
+            
+        return False
 
 
 if __name__ == "__main__":
