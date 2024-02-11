@@ -152,10 +152,10 @@ def main():
     
     print("\n%%%%%% NicLink vs Stockfish %%%%%%\n")
 
-    print("What level do you want for the fish? (0 - 33) for info enter i, else level")
+    print("What level do you want for the fish? (1 - 33) for info enter i, else level")
 
     while True:
-        sf_lvl = input("level (0 - 33):")
+        sf_lvl = input("level (1 - 33):")
         if( sf_lvl == 'i'):
             print("""1 is the highest level, 33 is stockfish at it's worst.
 I found this online, and stole it:
