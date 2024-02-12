@@ -189,23 +189,23 @@ board we are using to check for moves:\n{ self.game_board }"
 
         return False
 
-    def set_move_LEDs(self, last_move) -> None:
+    def set_move_LEDs(self, move) -> None:
         """highlight the last move. Light up the origin and destination LED"""
         # turn out move led's
         self.turn_off_all_leds()
         # make sure last move is of type str
-        if type(last_move) != str:
+        if type(move) != str:
             try:
-                last_move = last_move.uci()
+                move = move.uci()
             except:
                 self.logger.error(
-                    f"exception on trying to convert move { last_move } to uci."
+                    f"exception on trying to convert move { move } to uci."
                 )
 
-        self.logger.info(f"led on(origin): { last_move[:2] }")
-        self.set_led(last_move[:2], True)  # source
-        self.logger.info(f"led on(dest): { last_move[2:4] }")
-        self.set_led(last_move[2:4], True)  # dest
+        self.logger.info(f"led on(origin): { move[:2] }")
+        self.set_led(move[:2], True)  # source
+        self.logger.info(f"led on(dest): { move[2:4] }")
+        self.set_led(move[2:4], True)  # dest
 
     def await_move(self) -> str:
         """wait for a legal move, and return it in coordinate notation after making it on internal board"""
@@ -264,7 +264,7 @@ board we are using to check for moves:\n{ self.game_board }"
         self.last_move = None
 
     def show_board_diff(self, board1, board2) -> None:
-        """show the differance between two boards visualy"""
+        """show the differance between two boards and output differance"""
         for n in range(1, 9):
             for a in range(ord("a"), ord("h") + 1):
                 square = chr(a) + str(n)
