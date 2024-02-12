@@ -13,5 +13,4 @@ import test_niclink_FEN
 
 import test_niclink_move_parsing
 
-
-
+import test_niclink_board_compairison

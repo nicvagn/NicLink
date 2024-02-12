@@ -26,18 +26,19 @@ import chess
 
 # NicLink shit
 from niclink import NicLinkManager
+
 # the fish
 from stockfish import Stockfish
 
-logger = logging.getLogger( "NL play Fish" )
-logger.setLevel( logging.INFO )
+logger = logging.getLogger("NL play Fish")
+logger.setLevel(logging.INFO)
 
 # create console handler and set level to debug
 ch = logging.StreamHandler()
 ch.setLevel(logging.INFO)
 
 # create formatter
-formatter = logging.Formatter('%(name)s - %(levelname)s | %(message)s')
+formatter = logging.Formatter("%(name)s - %(levelname)s | %(message)s")
 
 # add formatter to ch
 ch.setFormatter(formatter)
@@ -45,51 +46,62 @@ ch.setFormatter(formatter)
 # add ch to logger
 logger.addHandler(ch)
 
-class Game(threading.Thread):
-    """ a chessgame with stockfish handled in it's own thread """
 
-    def __init__(self, NicLinkManager, playing_white, stockfish_level=5, **kwargs ):
+class Game(threading.Thread):
+    """a chessgame with stockfish handled in it's own thread"""
+
+    def __init__(
+        self, NicLinkManager, playing_white, stockfish_level=5, **kwargs
+    ) -> None:
         super().__init__(**kwargs)
         self.nl_inst = NicLinkManager
         # bool of if your playing white
         self.playing_white = playing_white
         # init stockfish
         self.fish = Stockfish()
-        self.fish.set_skill_level( stockfish_level )
+        self.fish.set_skill_level(stockfish_level)
         # list of all the game moves
         self.moves = []
         # is the game over?
         self.game_over = False
 
     def check_for_game_over(self) -> None:
-        """ check if the game is over """
+        """check if the game is over"""
         # is_game_over() will return False or a dictionary with:
         # {"over": bool, "winner": str or False, "reason": str}
         over_state = self.nl_inst.is_game_over()
-        if( not over_state ):
+        if not over_state:
             # the game is still going
             return
         # otherwise, tell the user and exit
-        print(f"result: {over_state['winner']} reason: {over_state['reason']} \
-                have a nice day.")
+        if over_state["winner"]:
+            winner = "White"
+        else:
+            winner = "Black"
+        print(
+            f"Winner: { winner } reason: {over_state['reason']} \n \
+have a nice day."
+        )
 
         sys.exit(0)
 
     def handle_human_turn(self) -> None:
-        """ Handle a human turn in the game """
+        """Handle a human turn in the game"""
 
-        logger.info("--- human turn ---")
+        logger.info("\n--- human turn ---\n")
 
-        print("Your turn, press a key when a move is on board.\n")
-        readchar.readkey()
         try:
-            move = self.nl_inst.await_move()  # await move from e-board the move from niclink
-            print( f"move from board: { move }" )
+            move = (
+                self.nl_inst.await_move()
+            )  # await move from e-board the move from niclink
+            print(f"move from board: { move }")
         except KeyboardInterrupt:
             print("Bye!")
-            sys.excit(0)
+            sys.exit(0)
         except:
-            print("no move gotten from board, try again.\n when a move is on the board press a key.")
+            print(
+                "no move gotten from board, try again.\n when a move is on the board press a key."
+            )
             readchar.readkey()
             self.handle_human_turn()
             return
@@ -99,66 +111,65 @@ class Game(threading.Thread):
         # check if the game is done
         self.check_for_game_over()
 
-    
-    def handle_fish_turn( self ) -> None:
-        """ handle fish's turn """
+    def handle_fish_turn(self) -> None:
+        """handle fish's turn"""
 
-        logger.info( "Fish's turn" )
+        logger.info("Fish's turn")
         self.fish.set_fen_position(self.nl_inst.get_game_FEN())
 
         # get stockfishes move
         fish_move = chess.Move.from_uci(self.fish.get_best_move())
-        logger.info( f"Fish's move { fish_move }" )
+        logger.info(f"Fish's move { fish_move }")
 
         # make move on the niclink internal board
-        self.nl_inst.make_move_game_board( fish_move )
-        self.nl_inst.set_move_LEDs( fish_move )
+        self.nl_inst.make_move_game_board(fish_move)
+        self.nl_inst.set_move_LEDs(fish_move)
 
-        print( f"board after fish turn:" )
+        print(f"board after fish turn:")
         self.nl_inst.show_game_board()
 
         # check for game over
         self.check_for_game_over()
 
-    def start( self ) -> None:
-        """ start playing the game """
+    def start(self) -> None:
+        """start playing the game"""
 
         # start by turning off all the lights
         self.nl_inst.turn_off_all_leds()
 
         self.run()
 
-    def run( self ) -> None:
-        """ run the game thread """
-        
-        # main game loop
-        while( True ):
+    def run(self) -> None:
+        """run the game thread"""
 
-            if( self.playing_white ):
+        # main game loop
+        while True:
+
+            if self.playing_white:
                 # if we go first, go first
-                self.handle_human_turn()            
+                self.handle_human_turn()
 
             # do the fish turn
             self.handle_fish_turn()
 
-            if( not self.playing_white ):
+            if not self.playing_white:
                 # case we are black
                 self.handle_human_turn()
 
 
 def main():
     # NicLinkManager
-    nl_inst = NicLinkManager( refresh_delay=2, logger=logger )
-    
+    nl_inst = NicLinkManager(refresh_delay=2, logger=logger)
+
     print("\n%%%%%% NicLink vs Stockfish %%%%%%\n")
 
     print("What level do you want for the fish? (1 - 33) for info enter i, else level")
 
     while True:
         sf_lvl = input("level (1 - 33):")
-        if( sf_lvl == 'i'):
-            print("""1 is the highest level, 33 is stockfish at it's worst.
-I found this online, and stole it:
+        if sf_lvl == "i":
+            print(
+                """I found this online, and stole it:
 
 Stockfish 16 UCI_Elo was calibrated with CCRL.
 
@@ -197,23 +208,25 @@ Stockfish 16 UCI_Elo was calibrated with CCRL.
   32 stash-bot-v8       :  1452.8   31.5  1953.5    3780    52
   33 master-skill-0     :  1320.1   32.9   651.5    2083    31
 
-credit: https://chess.stackexchange.com/users/25998/eric\n""")
+credit: https://chess.stackexchange.com/users/25998/eric\n"""
+            )
             continue
 
-        if(int(sf_lvl) > 0 and int(sf_lvl) <= 33):
+        if int(sf_lvl) > 0 and int(sf_lvl) <= 33:
             break
 
         else:
             print("invalid. Try again")
             continue
 
-    print( "Do you want to play white? (y/n)" )
+    print("Do you want to play white? (y/n)")
     playing_w = readchar.readkey()
-    playing_white = ( playing_w == 'y' ) 
+    playing_white = playing_w == "y"
 
-    game = Game(nl_inst, playing_white, stockfish_level=sf_lvl )
+    game = Game(nl_inst, playing_white, stockfish_level=sf_lvl)
 
     game.start()
+
 
 if __name__ == "__main__":
     main()

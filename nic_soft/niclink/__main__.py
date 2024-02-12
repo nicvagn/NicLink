@@ -19,10 +19,10 @@ class NicLinkManager:
         """initialize the link to the chessboard, and set up NicLink"""
         if logger != None:
             self.logger = logger
+            self.logger.setLevel(logging.WARN)
         else:
             self.logger = logging.getLogger()
-        #self.logger.setLevel( logging.DEBUG )
-        self.logger.setLevel(logging.WARN)
+
         self.refresh_delay = refresh_delay
         # initialize the chessboard, this must be done first, before chattering at it
         self.connect()
@@ -31,15 +31,16 @@ class NicLinkManager:
         # the last move the user has played
         self.last_move = None
         # the status of the leds. We have to keep track of this
-        self.led_status = [[0, 0, 0, 0, 0, 0, 0, 0],
-                           [0, 0, 0, 0, 0, 0, 0, 0],
-                           [0, 0, 0, 0, 0, 0, 0, 0],
-                           [0, 0, 0, 0, 0, 0, 0, 0],
-                           [0, 0, 0, 0, 0, 0, 0, 0],
-                           [0, 0, 0, 0, 0, 0, 0, 0],
-                           [0, 0, 0, 0, 0, 0, 0, 0],
-                           [0, 0, 0, 0, 0, 0, 0, 0]]
-
+        self.led_status = [
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+        ]
 
     def connect(self):
         """connect to the chessboard"""
@@ -56,13 +57,13 @@ class NicLinkManager:
             exceptionMessage = "Board initialization error. '' or None for FEN. Is the board connected and turned on?"
             raise RuntimeError(exceptionMessage)
 
-        logging.info(f"initial fen: { testFEN }")
-        logging.info("Board initialized")
+        self.logger.info(f"initial fen: { testFEN }")
+        self.logger.info("Board initialized")
 
     def disconnect(self) -> None:
         """disconnect from the chessboard"""
         _niclink.disconnect()
-        logging.info("Board disconnected")
+        self.logger.info("Board disconnected")
 
     def beep(self) -> None:
         """make the chessboard beep"""
@@ -88,24 +89,24 @@ class NicLinkManager:
 
         if not found:
             raise ValueError(f"{ square[1] } is not a valid file")
-        
+
         # modify the led map to reflect this change
-        if( status ):
+        if status:
             led = 1
         else:
             led = 0
         self.led_status[7 - num][file_num] = led
 
         # log the led status
-        logging.info("led status after change:")
+        self.logger.info("led status after change:")
         for i in range(8):
-            logging.info(self.led_status[i])
+            self.logger.info(self.led_status[i])
 
         # this is supper fucked, but the chessboard interaly starts counting at h8
         _niclink.setLED(7 - num, 7 - file_num, status)
 
     def turn_off_all_leds(self):
-        """ turn off all the leds """
+        """turn off all the leds"""
         _niclink.lightsOut()
 
     def get_FEN(self) -> str:
@@ -123,21 +124,21 @@ class NicLinkManager:
         legal_moves = list(self.game_board.legal_moves)
 
         tmp_board = self.game_board.copy()
-        logging.info(
+        self.logger.info(
             f"+++ find_move_from_FEN_change(...) called +++\n\
 board we are using to check legal moves: \n{self.game_board}"
         )
 
         for move in legal_moves:
-            # logging.info(move)
+            # self.logger.info(move)
             # breakpoint()
             tmp_board.push(move)  # Make the move on the board
             if (
                 tmp_board.board_fen() == new_FEN
             ):  # Check if the board's FEN matches the new FEN
-                logging.info(move)
+                self.logger.info(move)
                 self.last_move = move
-                
+
                 return move  # Return the last move
             tmp_board.pop()  # Undo the move
 
@@ -161,56 +162,64 @@ board we are using to check legal moves: \n{self.game_board}"
             try:
                 self.last_move = self.find_move_from_FEN_change(new_FEN)
             except KeyboardInterrupt:
-                logging.info("KeyboardInterrupt: bye")
+                self.logger.info("KeyboardInterrupt: bye")
                 sys.exit(0)
             except RuntimeError:
-                logging.warning(
-                    f"\n===== move not valid, undue it and try again. =====\n \
+                self.logger.warning(
+                    f"\n===== move not valid, undue it and try again. it is white's turn? { self.game_board.turn } =====\n\
 board we are using to check for moves:\n{ self.game_board }"
                 )
-                logging.info(f"external board as I see it:\n")
-                self.show_FEN_on_board(new_FEN)
+                # show the board diff from what we are checking for legal moves
+                print(f"diff from board we are checking legal moves on:\n")
+                self.set_board_FEN(board, new_FEN)
+                self.show_board_diff(new_board, game_board)
+                # pause for the refresh_delay
+
+                time.sleep(self.refresh_delay)
+                return False
+
             except ValueError:
-                logging.warn( "last move is None")
+                self.logger.warn("last move is None")
                 return False
 
             return True
 
         else:
-            logging.info("no change.")
+            self.logger.info("no change.")
 
         return False
 
-
     def set_move_LEDs(self, last_move) -> None:
         """highlight the last move. Light up the origin and destination LED"""
-        #turn out move led's 
+        # turn out move led's
         self.turn_off_all_leds()
         # make sure last move is of type str
         if type(last_move) != str:
             try:
                 last_move = last_move.uci()
             except:
-                logging.error(
+                self.logger.error(
                     f"exception on trying to convert move { last_move } to uci."
                 )
 
-        logging.info(f"led on(origin): { last_move[:2] }")
+        self.logger.info(f"led on(origin): { last_move[:2] }")
         self.set_led(last_move[:2], True)  # source
-        logging.info(f"led on(dest): { last_move[2:4] }")
+        self.logger.info(f"led on(dest): { last_move[2:4] }")
         self.set_led(last_move[2:4], True)  # dest
 
     def await_move(self) -> str:
-        """wait for a legal move, and return it in coordinate notation after making it on internal board """
+        """wait for a legal move, and return it in coordinate notation after making it on internal board"""
         # loop until we get a valid move
         while True:
             if self.check_for_move():
                 # a move has been played
-                
-                move = self.get_last_move()
+                try:
+                    move = self.get_last_move()
 
-                self.make_move_game_board( move )
-                return move
+                    self.make_move_game_board(move)
+                    return move
+                except ValueError:
+                    self.logger.error("No last move. continuing")
 
             # if no move has been played, sleep and check again
             time.sleep(self.refresh_delay)
@@ -223,9 +232,11 @@ board we are using to check for moves:\n{ self.game_board }"
         return self.last_move
 
     def make_move_game_board(self, move) -> None:
-        """make a move on the internal rep. of the game_board"""
+        """make a move on the internal rep. of the game_board. update the last move made"""
         self.game_board.push(move)
-        logging.info(
+        # update the last move
+        self.last_move = move
+        self.logger.info(
             f"made move on internal board \nBOARD POST MOVE:\n{ self.game_board }"
         )
 
@@ -245,36 +256,62 @@ board we are using to check for moves:\n{ self.game_board }"
 
     def show_game_board(self) -> None:
         """print the internal game_board"""
-        print( self.game_board )
+        print(self.game_board)
 
     def set_game_board(self, board) -> None:
         """set the game board"""
         self.game_board = board
         self.last_move = None
 
+    def show_board_diff(self, board1, board2) -> None:
+        """show the differance between two boards visualy"""
+        for n in range(1, 9):
+            for a in range(ord("a"), ord("h") + 1):
+                square = chr(a) + str(n)
+                py_square = chess.parse_square(square)
+                if board1.piece_at(py_square) != board2.piece_at(py_square):
+                    print(
+                        f"Square { square } is not the same. \n board1: \
+{ board1.piece_at(py_square) } \n board2: { board2.piece_at(py_square) }"
+                    )
+                    self.beep()
+                    time.sleep(1)
+                    self.beep()
+
     def get_game_FEN(self) -> str:
         """get the game board FEN"""
         return self.game_board.fen()
 
-    def is_game_over(self) -> {"over": bool, "winner": str or False, "reason": str} or False:
+    def is_game_over(
+        self,
+    ) -> {"over": bool, "winner": str or False, "reason": str} or False:
         """is the internal game over?"""
         if self.game_board.is_checkmate():
-            return { "over": True, "winner": self.game_board.turn, "reason": "checkmate"}
-        if self.game_board.is_stalemate(): 
-            return { "over": True, "winner": False, "reason": "Is a stalemate" }
+            return {"over": True, "winner": self.game_board.turn, "reason": "checkmate"}
+        if self.game_board.is_stalemate():
+            return {"over": True, "winner": False, "reason": "Is a stalemate"}
         if self.game_board.is_insufficient_material():
-            return { "over": True, "winner": False, "reason": "Is insufficient material" }
+            return {"over": True, "winner": False, "reason": "Is insufficient material"}
         if self.game_board.is_fivefold_repetition():
-            return { "over": True, "winner": False, "reason": "Is fivefold repetition." }
+            return {"over": True, "winner": False, "reason": "Is fivefold repetition."}
         if self.game_board.is_seventyfive_moves():
-            return { "over": True, "winner": False, "reason": "A game is automatically \
-    drawn if the half-move clock since a capture or pawn move is equal to or greater than 150. Other means to end a game take precedence." }
-            
+            return {
+                "over": True,
+                "winner": False,
+                "reason": "A game is automatically \
+    drawn if the half-move clock since a capture or pawn move is equal to or greater than 150. Other means to end a game take precedence.",
+            }
+
         return False
 
 
 if __name__ == "__main__":
     nl_instance = NicLinkManager(2)
+
+    print("set up the board and press enter, then make a move one the board.")
+    nl_instance.show_game_board()
+    print("===============")
+    readchar.readkey()
 
     leave = "n"
     while leave == "n":
@@ -294,15 +331,19 @@ if __name__ == "__main__":
             except KeyboardInterrupt:
                 print("KeyboardInterrupt: bye")
                 sys.exit(0)
-            except RuntimeError as re:
+            except ValueError as re:
                 print(f"{re} reset the board to the previous position an try again")
-                # print( f"previous position: \n{nl_instance.game_board}" )
-                # print( "leave? ('n for no, != 'n' yes: " )
-                # leave = readchar.readkey()
-
+                print(f"previous position: \n{nl_instance.game_board}")
+                print(
+                    "Once a correct move is on the board, press a key ('n' for leave, != 'n' try again)"
+                )
+                leave = readchar.readkey()
                 continue  # as move will not be defined
 
             # make the move on the game board
             nl_instance.make_move_game_board(move)
 
+            nl_instance.show_game_board()
+            # print( "leave? ('n' for no, != 'n' yes: )" )
+            # leave = readchar.readkey()
             # go again
