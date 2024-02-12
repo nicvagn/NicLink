@@ -1,7 +1,7 @@
 # NicLink - A python interface for the Chessnut Air
 
 # Notice
-> version 0.1
+> version 0.2
 > checkout this software, it solves the problem's I wannted to solve with NicLink:
     https://chromewebstore.google.com/detail/chessconnect/dmkkcjpbclkkhbdnjgcciohfbnpoaiam?hl=en-GB
 
@@ -50,6 +50,13 @@
 
     This gives wheel group access to all of your hidraw devices,
     but wheel usualy has sudo access so they have that anyway with sudo
+
+## playing with stockfish
+
+    > you can play with stockfish with NicLink!
+
+    In order to do so, you should read ./play_stockfish/README.md for further info
+
 
 ## have something to add/suggest?
 

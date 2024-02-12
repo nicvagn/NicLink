@@ -30,4 +30,3 @@ for x in range(1, 9):
         square = chr(ord("`") + a) + str(x)
         print(square + " off")
         nl.set_led(square, False)
-

@@ -25,7 +25,7 @@ while leave == "n":
     try:
         nl_inst.await_move()
     except ValueError:
-        print( "No move, pausing for 3 seconds and trying again" )
+        print("No move, pausing for 3 seconds and trying again")
 
         time.sleep(3)
         continue
@@ -52,7 +52,6 @@ while leave == "n":
             leave = readchar.readkey()
 
             continue  # as move will not be defined
-
 
     print("\n=================================\n")
     print("leave? 'n' for no, != 'n' yes: ")

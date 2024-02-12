@@ -34,7 +34,7 @@ correspondence = False
 if args.correspondence:
     correspondence = True
 
-DEBUG = True
+DEBUG = False
 if args.debug:
     DEBUG = True
 
@@ -62,7 +62,7 @@ def my_excepthook(excType, excValue, traceback, logger=logger):
 
 sys.excepthook = my_excepthook
 
-logging.info(
+print(
     "\n\n========================== \n NicLink_lichess startup\n==========================\n\n"
 )
 
@@ -207,11 +207,10 @@ def handle_ongoing_game(game_data):
     print("\n+++ joining game in progress +++\n")
     print(f"Playing: { game_data['color'] }")
 
-    if(game_data["isMyTurn"]):
-        print( "it is your turn. make a move." )
+    if game_data["isMyTurn"]:
+        print("it is your turn. make a move.")
     else:
-        print( "it is your opponents turn.")
-    
+        print("it is your opponents turn.")
 
 
 def is_correspondence(gameId) -> bool:
@@ -237,6 +236,7 @@ def is_correspondence(gameId) -> bool:
 client = None
 nl_inst = None
 
+
 def main():
     global client, nl_inst
     simplejson_spec = importlib.util.find_spec("simplejson")
@@ -246,14 +246,13 @@ def main():
         )
         sys.exit(-1)
 
-
     nl_inst = NicLinkManager(refresh_delay=2)
 
     try:
         logging.info(f"reading token from {TOKEN_FILE}")
         with open(TOKEN_FILE) as f:
             token = f.read().strip()
-            
+
     except FileNotFoundError:
         print(f"ERROR: cannot find token file")
         sys.exit(-1)
