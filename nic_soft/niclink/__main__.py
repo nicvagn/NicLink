@@ -4,6 +4,7 @@
 #
 #  You should have received a copy of the GNU General Public License along with NicLink. If not, see <https://www.gnu.org/licenses/>.
 import _niclink
+from nl_exceptions import NoMove, IllegalMove
 import time
 import chess
 import readchar
@@ -120,6 +121,9 @@ class NicLinkManager:
         return the move in coordinate notation
         """
 
+        if( new_FEN == self.game_board.board_fen() ):
+            raise NoMove("No FEN differance")
+
         # get a list of the legal moves
         legal_moves = list(self.game_board.legal_moves)
 
@@ -131,18 +135,22 @@ board we are using to check legal moves: \n{self.game_board}"
 
         for move in legal_moves:
             # self.logger.info(move)
-            # breakpoint()
             tmp_board.push(move)  # Make the move on the board
+            
             if (
                 tmp_board.board_fen() == new_FEN
             ):  # Check if the board's FEN matches the new FEN
                 self.logger.info(move)
                 self.last_move = move
 
+
                 return move  # Return the last move
             tmp_board.pop()  # Undo the move
 
-        raise RuntimeError("a valid move was not made")
+        error_board = chess.Board()
+        error_board.set_board_fen( new_FEN )
+        message = f"\n {error_board }\nis not a possible result from a legal move on:\n{ self.game_board }"
+        raise IllegalMove( message )
 
     def check_for_move(self) -> bool:
         """check if there has been a move on the chessboard, and see if it is valid. If so update self.last_move"""
@@ -153,7 +161,7 @@ board we are using to check legal moves: \n{self.game_board}"
         new_FEN = _niclink.getFEN()
 
         if new_FEN is None:
-            raise RuntimeError("No FEN from chessboard")
+            raise ValueError("No FEN from chessboard")
 
         if new_FEN != self.game_board.board_fen:
             # a change has occured on the chessboard
@@ -164,15 +172,16 @@ board we are using to check legal moves: \n{self.game_board}"
             except KeyboardInterrupt:
                 self.logger.info("KeyboardInterrupt: bye")
                 sys.exit(0)
-            except RuntimeError:
+            except RuntimeError as err:
+                self.logger.error(err)
                 self.logger.warning(
                     f"\n===== move not valid, undue it and try again. it is white's turn? { self.game_board.turn } =====\n\
 board we are using to check for moves:\n{ self.game_board }"
                 )
                 # show the board diff from what we are checking for legal moves
                 print(f"diff from board we are checking legal moves on:\n")
-                self.set_board_FEN(board, new_FEN)
-                self.show_board_diff(new_board, game_board)
+                current_board = chess.Board(new_FEN)
+                self.show_board_diff(current_board, self.game_board)
                 # pause for the refresh_delay
 
                 time.sleep(self.refresh_delay)
@@ -182,7 +191,7 @@ board we are using to check for moves:\n{ self.game_board }"
                 self.logger.warn("last move is None")
                 return False
 
-            return True
+            return self.last_move
 
         else:
             self.logger.info("no change.")
@@ -197,10 +206,9 @@ board we are using to check for moves:\n{ self.game_board }"
         if type(move) != str:
             try:
                 move = move.uci()
-            except:
-                self.logger.error(
-                    f"exception on trying to convert move { move } to uci."
-                )
+            except Exeption as err:
+                message = f"{err} was raised exception on trying to convert move { move } to uci."
+                self.logger.error( message )
 
         self.logger.info(f"led on(origin): { move[:2] }")
         self.set_led(move[:2], True)  # source
@@ -211,15 +219,18 @@ board we are using to check for moves:\n{ self.game_board }"
         """wait for a legal move, and return it in coordinate notation after making it on internal board"""
         # loop until we get a valid move
         while True:
-            if self.check_for_move():
-                # a move has been played
-                try:
-                    move = self.get_last_move()
+            #check for a move. If it move, return it else False
+            try:
+                move = self.check_for_move()
+            except NoMove:
+                #no move made, wait refresh_delay and continue
+                time.sleep(self.refresh_delay)
+                continue
 
-                    self.make_move_game_board(move)
-                    return move
-                except ValueError:
-                    self.logger.error("No last move. continuing")
+            if move:
+                # a move has been played
+                self.make_move_game_board(move)
+                return move
 
             # if no move has been played, sleep and check again
             time.sleep(self.refresh_delay)
@@ -308,42 +319,49 @@ board we are using to check for moves:\n{ self.game_board }"
 if __name__ == "__main__":
     nl_instance = NicLinkManager(2)
 
-    print("set up the board and press enter, then make a move one the board.")
+    print("set up the board and press enter.")
     nl_instance.show_game_board()
     print("===============")
     readchar.readkey()
 
     leave = "n"
     while leave == "n":
-        if nl_instance.check_for_move():
-            # beep to indicate a move was made
-            nl_instance.beep()
+        move = nl_instance.await_move();
+        print( move )
 
-            # get the new board FEN
-            post_move_FEN = nl_instance.get_FEN()
 
-            logging.info("new FEN:" + post_move_FEN)
 
-            try:
-                # find move from the FEN change
-                move = nl_instance.get_last_move()
 
-            except KeyboardInterrupt:
-                print("KeyboardInterrupt: bye")
-                sys.exit(0)
-            except ValueError as re:
-                print(f"{re} reset the board to the previous position an try again")
-                print(f"previous position: \n{nl_instance.game_board}")
-                print(
-                    "Once a correct move is on the board, press a key ('n' for leave, != 'n' try again)"
-                )
-                leave = readchar.readkey()
-                continue  # as move will not be defined
 
-            # make the move on the game board
-            nl_instance.make_move_game_board(move)
 
-            nl_instance.show_game_board()
-            # print( "leave? ('n' for no, != 'n' yes: )" )
-            # leave = readchar.readkey()
-            # go again
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

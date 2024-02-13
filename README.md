@@ -1,7 +1,7 @@
 # NicLink - A python interface for the Chessnut Air
 
 # Notice
-> version 0.2
+> version 0.3
 > checkout this software, it solves the problem's I wannted to solve with NicLink:
     https://chromewebstore.google.com/detail/chessconnect/dmkkcjpbclkkhbdnjgcciohfbnpoaiam?hl=en-GB
 
