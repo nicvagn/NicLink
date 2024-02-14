@@ -1,9 +1,10 @@
-#  NicLink is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+#  niclink is free software: you can redistribute it and/or modify it under the terms of the gnu general public license as published by the free software foundation, either version 3 of the license, or (at your option) any later version.
 #
-#  NicLink is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#  niclink is distributed in the hope that it will be useful, but without any warranty; without even the implied warranty of merchantability or fitness for a particular purpose. see the gnu general public license for more details.
 #
-#  You should have received a copy of the GNU General Public License along with NicLink. If not, see <https://www.gnu.org/licenses/>.
+#  you should have received a copy of the gnu general public license along with niclink. if not, see <https://www.gnu.org/licenses/>.
 import _niclink
+from bluetooth import niclink_bluetooth
 from nl_exceptions import NoMove, IllegalMove
 import time
 import chess
@@ -16,17 +17,23 @@ import logging
 class NicLinkManager:
     """manage Chessnut air external board"""
 
-    def __init__(self, refresh_delay, logger=None):
+    def __init__(self, refresh_delay, logger=None, bluetooth=False):
         """initialize the link to the chessboard, and set up NicLink"""
+
         if logger != None:
             self.logger = logger
             self.logger.setLevel(logging.WARN)
         else:
             self.logger = logging.getLogger()
 
+        if bluetooth:
+            self.nl_interface = niclink_bluetooth
+        else:
+            # connect with the external board usb
+            self.nl_interface = _niclink
+
         self.refresh_delay = refresh_delay
-        # initialize the chessboard, this must be done first, before chattering at it
-        self.connect()
+
         # this instances game board
         self.game_board = chess.Board()
         # the last move the user has played
@@ -43,16 +50,17 @@ class NicLinkManager:
             [0, 0, 0, 0, 0, 0, 0, 0],
         ]
 
-    def connect(self):
+    def connect(self, bluetooth=False):
         """connect to the chessboard"""
 
-        # connect with the external board
-        _niclink.connect()
+        # connect to the chessboard, this must be done first
+        self.nl_interface.connect()
+
         # because async programming is hard
-        testFEN = _niclink.getFEN()
+        testFEN = nl_interface.getFEN()
         time.sleep(2)
         # make sure getFEN is working
-        testFEN = _niclink.getFEN()
+        testFEN = self.nl_interface.getFEN()
 
         if testFEN == "" or None:
             exceptionMessage = "Board initialization error. '' or None for FEN. Is the board connected and turned on?"
@@ -63,12 +71,12 @@ class NicLinkManager:
 
     def disconnect(self) -> None:
         """disconnect from the chessboard"""
-        _niclink.disconnect()
+        self.nl_interface.disconnect()
         self.logger.info("Board disconnected")
 
     def beep(self) -> None:
         """make the chessboard beep"""
-        _niclink.beep()
+        self.nl_interface.beep()
 
     def set_led(self, square, status):
         """set an LED at a given square to a status (square: a1, e4 etc)"""
@@ -102,17 +110,16 @@ class NicLinkManager:
         self.logger.info("led status after change:")
         for i in range(8):
             self.logger.info(self.led_status[i])
-
         # this is supper fucked, but the chessboard interaly starts counting at h8
-        _niclink.setLED(7 - num, 7 - file_num, status)
+        self.nl_interface.setLED(7 - num, 7 - file_num, status)
 
     def turn_off_all_leds(self):
         """turn off all the leds"""
-        _niclink.lightsOut()
+        self.nl_interface.lightsOut()
 
     def get_FEN(self) -> str:
         """get the FEN from chessboard"""
-        return _niclink.getFEN()
+        return self.nl_interface.getFEN()
 
     def find_move_from_FEN_change(
         self, new_FEN
@@ -157,7 +164,7 @@ board we are using to check legal moves: \n{self.game_board}"
         # ensure the move was valid
 
         # get current FEN on the external board
-        new_FEN = _niclink.getFEN()
+        new_FEN = self.nl_interface.getFEN()
 
         if new_FEN is None:
             raise ValueError("No FEN from chessboard")
@@ -316,7 +323,7 @@ board we are using to check for moves:\n{ self.game_board }"
 
 
 if __name__ == "__main__":
-    nl_instance = NicLinkManager(2)
+    nl_instance = NicLinkManager(2, bluetooth=True)
 
     print("set up the board and press enter.")
     nl_instance.show_game_board()

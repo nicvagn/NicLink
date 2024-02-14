@@ -1,6 +1,54 @@
+#  nic_soft is free software: you can redistribute it and/or modify it under the terms of the gnu general public license as published by the free software foundation, either version 3 of the license, or (at your option) any later version.
+#
+#  nic_soft is distributed in the hope that it will be useful, but without any warranty; without even the implied warranty of merchantability or fitness for a particular purpose. see the gnu general public license for more details.
+#
+#  you should have received a copy of the gnu general public license along with nic_soft. if not, see <https://www.gnu.org/licenses/>.
+
+[build-system]
+requires = ["setuptools"]
+dynamic = ["version"]
+
 [project]
-name = "nic_soft"
-version = "0.2.0"
+VERSION = '0.3'
+DESCRIPTION = 'A package containing NicLink and associated software. NicLink is a "driver" for chessnut air boards.'
+
+name="nic_soft",
+version=VERSION,
+author="Nicolas Vaagen",
+author_email="nicolasvaagen@gmail.com",
+description=DESCRIPTION,
+long_description="""Hey, you. You're finally awake. You were trying to cross the border, right? Walked right into that Imperial ambush, same as us, and that thief over there. Damn you Stormcloaks. Skyrim was fine until you came along. Empire was nice and lazy. If they hadn't been looking for you, I could've stolen that horse and be halfway to Hammerfell. You there. You and me - we shouldn't be here. It's these Stormcloaks the Empire wants. We're all brothers and sisters in binds now, thief. Shut up back there! And what's wrong with him, huh? Watch your tongue. You're speaking to Ulfric Stormcloak, the true High King. Ulfric? The Jarl of Windhelm? You're the leader of the rebellion. But if they've captured you... Oh gods, where are they taking us? I don't know where we're going, but Sovngarde awaits. No, this can't be happening. This isn't happening. Hey, what village are you from, horse thief? Why do you care? A Nord's last thoughts should be of home. Rorikstead. I'm... I'm from Rorikstead.
+
+...looks like the Thalmor are with him.
+
+General Tullius, sir. The headsman is waiting. Good. Let's get this over with! Shor, Mara, Dibella, Kynareth, Akatosh. Divines, please help me. Look at him. General Tullius the Military Governor. And it looks like the Thalmor are with him. Damn elves. I bet they had something to do with this.
+
+Why are we stopping? Why do you think? End of the line. Let's go. Shouldn't keep the gods waiting for us.""",
+ackages=find_packages(),
+install_requires=['chess', 'pybind11'],
+
+keywords=["Chessnut", "Chessnut air", "e-board", "EasyLinkSDK", "chess", "lichess", "boardAPI"],
+classifiers= [
+    f"Development Status :: { VERSION }",
+    "Intended Audience :: Chessnut air owners",
+    "Programming language :: Python :: 3.12+",
+    "Programming language :: C++",
+    "Operating System :: POSIX :: GNU/Linux",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: Microsoft :: Windows", # untested
+    "Operating System :: MacOS :: MacOS X", # untested
+    "Topic :: chess"
+]
+readme = README.md
+license = {file = "LICENSE"}
+
+[project.urls]
+"GitHub": 'https://github.com/nicvagn/NicLink',
+'Bug Reports': 'https://github.com/nicvagn/NicLink/issues'
+
 
 [tool.setuptools.packages]
 find = {} # defaults
+
+[build-system]
+requires = ["setuptools"]
