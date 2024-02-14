@@ -121,7 +121,7 @@ class NicLinkManager:
         return the move in coordinate notation
         """
 
-        if( new_FEN == self.game_board.board_fen() ):
+        if new_FEN == self.game_board.board_fen():
             raise NoMove("No FEN differance")
 
         # get a list of the legal moves
@@ -136,21 +136,20 @@ board we are using to check legal moves: \n{self.game_board}"
         for move in legal_moves:
             # self.logger.info(move)
             tmp_board.push(move)  # Make the move on the board
-            
+
             if (
                 tmp_board.board_fen() == new_FEN
             ):  # Check if the board's FEN matches the new FEN
                 self.logger.info(move)
                 self.last_move = move
 
-
                 return move  # Return the last move
             tmp_board.pop()  # Undo the move
 
         error_board = chess.Board()
-        error_board.set_board_fen( new_FEN )
+        error_board.set_board_fen(new_FEN)
         message = f"\n {error_board }\nis not a possible result from a legal move on:\n{ self.game_board }"
-        raise IllegalMove( message )
+        raise IllegalMove(message)
 
     def check_for_move(self) -> bool:
         """check if there has been a move on the chessboard, and see if it is valid. If so update self.last_move"""
@@ -208,7 +207,7 @@ board we are using to check for moves:\n{ self.game_board }"
                 move = move.uci()
             except Exeption as err:
                 message = f"{err} was raised exception on trying to convert move { move } to uci."
-                self.logger.error( message )
+                self.logger.error(message)
 
         self.logger.info(f"led on(origin): { move[:2] }")
         self.set_led(move[:2], True)  # source
@@ -219,11 +218,11 @@ board we are using to check for moves:\n{ self.game_board }"
         """wait for a legal move, and return it in coordinate notation after making it on internal board"""
         # loop until we get a valid move
         while True:
-            #check for a move. If it move, return it else False
+            # check for a move. If it move, return it else False
             try:
                 move = self.check_for_move()
             except NoMove:
-                #no move made, wait refresh_delay and continue
+                # no move made, wait refresh_delay and continue
                 time.sleep(self.refresh_delay)
                 continue
 
@@ -326,42 +325,5 @@ if __name__ == "__main__":
 
     leave = "n"
     while leave == "n":
-        move = nl_instance.await_move();
-        print( move )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        move = nl_instance.await_move()
+        print(move)

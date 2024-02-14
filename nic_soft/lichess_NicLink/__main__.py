@@ -107,7 +107,7 @@ class Game(threading.Thread):
         global nl_inst
         # {'type': 'gameState', 'moves': 'd2d3 e7e6 b1c3', 'wtime': datetime.datetime( 1970, 1, 25, 20, 31, 23, 647000, tzinfo=datetime.timezone.utc ), 'btime': datetime.datetime( 1970, 1, 25, 20, 31, 23, 647000, tzinfo=datetime.timezone.utc ), 'winc': datetime.datetime( 1970, 1, 1, 0, 0, tzinfo=datetime.timezone.utc ), 'binc': datetime.datetime( 1970, 1, 1, 0, 0, tzinfo=datetime.timezone.utc ), 'bdraw': False, 'wdraw': False}
 
-        logging.info(game_state)
+        # logging.info(game_state)
 
         # tmp_chessboard is used to get the current game state from API and parse it into something we can use
         tmp_chessboard = chess.Board()
@@ -125,24 +125,23 @@ class Game(threading.Thread):
         if tmp_chessboard.turn == self.playing_white:
             logging.info("it is our turn")
 
-            nl_inst.await_move()  # await move from e-board the move from niclink
 
-            move = nl_inst.get_last_move()
+            try:
+                for attempt in range(3):
+                    move = nl_inst.await_move()  # await move from e-board the move from niclink
+                    logging.info(f"move from chessboard { move }")
 
-            logging.info(f"move from chessboard { move }")
-
-            for attempt in range(3):
-                try:
                     # make the move
                     self.make_move(move)
                     break
-                except KeyboardInterrupt:
-                    print("KeyboardInterrupt: bye")
-                    sys.exit(0)
-                except:
-                    e = sys.exc_info()[0]
-                    logging.info(f"exception on make_move: {e}")
 
+            except KeyboardInterrupt:
+                print("KeyboardInterrupt: bye")
+                sys.exit(0)
+            except:
+                e = sys.exc_info()[0]
+                logging.info(f"exception on make_move: {e}")
+            finally:
                 if attempt > 1:
                     logging.debug(f"sleeping before retry")
                     time.sleep(3)

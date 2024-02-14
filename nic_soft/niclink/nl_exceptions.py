@@ -4,13 +4,16 @@
 #
 #  You should have received a copy of the GNU General Public License along with NicLink. If not, see <https://www.gnu.org/licenses/>.
 
+
 class NoMove(Exception):
     """Exception raised when there is no move from chessboard (ie: the game board FEN == FEN from the external board)"""
+
     def __init__(self, message):
         self.message = message
+
 
 class IllegalMove(Exception):
     """Exception raised when an illegal move is on the external board"""
+
     def __init__(self, message):
         self.message = message
-
