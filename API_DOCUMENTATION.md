@@ -6,35 +6,12 @@
 
     it takes one required param ( refresh delay ) and one optional ( logger )
 ```
+
 class NicLinkManager:
     """manage Chessnut air external board"""
- 
-    def __init__(self, refresh_delay, logger=None):
-        """initialize the link to the chessboard, and set up NicLink"""
-        if logger != None:
-            self.logger = logger
-            self.logger.setLevel(logging.WARN)
-        else:
-            self.logger = logging.getLogger()
 
-        self.refresh_delay = refresh_delay
-        # initialize the chessboard, this must be done first, before chattering at it
-        self.connect()
-        # this instances game board
-        self.game_board = chess.Board()
-        # the last move the user has played
-        self.last_move = None
-        # the status of the leds. We have to keep track of this
-        self.led_status = [
-            [0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0],
-        ]
+    def __init__(self, refresh_delay, logger=None, bluetooth=False):
+        """initialize the link to the chessboard, and set up NicLink"""
 
     def connect(self):
         """connect to the chessboard"""

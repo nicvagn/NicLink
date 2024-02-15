@@ -4,10 +4,10 @@
 #
 #  You should have received a copy of the GNU General Public License along with NicLink. If not, see <https://www.gnu.org/licenses/>.
 
-from discovery import  GetChessnutAirDevices
+from .discovery import  GetChessnutAirDevices
 import asyncio
 from bleak import BleakClient
-from constants import INITIALIZASION_CODE, WRITECHARACTERISTICS, READCONFIRMATION, READDATA, convertDict, MASKLOW
+from .constants import INITIALIZASION_CODE, WRITECHARACTERISTICS, READCONFIRMATION, READDATA, convertDict, MASKLOW
 
 """ A api for getting the FEN etc. from the board with bluetooth """
 

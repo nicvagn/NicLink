@@ -4,7 +4,7 @@
 #
 #  you should have received a copy of the gnu general public license along with niclink. if not, see <https://www.gnu.org/licenses/>.
 import _niclink
-from bluetooth import niclink_bluetooth
+import nl_bluetooth
 from nl_exceptions import NoMove, IllegalMove
 import time
 import chess
@@ -27,7 +27,8 @@ class NicLinkManager:
             self.logger = logging.getLogger()
 
         if bluetooth:
-            self.nl_interface = niclink_bluetooth
+            # connect the board w bluetooth
+            self.nl_interface = nl_bluetooth
         else:
             # connect with the external board usb
             self.nl_interface = _niclink
@@ -57,7 +58,7 @@ class NicLinkManager:
         self.nl_interface.connect()
 
         # because async programming is hard
-        testFEN = nl_interface.getFEN()
+        testFEN = self.nl_interface.getFEN()
         time.sleep(2)
         # make sure getFEN is working
         testFEN = self.nl_interface.getFEN()
@@ -324,6 +325,7 @@ board we are using to check for moves:\n{ self.game_board }"
 
 if __name__ == "__main__":
     nl_instance = NicLinkManager(2, bluetooth=True)
+    nl_instance.connect()
 
     print("set up the board and press enter.")
     nl_instance.show_game_board()

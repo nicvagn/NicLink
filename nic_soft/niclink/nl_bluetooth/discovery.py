@@ -9,8 +9,8 @@ import logging
 from bleak import BleakScanner, BleakClient
 from bleak.backends.device import BLEDevice
 from bleak.backends.scanner import AdvertisementData
-from constants import DEVICELIST
-
+#from constants import DEVICELIST
+from .constants import DEVICELIST
 
 class GetChessnutAirDevices:
     """Class created to discover chessnut Air devices.
