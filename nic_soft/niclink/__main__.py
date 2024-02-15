@@ -272,6 +272,11 @@ board we are using to check for moves:\n{ self.game_board }"
         self.set_board_FEN(board, FEN)
         print(board)
 
+    def show_board_state(self) -> None:
+        """show the state of the real world board"""
+        curFEN = self.get_FEN()
+        self.show_FEN_on_board(curFEN)
+
     def show_game_board(self) -> None:
         """print the internal game_board"""
         print(self.game_board)
@@ -324,7 +329,7 @@ board we are using to check for moves:\n{ self.game_board }"
 
 
 if __name__ == "__main__":
-    nl_instance = NicLinkManager(2, bluetooth=True)
+    nl_instance = NicLinkManager(2, bluetooth=False)
     nl_instance.connect()
 
     print("set up the board and press enter.")

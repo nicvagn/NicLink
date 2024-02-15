@@ -10,6 +10,14 @@ from bleak import BleakClient
 from .constants import INITIALIZASION_CODE, WRITECHARACTERISTICS, READCONFIRMATION, READDATA, convertDict, MASKLOW
 
 """ A api for getting the FEN etc. from the board with bluetooth """
+currentFEN = None
+oldData = None
+CLIENT  = None
+# the values for specifying the square in rowan LED
+ROW_SQUARE_VALUES = [128, 64, 32, 16, 8, 4, 2, 1]
+
+#keeps track of what led's are on.
+led=bytearray([0x0A, 0x08, 0x1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
 
 def connect() -> bool:
     """try to connect to the board over bluetooth"""
@@ -29,21 +37,32 @@ def beep():
     """make the chessboard beep"""
     print("BEEP")
 
-def getFEN():
+def getFEN() -> str:
     """get the FEN from the chessboard over bluetooth"""
     print("BLUETOOTH get fen")
-    return "test bluetoth"
+    return currentFEN
 
 def lightsOut():
     """turn off all the chessboard lights"""
     print("lights out bt")
+    led=bytearray([0x0A, 0x08, 0x1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
+    # send the led bytearray with all zero for last 8 bytes
+    CLIENT.write_gatt_char(WRITECHARACTERISTICS, led)
+
+def setLED(x, y, status) -> None:
+    """set a led on the chessboard"""
+    set_bit(led, y, status)
 
 
 
-
-
-oldData = None
-CLIENT  = None
+def set_bit(v, index, x):
+    """Set the index:th bit of v to 1 if x is truthy, 
+    else to 0, and return the new value."""
+    mask = 1 << index   # Compute mask, an integer with just bit 'index' set.
+    v &= ~mask          # Clear the bit indicated by the mask (if x is False)
+    if x:
+        v |= mask       # If x was True, set the bit indicated by the mask.
+    return v            # Return the result, we're done.
 
 def printBoard(data):
     """Print the board in a human readable format.
@@ -95,14 +114,6 @@ the controls) would be:
 0A 08 00 00 00 00 08 00 08 00
 To turn off all LEDs you just send the 10 bytes with the last 8 bytes all as zero values
     """
-    def set_bit(v, index, x):
-        """Set the index:th bit of v to 1 if x is truthy, 
-        else to 0, and return the new value."""
-        mask = 1 << index   # Compute mask, an integer with just bit 'index' set.
-        v &= ~mask          # Clear the bit indicated by the mask (if x is False)
-        if x:
-            v |= mask       # If x was True, set the bit indicated by the mask.
-        return v            # Return the result, we're done.
 
 
     led=bytearray([0x0A, 0x08, 0x1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
@@ -118,8 +129,8 @@ To turn off all LEDs you just send the 10 bytes with the last 8 bytes all as zer
             if n2.isalnum():
                 v = set_bit(v, counter*2+1, 1)
                 led[counterColum + 2] = v
-    await CLIENT.write_gatt_char(WRITECHARACTERISTICS, led)
 
+    await CLIENT.write_gatt_char(WRITECHARACTERISTICS, led)
 
 async def run(connect, debug=False):
     """ Connect to the device and run the notification handler.

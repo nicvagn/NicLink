@@ -30,11 +30,15 @@ parser.add_argument("--quiet", action="store_true")
 parser.add_argument("--debug", action="store_true")
 args = parser.parse_args()
 
+# refresh refresh delay for NicLink and Lichess 
+REFRESH_DELAY = 2
+
 correspondence = False
 if args.correspondence:
     correspondence = True
 
-DEBUG = False
+DEBUG = True
+# DEBUG = False
 if args.debug:
     DEBUG = True
 
@@ -84,10 +88,12 @@ class Game(threading.Thread):
         # current state from stream
         self.current_state = next(self.stream)
 
+        # stuff about cur game
         self.playing_white = playing_white
+        self.game_board = chess.Board()
 
-        logging.info(f"game init w id: { game_id }")
-        logging.info(client.games.get_ongoing())
+        logger.info(f"game init w id: { game_id }")
+        logger.info(client.games.get_ongoing())
 
     def run(self) -> None:
         for event in self.stream:
@@ -98,7 +104,7 @@ class Game(threading.Thread):
 
     def make_move(self, move) -> None:
         """make a move in a lichess game"""
-        logging.info(f"move made: { move }")
+        logger.info(f"move made: { move }")
 
         self.berserk_board_client.make_move(self.game_id, move)
 
@@ -107,7 +113,7 @@ class Game(threading.Thread):
         global nl_inst
         # {'type': 'gameState', 'moves': 'd2d3 e7e6 b1c3', 'wtime': datetime.datetime( 1970, 1, 25, 20, 31, 23, 647000, tzinfo=datetime.timezone.utc ), 'btime': datetime.datetime( 1970, 1, 25, 20, 31, 23, 647000, tzinfo=datetime.timezone.utc ), 'winc': datetime.datetime( 1970, 1, 1, 0, 0, tzinfo=datetime.timezone.utc ), 'binc': datetime.datetime( 1970, 1, 1, 0, 0, tzinfo=datetime.timezone.utc ), 'bdraw': False, 'wdraw': False}
 
-        # logging.info(game_state)
+        # logger.info(game_state)
 
         # tmp_chessboard is used to get the current game state from API and parse it into something we can use
         tmp_chessboard = chess.Board()
@@ -123,13 +129,17 @@ class Game(threading.Thread):
 
         # tmp_chessboard.turn == True when white, false when black playing_white is same
         if tmp_chessboard.turn == self.playing_white:
-            logging.info("it is our turn")
+            logger.info("it is our turn")
 
+            nl_FEN = nl_inst.get_FEN()
+            nl_board = tmp_chessboard.copy()
+            nl_board.set_board_fen(nl_FEN)
+            print( f"NicLinked board prior to move\n{nl_board}")
 
             try:
                 for attempt in range(3):
                     move = nl_inst.await_move()  # await move from e-board the move from niclink
-                    logging.info(f"move from chessboard { move }")
+                    logger.info(f"move from chessboard { move }")
 
                     # make the move
                     self.make_move(move)
@@ -140,10 +150,10 @@ class Game(threading.Thread):
                 sys.exit(0)
             except:
                 e = sys.exc_info()[0]
-                logging.info(f"exception on make_move: {e}")
+                logger.info(f"exception on make_move: {e}")
             finally:
                 if attempt > 1:
-                    logging.debug(f"sleeping before retry")
+                    logger.debug(f"sleeping before retry")
                     time.sleep(3)
 
     def handle_chat_line(self, chat_line) -> None:
@@ -166,18 +176,18 @@ def handle_game_start(event) -> None:
 
     playing_white = game_data["color"] == "white"
 
-    logging.info(
-        f"\ngame start received: { game_data['id']}\n you play: { game_data['color'] }"
+    logger.info(
+        f"\ngame start received: { game_data['id']}\nyou play: { game_data['color'] }"
     )
 
     print(
-        f"\ngame board: { show_FEN_on_board(game_data['fen']) }\n your turn?: { game_data['isMyTurn'] }\n"
+        f"\ngame board: { show_FEN_on_board(game_data['fen']) }\nyour turn?: { game_data['isMyTurn'] }\n"
     )
 
     # check if game speed is correspondence, skip those if --correspondence argument is not set
     if not correspondence:
         if is_correspondence(game_data["id"]):
-            logging.info(f"skipping correspondence game: {game_data['id']}")
+            logger.info(f"skipping correspondence game: {game_data['id']}")
             return
     if game_data["hasMoved"]:
         """handle ongoing game"""
@@ -193,7 +203,7 @@ def handle_game_start(event) -> None:
     except berserk.exceptions.ResponseError as e:
         if "This game cannot be played with the Board API" in str(e):
             print("cannot play this game via board api")
-        logging.info(f"ERROR: {e}")
+        logger.info(f"ERROR: {e}")
         return
     except KeyboardInterrupt:
         print("KeyboardInterrupt: bye")
@@ -226,7 +236,7 @@ def is_correspondence(gameId) -> bool:
     except:
         e = sys.exc_info()[0]
         print(f"cannot determine game speed: {e}")
-        logging.info(f"cannot determine if game is correspondence: {e}")
+        logger.info(f"cannot determine if game is correspondence: {e}")
         return False
     return False
 
@@ -237,7 +247,9 @@ nl_inst = None
 
 
 def main():
-    global client, nl_inst
+    global client, nl_inst, REFRESH_DELAY
+
+    print("=== NicLink lichess main entered ===")
     simplejson_spec = importlib.util.find_spec("simplejson")
     if simplejson_spec is not None:
         print(
@@ -245,10 +257,10 @@ def main():
         )
         sys.exit(-1)
 
-    nl_inst = NicLinkManager(refresh_delay=2)
+    nl_inst = NicLinkManager(refresh_delay=REFRESH_DELAY)
 
     try:
-        logging.info(f"reading token from {TOKEN_FILE}")
+        logger.info(f"reading token from {TOKEN_FILE}")
         with open(TOKEN_FILE) as f:
             token = f.read().strip()
 
@@ -264,7 +276,7 @@ def main():
     except:
         e = sys.exc_info()[0]
         print(f"cannot create session: {e}")
-        logging.info(f"cannot create session {e}")
+        logger.info(f"cannot create session {e}")
         sys.exit(-1)
 
     try:
@@ -278,7 +290,7 @@ def main():
         sys.exit(0)
     except:
         e = sys.exc_info()[0]
-        logging.info(f"cannot create lichess client: {e}")
+        logger.info(f"cannot create lichess client: {e}")
         print(f"cannot create lichess client: {e}")
         sys.exit(-1)
 
@@ -292,20 +304,21 @@ def main():
         sys.exit(0)
     except:
         e = sys.exc_info()[0]
-        logging.info(f"cannot get lichess acount info: {e}")
+        logger.info(f"cannot get lichess acount info: {e}")
         print(f"cannot get lichess acount info: {e}")
         sys.exit(-1)
 
     # main program loop
     while True:
         try:
-            logging.debug(f"\n==== event loop ====\n")
+            logger.debug(f"\n==== event loop ====\n")
             for event in client.board.stream_incoming_events():
                 if event["type"] == "challenge":
                     print("\n==== Challenge received ====\n")
                     print(event)
                 elif event["type"] == "gameStart":
                     # a game is starting, it is handled by a function
+                    print("\n\n\n GAME START \n\n\n")
                     handle_game_start(event)
 
         except KeyboardInterrupt:
@@ -313,9 +326,12 @@ def main():
             sys.exit(0)
         except berserk.exceptions.ResponseError as e:
             print(f"ERROR: Invalid server response: {e}")
-            logging.info("Invalid server response: {e}")
+            logger.info("Invalid server response: {e}")
             if "Too Many Requests for url" in str(e):
                 time.sleep(10)
+
+        finally:
+            time.sleep(REFRESH_DELAY)
 
 
 if __name__ == "__main__":
