@@ -22,7 +22,6 @@ class NicLinkManager:
 
         if logger != None:
             self.logger = logger
-            self.logger.setLevel(logging.WARN)
         else:
             self.logger = logging.getLogger()
 
@@ -119,8 +118,14 @@ class NicLinkManager:
         self.nl_interface.lightsOut()
 
     def get_FEN(self) -> str:
-        """get the FEN from chessboard"""
+        """get the board FEN from chessboard"""
         return self.nl_interface.getFEN()
+    
+    def show_board_FEN_on_board( self, boardFEN ):
+        """show just the board part of FEN on asci chessboard"""
+        tmp_board = chess.Board()
+        tmp_board.set_board_fen( boardFEN )
+        print( tmp_board )
 
     def find_move_from_FEN_change(
         self, new_FEN
@@ -128,9 +133,13 @@ class NicLinkManager:
         """get the move that occured to change the game_board fen into a given FEN.
         return the move in coordinate notation
         """
-
-        if new_FEN == self.game_board.board_fen():
+        old_FEN = self.game_board.board_fen()
+        if new_FEN == old_FEN: 
+            print( "no fen diffrance" )
             raise NoMove("No FEN differance")
+
+        self.logger.debug( "new_FEN" + new_FEN )
+        self.logger.debug( "old FEN" + old_FEN ) 
 
         # get a list of the legal moves
         legal_moves = list(self.game_board.legal_moves)
@@ -138,6 +147,7 @@ class NicLinkManager:
         tmp_board = self.game_board.copy()
         self.logger.info(
             f"+++ find_move_from_FEN_change(...) called +++\n\
+current board: { self.show_board_FEN_on_board(self.get_FEN() ) } \n\
 board we are using to check legal moves: \n{self.game_board}"
         )
 
@@ -223,20 +233,30 @@ board we are using to check for moves:\n{ self.game_board }"
         self.set_led(move[2:4], True)  # dest
 
     def await_move(self) -> str:
-        """wait for a legal move, and return it in coordinate notation after making it on internal board"""
+        """wait for legal move, and return it in coordinate notation after making it on internal board"""
         # loop until we get a valid move
+        attempts = 0
         while True:
             # check for a move. If it move, return it else False
             try:
                 move = self.check_for_move()
             except NoMove:
                 # no move made, wait refresh_delay and continue
+                attempts += 1
+                self.logger.info(f"NoMove from chessboard. Attempt: {attempts}")
+                time.sleep(self.refresh_delay)
+                continue
+            except IllegalMove as err:
+                # IllegalMove made, waiting then trying again
+                attempts += 1
+                self.logger.error(f"{ err } | waiting refresh_delay={self.refresh_delay} and checking again.")
                 time.sleep(self.refresh_delay)
                 continue
 
             if move:
                 # a move has been played
                 self.make_move_game_board(move)
+                attempts = 0
                 return move
 
             # if no move has been played, sleep and check again

@@ -75,9 +75,9 @@ class Game(threading.Thread):
             return
         # otherwise, tell the user and exit
         if over_state["winner"]:
-            winner = "White"
-        else:
             winner = "Black"
+        else:
+            winner = "White"
         print(
             f"Winner: { winner } reason: {over_state['reason']} \n \
 have a nice day."
@@ -87,7 +87,7 @@ have a nice day."
 
     def handle_human_turn(self) -> None:
         """Handle a human turn in the game"""
-
+        global logger 
         logger.info("\n--- human turn ---\n")
 
         try:
@@ -98,13 +98,7 @@ have a nice day."
         except KeyboardInterrupt:
             print("Bye!")
             sys.exit(0)
-        except:
-            print(
-                "no move gotten from board, try again.\n when a move is on the board press a key."
-            )
-            readchar.readkey()
-            self.handle_human_turn()
-            return
+
 
         logger.info(f"move from chessboard { move }")
 
@@ -113,7 +107,7 @@ have a nice day."
 
     def handle_fish_turn(self) -> None:
         """handle fish's turn"""
-
+        global logger
         logger.info("Fish's turn")
         self.fish.set_fen_position(self.nl_inst.get_game_FEN())
 
@@ -131,6 +125,7 @@ have a nice day."
         # check for game over
         self.check_for_game_over()
 
+
     def start(self) -> None:
         """start playing the game"""
 
@@ -142,9 +137,8 @@ have a nice day."
     def run(self) -> None:
         """run the game thread"""
 
-        # main game loop
+       # main game loop
         while True:
-
             if self.playing_white:
                 # if we go first, go first
                 self.handle_human_turn()
@@ -160,6 +154,8 @@ have a nice day."
 def main():
     # NicLinkManager
     nl_inst = NicLinkManager(refresh_delay=2, logger=logger)
+
+    nl_inst.connect()
 
     print("\n%%%%%% NicLink vs Stockfish %%%%%%\n")
 
@@ -224,7 +220,9 @@ credit: https://chess.stackexchange.com/users/25998/eric\n"""
     playing_white = playing_w == "y"
 
     game = Game(nl_inst, playing_white, stockfish_level=sf_lvl)
-
+    print("game started")
+    if playing_white:
+        print("make a move please")
     game.start()
 
 
