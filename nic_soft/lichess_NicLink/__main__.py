@@ -260,7 +260,6 @@ def main():
     # init NicLink
     try:
         nl_inst = NicLinkManager(refresh_delay=REFRESH_DELAY)
-        nl_inst.connect()
     except:
         e = sys.exc_info()[0]
         print( f"error: { e } on NicLink connection. Exiting")

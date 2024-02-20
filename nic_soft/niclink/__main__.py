@@ -51,6 +51,8 @@ class NicLinkManager:
         # the status of the leds. We have to keep track of this
         self.led_status = self.ALL_LIGHTS_OUT
 
+        self.connect()
+
     def connect(self, bluetooth=False):
         """connect to the chessboard"""
 
