@@ -38,8 +38,7 @@ class NicLinkManager:
         self.game_board = chess.Board()
         # the last move the user has played
         self.last_move = None
-        # the status of the leds. We have to keep track of this
-        self.led_status = [
+        self.ALL_LIGHTS_OUT = [
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0],
@@ -49,6 +48,8 @@ class NicLinkManager:
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0],
         ]
+        # the status of the leds. We have to keep track of this
+        self.led_status = self.ALL_LIGHTS_OUT
 
     def connect(self, bluetooth=False):
         """connect to the chessboard"""
@@ -115,6 +116,7 @@ class NicLinkManager:
 
     def turn_off_all_leds(self):
         """turn off all the leds"""
+        self.led_status = self.ALL_LIGHTS_OUT
         self.nl_interface.lightsOut()
 
     def get_FEN(self) -> str:
@@ -166,6 +168,7 @@ board we are using to check legal moves: \n{self.game_board}"
 
         error_board = chess.Board()
         error_board.set_board_fen(new_FEN)
+        self.show_board_diff(error_board, self.game_board)
         message = f"\n {error_board }\nis not a possible result from a legal move on:\n{ self.game_board }"
         raise IllegalMove(message)
 
@@ -231,6 +234,7 @@ board we are using to check for moves:\n{ self.game_board }"
         self.set_led(move[:2], True)  # source
         self.logger.info(f"led on(dest): { move[2:4] }")
         self.set_led(move[2:4], True)  # dest
+
 
     def await_move(self) -> str:
         """wait for legal move, and return it in coordinate notation after making it on internal board"""
@@ -308,6 +312,8 @@ board we are using to check for moves:\n{ self.game_board }"
 
     def show_board_diff(self, board1, board2) -> None:
         """show the differance between two boards and output differance"""
+        # go through the squares and turn on the light for ones that are in error
+        self.nl_interface.lightsOut()
         for n in range(1, 9):
             for a in range(ord("a"), ord("h") + 1):
                 square = chr(a) + str(n)
@@ -317,8 +323,7 @@ board we are using to check for moves:\n{ self.game_board }"
                         f"Square { square } is not the same. \n board1: \
 { board1.piece_at(py_square) } \n board2: { board2.piece_at(py_square) }"
                     )
-                    self.beep()
-                    time.sleep(1)
+                    self.set_led(square, True)
                     self.beep()
 
     def get_game_FEN(self) -> str:

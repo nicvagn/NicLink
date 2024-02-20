@@ -37,8 +37,8 @@ correspondence = False
 if args.correspondence:
     correspondence = True
 
-DEBUG = True
-# DEBUG = False
+#DEBUG = True
+DEBUG = False
 if args.debug:
     DEBUG = True
 
@@ -257,7 +257,14 @@ def main():
         )
         sys.exit(-1)
 
-    nl_inst = NicLinkManager(refresh_delay=REFRESH_DELAY)
+    # init NicLink
+    try:
+        nl_inst = NicLinkManager(refresh_delay=REFRESH_DELAY)
+        nl_inst.connect()
+    except:
+        e = sys.exc_info()[0]
+        print( f"error: { e } on NicLink connection. Exiting")
+        sys.exit(-1)
 
     try:
         logger.info(f"reading token from {TOKEN_FILE}")
