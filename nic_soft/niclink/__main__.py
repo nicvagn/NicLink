@@ -262,7 +262,6 @@ board we are using to check for moves:\n{ self.game_board }"
             if move:
                 # a move has been played
                 self.make_move_game_board(move)
-                attempts = 0
                 return move
 
             # if no move has been played, sleep and check again

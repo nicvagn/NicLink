@@ -23,36 +23,18 @@ while leave == "n":
 
     # wait for a move
     try:
-        nl_inst.await_move()
+        move = nl_inst.await_move()
     except ValueError:
         print("No move, pausing for 3 seconds and trying again")
 
         time.sleep(3)
         continue
 
-    if nl_inst.check_for_move():
-        # beep to indicate a move was made
-        nl_inst.beep()
+    # show the internal board state
+    #nl_inst.show_game_board()
 
-        # show the post move fen on a board
-        nl_inst.show_game_board()
+    
 
-        try:
-            # find move from the FEN change
-            move = nl_inst.get_last_move()
-
-            print(f"\n_________ {move} detected ________\n")
-        except KeyboardInterrupt:
-            print("KeyboardInterrupt: bye")
-            sys.exit(0)
-        except RuntimeError as re:
-            print(f"{re} reset the board to the previous position an try again")
-            # print( f"previous position: \n{nl_inst.game_board}" )
-            print("leave? 'n' for no, != 'n' yes: ")
-            leave = readchar.readkey()
-
-            continue  # as move will not be defined
-
-    print("\n=================================\n")
+    print(f"\n==== { move } ====\n")
     print("leave? 'n' for no, != 'n' yes: ")
     leave = readchar.readkey()
