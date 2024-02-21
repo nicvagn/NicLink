@@ -140,6 +140,7 @@ class NicLinkManager:
         old_FEN = self.game_board.board_fen()
         if new_FEN == old_FEN: 
             print( "no fen diffrance" )
+            self.turn_off_all_leds()
             raise NoMove("No FEN differance")
 
         self.logger.debug( "new_FEN" + new_FEN )

@@ -105,7 +105,6 @@ class Game(threading.Thread):
     def make_move(self, move) -> None:
         """make a move in a lichess game"""
         logger.info(f"move made: { move }")
-
         self.berserk_board_client.make_move(self.game_id, move)
 
     def handle_state_change(self, game_state) -> None:
