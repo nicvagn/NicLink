@@ -5,8 +5,30 @@
     The main gateway that you will interact with is a class called NicLinkManeger
 
     it takes one required param ( refresh delay ) and one optional ( logger )
+
+nl_interface(the connection w physical board, usb or bluetoth):
+
+```
+/* =======================================
+ * connect does not return the chess ptr, but stores it in the cpp memory.
+ * This should be called before any other functions that use chess ptr.
+ * ======================================*/
+m.def("connect", &connect, "connect to chess board device with hid even if the device is not connected,\nit will automatically connect when the device is plugged into the computer");
+m.def("disconnect", &disconnect, "disconnect from the chessboard.");
+
+// switch modes
+m.def("uploadMode", &ChessLink::switchUploadMode, py::return_value_policy::copy, "Switch to upload mode.");
+m.def("realTimeMode", &ChessLink::switchRealTimeMode, py::return_value_policy::copy, "Switch to realtime mode.");
+// doers
+m.def("setLED", &setLED, "Set a LED on the chessboard. [[ void setLED(int x, int y, bool LEDsetting)]]");
+m.def("lightsOut", &lightsOut, "turn of all the lights [[ () ]]");
+m.def("beep", &beep, "Cause the chessboard to beep. [[ () ]]");
+// getters
+m.def("getFEN", &getFEN, py::return_value_policy::copy, "Get the FEN for the chessboard's cur position. [[ () ]]");
 ```
 
+NicLinkManager:
+```
 class NicLinkManager:
     """manage Chessnut air external board"""
 

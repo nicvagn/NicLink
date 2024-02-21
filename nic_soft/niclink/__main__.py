@@ -35,6 +35,9 @@ class NicLinkManager:
 
         self.refresh_delay = refresh_delay
 
+        # connect w the board
+        self.nl_interface.connect()
+
         # this instances game board
         self.game_board = chess.Board()
         # the last move the user has played
@@ -330,7 +333,6 @@ board we are using to check for moves:\n{ self.game_board }"
 
 if __name__ == "__main__":
     nl_instance = NicLinkManager(2, bluetooth=False)
-    nl_instance.connect()
 
     print("set up the board and press enter.")
     nl_instance.show_game_board()

@@ -37,8 +37,8 @@ correspondence = False
 if args.correspondence:
     correspondence = True
 
-DEBUG = True
-# DEBUG = False
+# DEBUG = True
+DEBUG = False
 if args.debug:
     DEBUG = True
 
@@ -105,7 +105,7 @@ class Game(threading.Thread):
     def make_move(self, move) -> None:
         """make a move in a lichess game"""
         logger.info(f"move made: { move }")
-
+        breakpoint()
         self.berserk_board_client.make_move(self.game_id, move)
 
     def handle_state_change(self, game_state) -> None:
@@ -244,7 +244,6 @@ def is_correspondence(gameId) -> bool:
 # globals, because why not
 client = None
 nl_inst = None
-
 
 def main():
     global client, nl_inst, REFRESH_DELAY

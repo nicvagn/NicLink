@@ -9,6 +9,9 @@ import asyncio
 from bleak import BleakClient
 from .constants import INITIALIZASION_CODE, WRITECHARACTERISTICS, READCONFIRMATION, READDATA, convertDict, MASKLOW
 
+from threading import Thread
+import time
+
 """ A api for getting the FEN etc. from the board with bluetooth """
 currentFEN = None
 oldData = None
@@ -21,29 +24,37 @@ led=bytearray([0x0A, 0x08, 0x1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
 
 def connect() -> bool:
     """try to connect to the board over bluetooth"""
-    breakpoint()
     connect = GetChessnutAirDevices()
     # get device
     asyncio.run(connect.discover())
     # connect to device
-    asyncio.run(run(connect))
+    connection_thread = Thread( target=asyncio.run, args = run(connect) )
+    connection_thread.start()
     
     
 def disconnect():
     """disscoiiect from the chessboard"""
-    print("BLUETOOTH DISCONECT. WHY WOULD I cALL THIS?")
+    print("BLUETOOTH DISCONECT. WHY WOULD I CALL THIS? DOES NOTHING RN")
 
 def beep():
     """make the chessboard beep"""
     print("BEEP")
+    beep=bytearray([0x0b, 0x04, 0x6f, 0x66, 0x66, 0x60, 0x60, 0x60, 0x66, 0x00])
+
 
 def getFEN() -> str:
     """get the FEN from the chessboard over bluetooth"""
     print("BLUETOOTH get fen")
+    # if there is no currentFEN wait and check again
+    if(currentFEN == None):
+        time.sleep( 1 )
+        if( currentFEN == None):
+           raise ValueError("No FEN from chessboard (bluetooth connection)")
     return currentFEN
 
 def lightsOut():
     """turn off all the chessboard lights"""
+    global led
     print("lights out bt")
     led=bytearray([0x0A, 0x08, 0x1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
     # send the led bytearray with all zero for last 8 bytes
@@ -51,7 +62,42 @@ def lightsOut():
 
 def setLED(x, y, status) -> None:
     """set a led on the chessboard"""
+    global led
     set_bit(led, y, status)
+
+    CLIENT.write_gatt_char(WRITECHARACTERISTICS, led)
+
+
+def updateFEN(data):
+    """update the FEN used by NicLink.
+    first two bytes should be 0x01 0x24.
+    The next 32 bytes specify the position. 
+
+    Each square has a value specifying the piece:
+Value 0 1 2 3 4 5 6 7 8 9 A B C
+Piece . q k b p n R P r B N Q K
+
+        q k b p n R P r B N Q K
+
+Each of the 32 bytes represents two squares with the order being the squares labelled
+H8,G8,F8...C1,B1,A1. Within each byte the lower 4 bits represent the first square and the
+higher 4 bits represent the second square. This means that if the 32 bits were written out in
+normal hex characters the pairs would actually appear reversed.
+For example, the 32 bytes for the normal starting position with black on the 7th and 8th ranks
+would be shown as:
+58 23 31 85 44 44 44 44 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 77 77 77 77 A6 C9 9B 6A
+So the first byte's value of 0x58 means a black rook (0x8) on H8 and a black knight (0x5) on
+G8 and the second byte's value of 0x23 means a black bishop (0x3) on F8 and a black king (0x2)
+on E8.
+    """
+    breakpoint()
+    for counterColum in range(0,8):
+        row = reversed(data[counterColum*4:counterColum*4+4])
+        for b in row:
+            print (convertDict[b >> 4],  convertDict[b & MASKLOW], end=" ")
+        print("")
+    print("    a b c d e f g h\n\n")
 
 
 
@@ -142,7 +188,8 @@ async def run(connect, debug=False):
         global oldData
         # print("data: ", ''.join('{:02x}'.format(x) for x in data))
         if data[2:34] != oldData:
-            printBoard(data[2:34])
+            #printBoard(data[2:34])
+            updateFEN(data[2:34])
             await leds(data[2:34])
             oldData = data[2:34].copy()
     global CLIENT
