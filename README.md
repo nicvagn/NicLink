@@ -1,7 +1,8 @@
 # NicLink - A python interface for the Chessnut Air
 
 # Notice
-> version 0.4
+> version 0.5
+
 > checkout this software, it solves the problem's I wannted to solve with NicLink:
     https://chromewebstore.google.com/detail/chessconnect/dmkkcjpbclkkhbdnjgcciohfbnpoaiam?hl=en-GB
 
@@ -12,6 +13,7 @@
     - branches:
         - master: behind the times. More likely to be solid
         - dev: the wild west of new features
+        - bluetooth: in dev, not in a good place yet
 
 ## Using the board on lichess with the board api
         
