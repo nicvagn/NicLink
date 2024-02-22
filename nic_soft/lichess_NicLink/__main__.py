@@ -31,13 +31,13 @@ parser.add_argument("--debug", action="store_true")
 args = parser.parse_args()
 
 # refresh refresh delay for NicLink and Lichess 
-REFRESH_DELAY = 2
+REFRESH_DELAY = 1
 
 correspondence = False
 if args.correspondence:
     correspondence = True
 
-# DEBUG = True
+#DEBUG = True
 DEBUG = False
 if args.debug:
     DEBUG = True
@@ -88,6 +88,8 @@ class Game(threading.Thread):
         # current state from stream
         self.current_state = next(self.stream)
 
+        self.stop_event = threading.Event()
+
         # stuff about cur game
         self.playing_white = playing_white
         self.game_board = chess.Board()
@@ -97,16 +99,28 @@ class Game(threading.Thread):
 
     def run(self) -> None:
         for event in self.stream:
-            if event["type"] == "gameState":
-                self.handle_state_change(event)
-            elif event["type"] == "chatLine":
-                self.handle_chat_line(event)
+            if not self.stop_event.is_set():
+                if event["type"] == "gameState":
+                    self.handle_state_change(event)
+                elif event["type"] == "chatLine":
+                    self.handle_chat_line(event)
+            else:
+                break
+        
+        print("good game")
+        breakpoint()
 
     def make_move(self, move) -> None:
         """make a move in a lichess game"""
         logger.info(f"move made: { move }")
-        breakpoint()
-        self.berserk_board_client.make_move(self.game_id, move)
+        while True:
+            try:
+                self.berserk_board_client.make_move(self.game_id, move)
+            except berserk.exceptions.ResponseError:
+                print("ResponseError: trying again")
+                continue
+            else:
+                break
 
     def handle_state_change(self, game_state) -> None:
         """Handle a state change in the lichess game."""
@@ -124,6 +138,25 @@ class Game(threading.Thread):
             tmp_chessboard.push_uci(move)
             last_move = move
 
+        # check for game over
+        result = tmp_chessboard.outcome()
+        if result is not None:
+            nl_inst.beep()
+
+            # set the winner var
+            if result.winner is None:
+                winner = "no winner"
+            elif result.winner:
+                winner = "White"
+            else:
+                winner = "Black"
+
+            self.stop_event.set() # set event to stop thread
+            print( f"\n--- GAME OVER ---\nreason: {result.termination}\nwinner: {winner}")
+            # stop the tread
+            raise Exception("Game over") 
+
+
         # set this board as NicLink game board
         nl_inst.set_game_board(tmp_chessboard)
 
@@ -131,10 +164,10 @@ class Game(threading.Thread):
         if tmp_chessboard.turn == self.playing_white:
             logger.info("it is our turn")
 
-            nl_FEN = nl_inst.get_FEN()
-            nl_board = tmp_chessboard.copy()
-            nl_board.set_board_fen(nl_FEN)
-            print( f"NicLinked board prior to move\n{nl_board}")
+            #nl_board = tmp_chessboard.copy() # set the NicLink board as the nl board for checking moves
+            #nl_FEN = nl_inst.get_FEN() # 
+            #nl_board.set_board_fen(nl_FEN)
+            print( f"board prior to move\n{tmp_chessboard}")
 
             try:
                 for attempt in range(3):
@@ -256,20 +289,25 @@ def main():
         )
         sys.exit(-1)
 
-    nl_inst = NicLinkManager(refresh_delay=REFRESH_DELAY)
+    # init NicLink
+    try:
+        nl_inst = NicLinkManager(refresh_delay=REFRESH_DELAY)
+    except:
+        e = sys.exc_info()[0]
+        print( f"error: { e } on NicLink connection. Exiting")
+        sys.exit(-1)
 
     try:
         logger.info(f"reading token from {TOKEN_FILE}")
         with open(TOKEN_FILE) as f:
             token = f.read().strip()
-
+    
     except FileNotFoundError:
         print(f"ERROR: cannot find token file")
         sys.exit(-1)
     except PermissionError:
         print(f"ERROR: permission denied on token file")
         sys.exit(-1)
-
     try:
         session = berserk.TokenSession(token)
     except:

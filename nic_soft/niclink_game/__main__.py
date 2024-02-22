@@ -27,10 +27,7 @@ import chess
 # NicLink shit
 from niclink import NicLinkManager
 
-# the fish
-from stockfish import Stockfish
-
-logger = logging.getLogger("NL play Fish")
+logger = logging.getLogger("NL game")
 logger.setLevel(logging.INFO)
 
 # create console handler and set level to debug
@@ -51,15 +48,12 @@ class Game(threading.Thread):
     """a chessgame with stockfish handled in it's own thread"""
 
     def __init__(
-        self, NicLinkManager, playing_white, stockfish_level=5, **kwargs
+        self, NicLinkManager, playing_white, **kwargs
     ) -> None:
         super().__init__(**kwargs)
         self.nl_inst = NicLinkManager
         # bool of if your playing white
         self.playing_white = playing_white
-        # init stockfish
-        self.fish = Stockfish()
-        self.fish.set_skill_level(stockfish_level)
         # list of all the game moves
         self.moves = []
         # is the game over?
@@ -105,21 +99,13 @@ have a nice day."
         # check if the game is done
         self.check_for_game_over()
 
-    def handle_fish_turn(self) -> None:
-        """handle fish's turn"""
+    def handle_opponent_turn(self) -> None:
+        """handle opponent turn"""
         global logger
-        logger.info("Fish's turn")
-        self.fish.set_fen_position(self.nl_inst.get_game_FEN())
+        logger.info("handle opponent turn")
 
-        # get stockfishes move
-        fish_move = chess.Move.from_uci(self.fish.get_best_move())
-        logger.info(f"Fish's move { fish_move }")
 
-        # make move on the niclink internal board
-        self.nl_inst.make_move_game_board(fish_move)
-        self.nl_inst.set_move_LEDs(fish_move)
-
-        print(f"board after fish turn:")
+        print(f"board after opponent turn:")
         self.nl_inst.show_game_board()
 
         # check for game over
@@ -144,7 +130,7 @@ have a nice day."
                 self.handle_human_turn()
 
             # do the fish turn
-            self.handle_fish_turn()
+            self.handle_opponent_turn()
 
             if not self.playing_white:
                 # case we are black
@@ -157,9 +143,8 @@ def main():
 
     nl_inst.connect()
 
-    print("\n%%%%%% NicLink vs Stockfish %%%%%%\n")
+    print("\n%%%%%% NicLink vs x %%%%%%\n")
 
-    print("What level do you want for the fish? (1 - 33) for info enter i, else level")
 
     while True:
         sf_lvl = input("level (1 - 33):")

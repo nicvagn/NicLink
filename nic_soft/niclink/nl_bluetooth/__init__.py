@@ -69,7 +69,7 @@ def setLED(x, y, status) -> None:
 
 
 def updateFEN(data):
-    """update the FEN used by NicLink.
+    """update the currentFEN
     first two bytes should be 0x01 0x24.
     The next 32 bytes specify the position. 
 
@@ -91,15 +91,25 @@ So the first byte's value of 0x58 means a black rook (0x8) on H8 and a black kni
 G8 and the second byte's value of 0x23 means a black bishop (0x3) on F8 and a black king (0x2)
 on E8.
     """
-    breakpoint()
-    for counterColum in range(0,8):
-        row = reversed(data[counterColum*4:counterColum*4+4])
+    chessboard = [ 8 ]
+    for col_num in range(0,8):
+        empty = 0 # a value for setting empty part's of the fen
+        row = reversed(data[col_num*4:col_num*4+4])
+        print(row)
+        # chessboard[col_num] = row
+        byte_num = 0
+        convertedRow = []
         for b in row:
-            print (convertDict[b >> 4],  convertDict[b & MASKLOW], end=" ")
-        print("")
-    print("    a b c d e f g h\n\n")
+            breakpoint()
+            if(b >> 4 == 0):
+                empty += 1
+                breakpoint()
+                continue
+            convertedRow[byte_num] = (convertDict[b >> 4],  convertDict[b & MASKLOW])
+            byte_num += 1
 
-
+        chessboard[col_num] = convertedRow 
+    print(chessboard)
 
 def set_bit(v, index, x):
     """Set the index:th bit of v to 1 if x is truthy, 
@@ -189,7 +199,7 @@ async def run(connect, debug=False):
         # print("data: ", ''.join('{:02x}'.format(x) for x in data))
         if data[2:34] != oldData:
             #printBoard(data[2:34])
-            updateFEN(data[2:34])
+            updateFEN( data[2:34] )
             await leds(data[2:34])
             oldData = data[2:34].copy()
     global CLIENT

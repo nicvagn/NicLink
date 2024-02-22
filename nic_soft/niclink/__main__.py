@@ -22,7 +22,6 @@ class NicLinkManager:
 
         if logger != None:
             self.logger = logger
-            self.logger.setLevel(logging.WARN)
         else:
             self.logger = logging.getLogger()
 
@@ -42,8 +41,7 @@ class NicLinkManager:
         self.game_board = chess.Board()
         # the last move the user has played
         self.last_move = None
-        # the status of the leds. We have to keep track of this
-        self.led_status = [
+        self.ALL_LIGHTS_OUT = [
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0],
@@ -53,8 +51,12 @@ class NicLinkManager:
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0],
         ]
+        # the status of the leds. We have to keep track of this
+        self.led_status = self.ALL_LIGHTS_OUT
 
-    def connect(self, bluetooth=False):
+        self.connect(bluetooth)
+
+    def connect(self):
         """connect to the chessboard"""
 
         # connect to the chessboard, this must be done first
@@ -119,11 +121,18 @@ class NicLinkManager:
 
     def turn_off_all_leds(self):
         """turn off all the leds"""
+        self.led_status = self.ALL_LIGHTS_OUT
         self.nl_interface.lightsOut()
 
     def get_FEN(self) -> str:
-        """get the FEN from chessboard"""
+        """get the board FEN from chessboard"""
         return self.nl_interface.getFEN()
+    
+    def show_board_FEN_on_board( self, boardFEN ):
+        """show just the board part of FEN on asci chessboard"""
+        tmp_board = chess.Board()
+        tmp_board.set_board_fen( boardFEN )
+        print( tmp_board )
 
     def find_move_from_FEN_change(
         self, new_FEN
@@ -131,9 +140,14 @@ class NicLinkManager:
         """get the move that occured to change the game_board fen into a given FEN.
         return the move in coordinate notation
         """
-
-        if new_FEN == self.game_board.board_fen():
+        old_FEN = self.game_board.board_fen()
+        if new_FEN == old_FEN: 
+            print( "no fen diffrance" )
+            self.turn_off_all_leds()
             raise NoMove("No FEN differance")
+
+        self.logger.debug( "new_FEN" + new_FEN )
+        self.logger.debug( "old FEN" + old_FEN ) 
 
         # get a list of the legal moves
         legal_moves = list(self.game_board.legal_moves)
@@ -141,6 +155,7 @@ class NicLinkManager:
         tmp_board = self.game_board.copy()
         self.logger.info(
             f"+++ find_move_from_FEN_change(...) called +++\n\
+current board: { self.show_board_FEN_on_board(self.get_FEN() ) } \n\
 board we are using to check legal moves: \n{self.game_board}"
         )
 
@@ -159,7 +174,8 @@ board we are using to check legal moves: \n{self.game_board}"
 
         error_board = chess.Board()
         error_board.set_board_fen(new_FEN)
-        message = f"\n {error_board }\nis not a possible result from a legal move on:\n{ self.game_board }"
+        self.show_board_diff(error_board, self.game_board)
+        message = f"Board we see:\n{ error_board }\nis not a possible result from a legal move on:\n{ self.game_board }"
         raise IllegalMove(message)
 
     def check_for_move(self) -> bool:
@@ -222,18 +238,30 @@ board we are using to check for moves:\n{ self.game_board }"
 
         self.logger.info(f"led on(origin): { move[:2] }")
         self.set_led(move[:2], True)  # source
+
         self.logger.info(f"led on(dest): { move[2:4] }")
         self.set_led(move[2:4], True)  # dest
 
+
+
     def await_move(self) -> str:
-        """wait for a legal move, and return it in coordinate notation after making it on internal board"""
+        """wait for legal move, and return it in coordinate notation after making it on internal board"""
         # loop until we get a valid move
+        attempts = 0
         while True:
             # check for a move. If it move, return it else False
             try:
                 move = self.check_for_move()
             except NoMove:
                 # no move made, wait refresh_delay and continue
+                attempts += 1
+                self.logger.info(f"NoMove from chessboard. Attempt: {attempts}")
+                time.sleep(self.refresh_delay)
+                continue
+            except IllegalMove as err:
+                # IllegalMove made, waiting then trying again
+                attempts += 1
+                self.logger.error(f"{ err } | waiting refresh_delay={self.refresh_delay} and checking again.")
                 time.sleep(self.refresh_delay)
                 continue
 
@@ -291,18 +319,21 @@ board we are using to check for moves:\n{ self.game_board }"
 
     def show_board_diff(self, board1, board2) -> None:
         """show the differance between two boards and output differance"""
+        # go through the squares and turn on the light for ones that are in error
+        self.nl_interface.lightsOut()
         for n in range(1, 9):
             for a in range(ord("a"), ord("h") + 1):
                 square = chr(a) + str(n)
                 py_square = chess.parse_square(square)
                 if board1.piece_at(py_square) != board2.piece_at(py_square):
                     print(
-                        f"Square { square } is not the same. \n board1: \
+                        f"\n\nSquare { square } is not the same. \n board1: \
 { board1.piece_at(py_square) } \n board2: { board2.piece_at(py_square) }"
                     )
+                    self.set_led(square, True)
                     self.beep()
+                    # sleep to give a chanch to fix
                     time.sleep(1)
-                    self.beep()
 
     def get_game_FEN(self) -> str:
         """get the game board FEN"""
@@ -329,11 +360,18 @@ board we are using to check for moves:\n{ self.game_board }"
             }
 
         return False
+def test_bt():
+    """ test nl_bluetooth """
 
 
 if __name__ == "__main__":
-    nl_instance = NicLinkManager(2, bluetooth=False)
+    nl_instance = NicLinkManager(2, bluetooth=True)
 
+def test_usb():
+    """test usb connection"""
+
+    nl_instance = NicLinkManager(2)
+    nl_instance.connect()
     print("set up the board and press enter.")
     nl_instance.show_game_board()
     print("===============")
@@ -343,3 +381,7 @@ if __name__ == "__main__":
     while leave == "n":
         move = nl_instance.await_move()
         print(move)
+
+if __name__ == "__main__":
+    #test_bt()
+    test_usb()
