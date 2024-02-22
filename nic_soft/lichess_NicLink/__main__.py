@@ -31,7 +31,7 @@ parser.add_argument("--debug", action="store_true")
 args = parser.parse_args()
 
 # refresh refresh delay for NicLink and Lichess 
-REFRESH_DELAY = 2
+REFRESH_DELAY = 1
 
 correspondence = False
 if args.correspondence:
@@ -118,6 +118,7 @@ class Game(threading.Thread):
                 self.berserk_board_client.make_move(self.game_id, move)
             except berserk.exceptions.ResponseError:
                 print("ResponseError: trying again")
+                continue
             else:
                 break
 
@@ -163,10 +164,10 @@ class Game(threading.Thread):
         if tmp_chessboard.turn == self.playing_white:
             logger.info("it is our turn")
 
-            nl_FEN = nl_inst.get_FEN()
-            nl_board = tmp_chessboard.copy()
-            nl_board.set_board_fen(nl_FEN)
-            print( f"NicLinked board prior to move\n{nl_board}")
+            #nl_board = tmp_chessboard.copy() # set the NicLink board as the nl board for checking moves
+            #nl_FEN = nl_inst.get_FEN() # 
+            #nl_board.set_board_fen(nl_FEN)
+            print( f"board prior to move\n{tmp_chessboard}")
 
             try:
                 for attempt in range(3):

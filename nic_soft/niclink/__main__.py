@@ -235,8 +235,10 @@ board we are using to check for moves:\n{ self.game_board }"
 
         self.logger.info(f"led on(origin): { move[:2] }")
         self.set_led(move[:2], True)  # source
+
         self.logger.info(f"led on(dest): { move[2:4] }")
         self.set_led(move[2:4], True)  # dest
+
 
 
     def await_move(self) -> str:
@@ -322,11 +324,13 @@ board we are using to check for moves:\n{ self.game_board }"
                 py_square = chess.parse_square(square)
                 if board1.piece_at(py_square) != board2.piece_at(py_square):
                     print(
-                        f"Square { square } is not the same. \n board1: \
+                        f"\n\nSquare { square } is not the same. \n board1: \
 { board1.piece_at(py_square) } \n board2: { board2.piece_at(py_square) }"
                     )
                     self.set_led(square, True)
                     self.beep()
+                    # sleep to give a chanch to fix
+                    time.sleep(1)
 
     def get_game_FEN(self) -> str:
         """get the game board FEN"""
@@ -353,12 +357,17 @@ board we are using to check for moves:\n{ self.game_board }"
             }
 
         return False
+def test_bt():
+    """ test nl_bluetooth """
 
-
-if __name__ == "__main__":
-    nl_instance = NicLinkManager(2, bluetooth=False)
+    nl_instance = NicLinkManager(2, bluetooth=True)
     nl_instance.connect()
 
+def test_usb():
+    """test usb connection"""
+
+    nl_instance = NicLinkManager(2)
+    nl_instance.connect()
     print("set up the board and press enter.")
     nl_instance.show_game_board()
     print("===============")
@@ -368,3 +377,7 @@ if __name__ == "__main__":
     while leave == "n":
         move = nl_instance.await_move()
         print(move)
+
+if __name__ == "__main__":
+    #test_bt()
+    test_usb()
