@@ -113,7 +113,13 @@ class Game(threading.Thread):
     def make_move(self, move) -> None:
         """make a move in a lichess game"""
         logger.info(f"move made: { move }")
-        self.berserk_board_client.make_move(self.game_id, move)
+        while True:
+            try:
+                self.berserk_board_client.make_move(self.game_id, move)
+            except berserk.exceptions.ResponseError:
+                print("ResponseError: trying again")
+            else:
+                break
 
     def handle_state_change(self, game_state) -> None:
         """Handle a state change in the lichess game."""
