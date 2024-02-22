@@ -172,7 +172,7 @@ board we are using to check legal moves: \n{self.game_board}"
         error_board = chess.Board()
         error_board.set_board_fen(new_FEN)
         self.show_board_diff(error_board, self.game_board)
-        message = f"\n {error_board }\nis not a possible result from a legal move on:\n{ self.game_board }"
+        message = f"Board we see:\n{ error_board }\nis not a possible result from a legal move on:\n{ self.game_board }"
         raise IllegalMove(message)
 
     def check_for_move(self) -> bool:
