@@ -362,16 +362,25 @@ board we are using to check for moves:\n{ self.game_board }"
         return False
 def test_bt():
     """ test nl_bluetooth """
+    try:
+        print("--- test bluetoth ---")
+        nl_instance = NicLinkManager(2, bluetooth=True)
 
+        leave = "n"
+        while leave == "n":
+            print("awaiting move") 
+            nl_instance.show_board_state()
+            move = nl_instance.await_move()
+            print(f"the move was {move}\nLeave? 'n' for no:")        
+            leave = readchar.readkey()
 
-if __name__ == "__main__":
-    nl_instance = NicLinkManager(2, bluetooth=True)
+    except KeyboardInterrupt:
+        sys.exit()
 
 def test_usb():
     """test usb connection"""
 
     nl_instance = NicLinkManager(2)
-    nl_instance.connect()
     print("set up the board and press enter.")
     nl_instance.show_game_board()
     print("===============")
@@ -380,8 +389,9 @@ def test_usb():
     leave = "n"
     while leave == "n":
         move = nl_instance.await_move()
-        print(move)
+        print(f"the move was {move}\nLeave? 'n' for no:")        
+        leave = readchar.readkey()
 
 if __name__ == "__main__":
-    #test_bt()
-    test_usb()
+    test_bt()
+    #test_usb()

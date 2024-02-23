@@ -91,25 +91,30 @@ So the first byte's value of 0x58 means a black rook (0x8) on H8 and a black kni
 G8 and the second byte's value of 0x23 means a black bishop (0x3) on F8 and a black king (0x2)
 on E8.
     """
-    chessboard = [ 8 ]
-    for col_num in range(0,8):
-        empty = 0 # a value for setting empty part's of the fen
-        row = reversed(data[col_num*4:col_num*4+4])
-        print(row)
-        # chessboard[col_num] = row
-        byte_num = 0
-        convertedRow = []
-        for b in row:
-            breakpoint()
-            if(b >> 4 == 0):
-                empty += 1
-                breakpoint()
-                continue
-            convertedRow[byte_num] = (convertDict[b >> 4],  convertDict[b & MASKLOW])
-            byte_num += 1
 
-        chessboard[col_num] = convertedRow 
-    print(chessboard)
+    # notes: each byte is two squares
+    chessboard = [ 8 ]
+    for row_num in range(0,4):
+        empty = 0 # a value for setting empty part's of the fen
+        row = list(reversed(data[row_num*4:row_num*4+4]))
+        print(f"row: {row}")
+        byte_num = 0
+        chessboard[row_num] = [8]
+        for b in row:
+            # break the byte into two squares
+            square1 = convertDict[b >> 4]
+            square2 = convertDict[b & MASKLOW]
+            print(f"square1: {square1}, square2: {square2}")
+            if(square1 == '.'):
+                empty += 1
+            if(square2 == '.'):
+                empty += 1
+            breakpoint()
+            chessboard[row_num].insert(byte_num, square1)  # set the first square
+            chessboard[row_num].insert(byte_num + 1, square2) # and the second square of the byte
+            byte_num += 1 # what byte we are at
+
+    print(chessboar)
 
 def set_bit(v, index, x):
     """Set the index:th bit of v to 1 if x is truthy, 
