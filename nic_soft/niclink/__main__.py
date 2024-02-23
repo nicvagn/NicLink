@@ -35,7 +35,7 @@ class NicLinkManager:
         self.refresh_delay = refresh_delay
 
         # connect w the board
-        self.nl_interface.connect()
+        self.connect()
 
         # this instances game board
         self.game_board = chess.Board()
@@ -54,7 +54,7 @@ class NicLinkManager:
         # the status of the leds. We have to keep track of this
         self.led_status = self.ALL_LIGHTS_OUT
 
-        self.connect(bluetooth)
+        self.connect()
 
     def connect(self):
         """connect to the chessboard"""
@@ -360,10 +360,12 @@ board we are using to check for moves:\n{ self.game_board }"
             }
 
         return False
+
 def test_bt():
     """ test nl_bluetooth """
     try:
         print("--- test bluetoth ---")
+        breakpoint()
         nl_instance = NicLinkManager(2, bluetooth=True)
 
         leave = "n"
@@ -380,7 +382,7 @@ def test_bt():
 def test_usb():
     """test usb connection"""
 
-    nl_instance = NicLinkManager(2)
+    nl_instance = NicLinkManager(2, bluetoth=False)
     print("set up the board and press enter.")
     nl_instance.show_game_board()
     print("===============")

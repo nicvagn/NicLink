@@ -24,11 +24,13 @@ led=bytearray([0x0A, 0x08, 0x1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
 
 def connect() -> bool:
     """try to connect to the board over bluetooth"""
+    print("nl_bluetoth, connect entered")
     connect = GetChessnutAirDevices()
     # get device
     asyncio.run(connect.discover())
     # connect to device
-    connection_thread = Thread( target=asyncio.run, args = run(connect) )
+    breakpoint()
+    connection_thread = Thread( target=asyncio.run,  args = (connect,))# args = run(connect) )
     connection_thread.start()
     
     
@@ -49,7 +51,8 @@ def getFEN() -> str:
     if(currentFEN == None):
         time.sleep( 1 )
         if( currentFEN == None):
-           raise ValueError("No FEN from chessboard (bluetooth connection)")
+            print("no fen bt")
+            #raise ValueError("No FEN from chessboard (bluetooth connection)")
     return currentFEN
 
 def lightsOut():
@@ -67,8 +70,9 @@ def setLED(x, y, status) -> None:
 
     CLIENT.write_gatt_char(WRITECHARACTERISTICS, led)
 
-
-def updateFEN(data):
+Tdata = bytearray([0x0A, 0x08, 0x1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
+#def updateFEN(data):
+def updateFEN(Tdata):
     """update the currentFEN
     first two bytes should be 0x01 0x24.
     The next 32 bytes specify the position. 
@@ -94,27 +98,47 @@ on E8.
 
     # notes: each byte is two squares
     chessboard = [ 8 ]
-    for row_num in range(0,4):
+    for pair_num in range(0,4):
+        """ pair_num is the index of one byte that represents 2 squares """
         empty = 0 # a value for setting empty part's of the fen
-        row = list(reversed(data[row_num*4:row_num*4+4]))
+        row = list(reversed(data[pair_num*4:pair_num*4+4]))
         print(f"row: {row}")
         byte_num = 0
-        chessboard[row_num] = [8]
+        chessboard[pair_num] = [8]
         for b in row:
             # break the byte into two squares
             square1 = convertDict[b >> 4]
             square2 = convertDict[b & MASKLOW]
             print(f"square1: {square1}, square2: {square2}")
+            
+            # first square of the byte
             if(square1 == '.'):
                 empty += 1
+            else:
+                if empty == 0:
+                    foundFEN += square1
+                else:
+                    # add the square to the FEN
+                    foundFEN += str(empty)
+                    empty = 0
+                    foundFEN += square1
+
+            # second square
             if(square2 == '.'):
                 empty += 1
+            else:
+                # add the square to the FEN
+                if empty == 0:
+                    foundFEN += square2
+                else:
+                    foundFEN += str(empty)
+
             breakpoint()
-            chessboard[row_num].insert(byte_num, square1)  # set the first square
-            chessboard[row_num].insert(byte_num + 1, square2) # and the second square of the byte
+            chessboard[pair_num].insert(byte_num, square1)  # set the first square
+            chessboard[pair_num].insert(byte_num + 1, square2) # and the second square of the byte
             byte_num += 1 # what byte we are at
 
-    print(chessboar)
+    print(chessboard)
 
 def set_bit(v, index, x):
     """Set the index:th bit of v to 1 if x is truthy, 
@@ -148,6 +172,7 @@ So the first byte's value of 0x58 means a black rook (0x8) on H8 and a black kni
 G8 and the second byte's value of 0x23 means a black bishop (0x3) on F8 and a black king (0x2)
 on E8.
     """
+    breakpoint()
     for counterColum in range(0,8):
         print(8-counterColum, " ", end=" ")
         row = reversed(data[counterColum*4:counterColum*4+4])
@@ -203,8 +228,9 @@ async def run(connect, debug=False):
         global oldData
         # print("data: ", ''.join('{:02x}'.format(x) for x in data))
         if data[2:34] != oldData:
-            #printBoard(data[2:34])
-            updateFEN( data[2:34] )
+            printBoard(data[2:34])
+            breakpoint()
+            #updateFEN( data[2:34] )
             await leds(data[2:34])
             oldData = data[2:34].copy()
     global CLIENT
@@ -221,8 +247,9 @@ async def run(connect, debug=False):
 if __name__ == "__main__":
     connect = GetChessnutAirDevices()
     # get device
+    breakpoint()
     asyncio.run(connect.discover())
     # connect to device
-    asyncio.run(run(connect))
+    asyncio.run(run(connect, debug=True))
     
 
