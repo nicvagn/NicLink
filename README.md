@@ -22,11 +22,16 @@
     only the text of your lichess auth token.
 
     example:
-         filename: nic_sof/niclink_lichess/token
-         content: lip_5PIkq4soaF3XyFGvelx
+         `filename: nic_sof/niclink_lichess/token`
+         `content: lip_5PIkq4soaF3XyFGvelx`
 
+    then cd .. and run python niclink_lichess
 
-   then cd .. and run python niclink_lichess
+    It can play games that can be played w board API ( only tested rapid and classical ).
+
+    The board will beap at you when an inncorect position is on the board.
+
+    After A game is through, you can start another without restarting NicLink.
 
 ## Use with gnu/linux:
 
@@ -61,7 +66,7 @@
 
 ## Connecty w bluetooth
 
-    not mature enough to doc, but exists
+    not mature enough to doc, but exists (Is a broken mess, save yourself)
 
 ## have something to add/suggest?
 
