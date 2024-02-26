@@ -9,6 +9,7 @@
 ## overview 
 
     - see the python requirements.txt for external requirements
+    - run updateNicLink.sh to compile and prepaire the env
     - only tested on gnu/linux with a chessnut air.
     - branches:
         - master: behind the times. More likely to be solid
