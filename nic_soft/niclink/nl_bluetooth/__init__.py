@@ -4,13 +4,14 @@
 #
 #  You should have received a copy of the GNU General Public License along with NicLink. If not, see <https://www.gnu.org/licenses/>.
 
-from .discovery import  GetChessnutAirDevices
+from discovery import  GetChessnutAirDevices
 import asyncio
 from bleak import BleakClient
-from .constants import INITIALIZASION_CODE, WRITECHARACTERISTICS, READCONFIRMATION, READDATA, convertDict, MASKLOW
+from constants import INITIALIZASION_CODE, WRITECHARACTERISTICS, READCONFIRMATION, READDATA, convertDict, MASKLOW
 
 from threading import Thread
 import time
+import math
 
 """ A api for getting the FEN etc. from the board with bluetooth """
 currentFEN = None
@@ -25,14 +26,10 @@ led=bytearray([0x0A, 0x08, 0x1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
 def connect() -> bool:
     """try to connect to the board over bluetooth"""
     print("nl_bluetoth, connect entered")
-    connect = GetChessnutAirDevices()
-    # get device
-    asyncio.run(connect.discover())
-    # connect to device
     breakpoint()
-    connection_thread = Thread( target=asyncio.run,  args = (connect,))# args = run(connect) )
+    loop = asyncio.new_event_loop()
+    connection_thread = Thread( target=_start_async)# args = run(connect) )
     connection_thread.start()
-    
     
 def disconnect():
     """disscoiiect from the chessboard"""
@@ -70,9 +67,19 @@ def setLED(x, y, status) -> None:
 
     CLIENT.write_gatt_char(WRITECHARACTERISTICS, led)
 
+def _start_async():
+    """start the bluetoth connection"""
+    # get te device
+    connect = GetChessnutAirDevices()
+    # get device
+    asyncio.run(connect.discover())
+    # connect to device in a new thread
+
+    asyncio.run(run(connect, debug=True))
+
 Tdata = bytearray([0x0A, 0x08, 0x1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
+def updateFEN(data):
 #def updateFEN(data):
-def updateFEN(Tdata):
     """update the currentFEN
     first two bytes should be 0x01 0x24.
     The next 32 bytes specify the position. 
@@ -96,6 +103,29 @@ G8 and the second byte's value of 0x23 means a black bishop (0x3) on F8 and a bl
 on E8.
     """
 
+    fen = ""
+    empty = 0
+    
+    for i in range(8): 
+        for j in range(8):
+            #breakpoint()
+            print(int(data[int((i * 8 + j) / 2 + 2)] & 0x0f) )
+            print(data[int(math.floor((i * 8 + j) / 2 + 2))] >> 4)
+            piece = convertDict[int(data[int((i * 8 + j) / 2 + 2)] & 0x0f)] if (j % 2 == 0) else convertDict [data[int(math.floor((i * 8 + j) / 2 + 2))] >> 4]
+        if (piece == '0'):
+            empty += 1;
+        else:
+            if (empty > 0):
+                fen += str(empty)
+            empty = 0;
+        if (piece != '0'):
+            fen += str(empty)
+   
+        if (empty > 0):
+            fen += str(empty)
+        if (i < 7):
+            fen += "/"
+    '''
     # notes: each byte is two squares
     chessboard = [ 8 ]
     for pair_num in range(0,4):
@@ -139,7 +169,9 @@ on E8.
             byte_num += 1 # what byte we are at
 
     print(chessboard)
+    '''
 
+    print(fen)
 def set_bit(v, index, x):
     """Set the index:th bit of v to 1 if x is truthy, 
     else to 0, and return the new value."""
@@ -243,13 +275,46 @@ async def run(connect, debug=False):
         await client.write_gatt_char(WRITECHARACTERISTICS, INITIALIZASION_CODE) # send initialisation string
         await asyncio.sleep(100.0) ## wait 100 seconds
         await client.stop_notify(READDATA) # stop the notification handler
-
+"""
+string toFen(unsigned char *data, size_t length) {
+  if (length <= 32) {
+    return "";
+  }
+  string fen = "";
+  int empty = 0;
+  for (int i = 0; i < 8; i++) {
+    for (int j = 7; j >= 0; j--) {
+      char piece =
+          j % 2 == 0
+              ? CHESS_PIECES[data[(i * 8 + j) / 2 + 2] & 0x0f]
+              : CHESS_PIECES
+                    [data[static_cast<int>(floor((i * 8 + j) / 2 + 2))] >> 4];
+      if (piece == '0')
+        empty++;
+      else {
+        if (empty > 0) {
+          fen += to_string(empty);
+          empty = 0;
+        }
+      }
+      if (piece != '0')
+        fen += piece;
+    }
+    if (empty > 0)
+      fen += to_string(empty);
+    if (i < 7)
+      fen += "/";
+    empty = 0;
+  }
+  return fen;
+}
+"""
 if __name__ == "__main__":
+    connect()
+    '''
     connect = GetChessnutAirDevices()
     # get device
-    breakpoint()
     asyncio.run(connect.discover())
     # connect to device
     asyncio.run(run(connect, debug=True))
-    
-
+    '''

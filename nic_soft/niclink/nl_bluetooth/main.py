@@ -107,10 +107,10 @@ async def run(connect, debug=False):
         await asyncio.sleep(100.0) ## wait 100 seconds
         await client.stop_notify(READDATA) # stop the notification handler
 
-##connect = GetChessnutAirDevices()
+connect = GetChessnutAirDevices()
 ## get device
-#asyncio.run(connect.discover())
+asyncio.run(connect.discover())
 ## connect to device
-#asyncio.run(run(connect))
+asyncio.run(run(connect))
 #
 

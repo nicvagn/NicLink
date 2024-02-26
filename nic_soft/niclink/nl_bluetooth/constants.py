@@ -31,3 +31,6 @@ convertDict = {0: " ",
                11: "Q",
                12: "K"
 }
+CHESS_PIECES = [
+    '0', 'q', 'k', 'b', 'p', 'n', 'R', 'P', 'r', 'B', 'N', 'Q', 'K'
+]
