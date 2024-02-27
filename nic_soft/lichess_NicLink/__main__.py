@@ -119,6 +119,8 @@ class Game(threading.Thread):
                 break
         
         print("good game")
+        nl_inst.beep()
+        nl_inst.gameover_lights()
 
     def make_move(self, move) -> None:
         """make a move in a lichess game"""
