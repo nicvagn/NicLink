@@ -77,7 +77,7 @@ print(
 class Game(threading.Thread):
     """a game on lichess"""
 
-    def __init__(self, game_id, playing_white, starting_fen=None, **kwargs):
+    def __init__(self, game_id, playing_white, starting_fen=False, **kwargs):
         """Game, the client.board, niclink instance, the game id on lila, idk fam"""
         global client, nl_inst
         super().__init__(**kwargs)
@@ -95,13 +95,13 @@ class Game(threading.Thread):
 
         # stuff about cur game
         self.playing_white = playing_white
-        if starting_fen:
+        if starting_fen and False: # TODO fix starting fen
             self.game_board = chess.Board(starting_fen)
             nl_inst.set_game_board(self.game_board)
             self.starting_fen = starting_fen
         else:
             self.game_board = chess.Board()
-            self.starting_position = None
+            self.starting_fen = None
 
         logger.info(f"game init w id: { game_id }")
         logger.info(client.games.get_ongoing())
@@ -141,7 +141,7 @@ class Game(threading.Thread):
         # logger.info(game_state)
 
         # tmp_chessboard is used to get the current game state from API and parse it into something we can use
-        if self.starting_fen:
+        if self.starting_fen and game_state["hasMoved"]:
             # allows for different starting position
             tmp_chessboard = chess.Board(self.starting_fen) 
         else:
