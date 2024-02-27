@@ -13,11 +13,6 @@ shared_ptr<ChessLink> chessLink = nullptr;
 //the current FEN
 string currentFen;
 
-int add(int i, int j)
-{
-    return i + j;
-}
-
 /**
  * Set up connection, and set up real time callback
  * creates the shared_ptr<ChessLink> for use by other NicLink stuff
@@ -149,6 +144,25 @@ void setLED(int x, int y, bool LEDsetting)
     // set back to realTimeMode
     chessLink -> switchRealTimeMode();
 }
+
+/**
+ * signal game over via board LED's
+ */
+void gameover_lights()
+{
+    lightsOut();
+    //turn off all the lights
+    chessLink -> setLed({
+        bitset<8>("11111111"), //
+        bitset<8>("10000001"), //
+        bitset<8>("10111101"), //
+        bitset<8>("10100101"), //
+        bitset<8>("10100101"), //
+        bitset<8>("10111101"), //
+        bitset<8>("10000001"), //
+        bitset<8>("11111111"), //
+    });
+}
 /**
  * get the board to beep, switches to uploadMode and leaves the board in realTimeMode 
  */
@@ -191,8 +205,6 @@ PYBIND11_MODULE(_niclink, m)
 {
     m.doc() = "A passthrough between the C++ Chessnut EasyLink SDK and python";
 
-    // test shit
-    m.def("add", &add, py::return_value_policy::copy, "A function to add");
 
     // connect with a redirected out to py
     /* =======================================
@@ -208,6 +220,7 @@ PYBIND11_MODULE(_niclink, m)
     // doers
     m.def("setLED", &setLED, "Set a LED on the chessboard. [[ void setLED(int x, int y, bool LEDsetting)]]");
     m.def("lightsOut", &lightsOut, "turn of all the lights [[ () ]]");
+    m.def("gameover_lights", &gameover_lights, "show a game over lightshow. [[ () ]]"); 
     m.def("beep", &beep, "Cause the chessboard to beep. [[ () ]]");
     // getters
     m.def("getFEN", &getFEN, py::return_value_policy::copy, "Get the FEN for the chessboard's cur position. [[ () ]]");

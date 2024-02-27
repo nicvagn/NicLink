@@ -314,6 +314,10 @@ board we are using to check for moves:\n{ self.game_board }"
         self.game_board = board
         self.last_move = None
 
+    def gameover_lights(self) -> None:
+        """ show some fireworks """
+        self.nl_interface.gameover_lights()
+
     def show_board_diff(self, board1, board2) -> None:
         """show the differance between two boards and output differance"""
         # go through the squares and turn on the light for ones that are in error
@@ -375,6 +379,7 @@ def test_usb():
 
     leave = "n"
     while leave == "n":
+        nl_instance.gameover_lights()
         move = nl_instance.await_move()
         print(move)
 

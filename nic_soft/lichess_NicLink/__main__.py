@@ -50,7 +50,10 @@ if DEBUG:
     TOKEN_FILE = os.path.join(os.path.dirname(__file__), "lichess_token/dev_token")
 
 logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
+if DEBUG:
+    logger.setLevel(logging.DEBUG)
+else:
+    logger.setLevel(logging.ERROR)
 formatter = logging.Formatter("%(asctime)s %(levelname)s %(module)s %(message)s")
 
 if not args.quiet:
@@ -74,7 +77,7 @@ print(
 class Game(threading.Thread):
     """a game on lichess"""
 
-    def __init__(self, game_id, playing_white, **kwargs):
+    def __init__(self, game_id, playing_white, starting_fen=None, **kwargs):
         """Game, the client.board, niclink instance, the game id on lila, idk fam"""
         global client, nl_inst
         super().__init__(**kwargs)
@@ -92,7 +95,13 @@ class Game(threading.Thread):
 
         # stuff about cur game
         self.playing_white = playing_white
-        self.game_board = chess.Board()
+        if starting_fen:
+            self.game_board = chess.Board(starting_fen)
+            nl_inst.set_game_board(self.game_board)
+            self.starting_fen = starting_fen
+        else:
+            self.game_board = chess.Board()
+            self.starting_position = None
 
         logger.info(f"game init w id: { game_id }")
         logger.info(client.games.get_ongoing())
@@ -104,11 +113,12 @@ class Game(threading.Thread):
                     self.handle_state_change(event)
                 elif event["type"] == "chatLine":
                     self.handle_chat_line(event)
+                elif event["type"] == "gameFull":
+                    self.handle_state_change(event)
             else:
                 break
         
         print("good game")
-        breakpoint()
 
     def make_move(self, move) -> None:
         """make a move in a lichess game"""
@@ -117,7 +127,8 @@ class Game(threading.Thread):
             try:
                 self.berserk_board_client.make_move(self.game_id, move)
             except berserk.exceptions.ResponseError:
-                print("ResponseError: trying again")
+                print("ResponseError: trying again after three seconds")
+                time.sleep(3)
                 continue
             else:
                 break
@@ -130,7 +141,12 @@ class Game(threading.Thread):
         # logger.info(game_state)
 
         # tmp_chessboard is used to get the current game state from API and parse it into something we can use
-        tmp_chessboard = chess.Board()
+        if self.starting_fen:
+            # allows for different starting position
+            tmp_chessboard = chess.Board(self.starting_fen) 
+        else:
+            tmp_chessboard = chess.Board()
+
         moves = game_state["moves"].split(" ")
         last_move = None
         for move in moves:
@@ -142,6 +158,7 @@ class Game(threading.Thread):
         result = tmp_chessboard.outcome()
         if result is not None:
             nl_inst.beep()
+            nl_inst.gameover_lights()
 
             # set the winner var
             if result.winner is None:
@@ -164,10 +181,7 @@ class Game(threading.Thread):
         if tmp_chessboard.turn == self.playing_white:
             logger.info("it is our turn")
 
-            #nl_board = tmp_chessboard.copy() # set the NicLink board as the nl board for checking moves
-            #nl_FEN = nl_inst.get_FEN() # 
-            #nl_board.set_board_fen(nl_FEN)
-            print( f"board prior to move\n{tmp_chessboard}")
+            print( f"board prior to move\n{tmp_chessboard}\n board I see:\n")
 
             try:
                 for attempt in range(3):
@@ -207,28 +221,31 @@ def handle_game_start(event) -> None:
     global client
     game_data = event["game"]
 
+    # check if game speed is correspondence, skip those if --correspondence argument is not set
+    if not correspondence:
+        if is_correspondence(game_data["id"]):
+            logger.info(f"skipping correspondence game: {game_data['id']}")
+            return
+
     playing_white = game_data["color"] == "white"
 
     logger.info(
         f"\ngame start received: { game_data['id']}\nyou play: { game_data['color'] }"
     )
 
+    game_fen = game_data["fen"]
     print(
-        f"\ngame board: { show_FEN_on_board(game_data['fen']) }\nyour turn?: { game_data['isMyTurn'] }\n"
+        f"game start:\ngame board: \n{ chess.Board(game_fen) }\nyour turn?: { game_data['isMyTurn'] }\n"
     )
 
-    # check if game speed is correspondence, skip those if --correspondence argument is not set
-    if not correspondence:
-        if is_correspondence(game_data["id"]):
-            logger.info(f"skipping correspondence game: {game_data['id']}")
-            return
+
     if game_data["hasMoved"]:
         """handle ongoing game"""
         handle_ongoing_game(game_data)
 
     try:
         game = Game(
-            game_data["id"], playing_white
+            game_data["id"], playing_white, starting_fen=game_fen
         )  # ( game_data['color'] == "white" ) is used to set is_white bool
         game.daemon = True
         game.start()  # start the game thread
@@ -354,9 +371,8 @@ def main():
                 if event["type"] == "challenge":
                     print("\n==== Challenge received ====\n")
                     print(event)
-                elif event["type"] == "gameStart":
+                elif event["type"] == "gameStart" or event["type"] == "gameFull":
                     # a game is starting, it is handled by a function
-                    print("\n\n\n GAME START \n\n\n")
                     handle_game_start(event)
 
         except KeyboardInterrupt:
