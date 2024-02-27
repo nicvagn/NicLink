@@ -8,4 +8,4 @@ cd $SCRIPT_DIR/nic_soft
 
 python lichess_NicLink
 
-echo "Goodbye"
+echo "Thank you for using NicLink"
