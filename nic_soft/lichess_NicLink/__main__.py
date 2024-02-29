@@ -105,6 +105,13 @@ class Game(threading.Thread):
 
         logger.info(f"game init w id: { game_id }")
         logger.info(client.games.get_ongoing())
+       
+
+        # if white, await move from NicLink
+        if self.playing_white and self.current_state['state']['moves'] == '':
+            
+            breakpoint()
+            self.make_first_move()
 
     def run(self) -> None:
         for event in self.stream:
@@ -134,6 +141,15 @@ class Game(threading.Thread):
                 continue
             else:
                 break
+
+    def make_first_move(self):
+        global nl_inst
+        """make the first move in a lichess game, before stream starts"""
+        logger.info("making the first move")
+        move = nl_inst.await_move()
+        # make the move
+        self.make_move(move)
+
 
     def handle_state_change(self, game_state) -> None:
         """Handle a state change in the lichess game."""
