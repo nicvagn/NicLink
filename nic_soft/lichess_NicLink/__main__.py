@@ -31,7 +31,7 @@ parser.add_argument("--debug", action="store_true")
 args = parser.parse_args()
 
 # refresh refresh delay for NicLink and Lichess 
-REFRESH_DELAY = 1
+REFRESH_DELAY = 0.5
 
 correspondence = False
 if args.correspondence:
@@ -161,6 +161,8 @@ class Game(threading.Thread):
         if result is not None:
             nl_inst.beep()
             nl_inst.gameover_lights()
+            nl_inst.killswitch = True
+            breakpoint()
 
             # set the winner var
             if result.winner is None:
@@ -373,9 +375,14 @@ def main():
                 if event["type"] == "challenge":
                     print("\n==== Challenge received ====\n")
                     print(event)
-                elif event["type"] == "gameStart" or event["type"] == "gameFull":
+                elif event["type"] == "gameStart":
                     # a game is starting, it is handled by a function
-                    handle_game_start(event)
+                    handle_game_start(event)               
+                elif event["type"] == "gameFull":
+                    nl_inst.killswitch = True
+                    breakpoint()
+                    print("GAME FULL received")
+
 
         except KeyboardInterrupt:
             print("KeyboardInterrupt: bye")

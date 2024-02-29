@@ -53,6 +53,9 @@ class NicLinkManager:
 
         self.connect()
 
+        # a way to kill the program from outside
+        self.kill_switch = False 
+
     def connect(self, bluetooth=False):
         """connect to the chessboard"""
 
@@ -245,7 +248,7 @@ board we are using to check for moves:\n{ self.game_board }"
         """wait for legal move, and return it in coordinate notation after making it on internal board"""
         # loop until we get a valid move
         attempts = 0
-        while True:
+        while not self.kill_switch:
             # check for a move. If it move, return it else False
             try:
                 move = self.check_for_move()
@@ -258,7 +261,7 @@ board we are using to check for moves:\n{ self.game_board }"
             except IllegalMove as err:
                 # IllegalMove made, waiting then trying again
                 attempts += 1
-                self.logger.error(f"{ err } | waiting refresh_delay={self.refresh_delay} and checking again.")
+                self.logger.error(f"\n{ err } | waiting refresh_delay={self.refresh_delay} and checking again.\n")
                 time.sleep(self.refresh_delay)
                 continue
 
@@ -361,6 +364,8 @@ board we are using to check for moves:\n{ self.game_board }"
             }
 
         return False
+
+
 def test_bt():
     """ test nl_bluetooth """
 
