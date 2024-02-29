@@ -6,7 +6,7 @@
 > checkout this software, it solves the problem's I wannted to solve with NicLink:
     https://chromewebstore.google.com/detail/chessconnect/dmkkcjpbclkkhbdnjgcciohfbnpoaiam?hl=en-GB
 
-## overview 
+# overview 
 
     - see the python requirements.txt for external requirements
     - run updateNicLink.sh to compile and prepaire the env
@@ -32,7 +32,6 @@
 
     The board will beap at you when an inncorect position is on the board.
 
-    After A game is through, you can start another without restarting NicLink.
 
 ## Use with gnu/linux:
 
