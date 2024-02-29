@@ -90,7 +90,6 @@ class Game(threading.Thread):
 
         # current state from stream
         self.current_state = next(self.stream)
-
         self.stop_event = threading.Event()
 
         # stuff about cur game
@@ -101,19 +100,20 @@ class Game(threading.Thread):
             self.starting_fen = starting_fen
         else:
             self.game_board = chess.Board()
+            nl_inst.set_game_board(self.game_board)
             self.starting_fen = None
 
         logger.info(f"game init w id: { game_id }")
         logger.info(client.games.get_ongoing())
        
 
-        # if white, await move from NicLink
+        # if white, make the first move
         if self.playing_white and self.current_state['state']['moves'] == '':
-            
-            breakpoint()
             self.make_first_move()
 
     def run(self) -> None:
+        global nl_inst
+
         for event in self.stream:
             if not self.stop_event.is_set():
                 if event["type"] == "gameState":
@@ -121,13 +121,23 @@ class Game(threading.Thread):
                 elif event["type"] == "chatLine":
                     self.handle_chat_line(event)
                 elif event["type"] == "gameFull":
-                    self.handle_state_change(event)
+                    nl_inst.killswitch = True
+                    self.game_done()
             else:
                 break
         
+        self.game_done()
+
+    def game_done(self):
+        """stop the thread, game should be over, or maybe a rage quit"""
         print("good game")
+        logger.info("game_done entered")
         nl_inst.beep()
         nl_inst.gameover_lights()
+        nl_inst.killswitch = True
+        # stop the thread
+        self.stop_event.set()
+        raise Exception("Game over") 
 
     def make_move(self, move) -> None:
         """make a move in a lichess game"""
@@ -135,7 +145,11 @@ class Game(threading.Thread):
         while True:
             try:
                 self.berserk_board_client.make_move(self.game_id, move)
-            except berserk.exceptions.ResponseError:
+            except berserk.exceptions.ResponseError as err:
+                breakpoint()
+                print(err)
+                self.game_done()
+                # game is over
                 print("ResponseError: trying again after three seconds")
                 time.sleep(3)
                 continue
@@ -175,11 +189,6 @@ class Game(threading.Thread):
         # check for game over
         result = tmp_chessboard.outcome()
         if result is not None:
-            nl_inst.beep()
-            nl_inst.gameover_lights()
-            nl_inst.killswitch = True
-            breakpoint()
-
             # set the winner var
             if result.winner is None:
                 winner = "no winner"
@@ -188,10 +197,10 @@ class Game(threading.Thread):
             else:
                 winner = "Black"
 
-            self.stop_event.set() # set event to stop thread
             print( f"\n--- GAME OVER ---\nreason: {result.termination}\nwinner: {winner}")
             # stop the tread
-            raise Exception("Game over") 
+
+            self.game_done()
 
 
         # set this board as NicLink game board
