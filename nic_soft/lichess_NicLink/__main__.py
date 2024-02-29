@@ -150,9 +150,9 @@ class Game(threading.Thread):
                 print(err)
                 self.game_done()
                 # game is over
-                print("ResponseError: trying again after three seconds")
-                time.sleep(3)
-                continue
+                #print("ResponseError: trying again after three seconds")
+                #time.sleep(3)
+                #continue
             else:
                 break
 
