@@ -62,6 +62,9 @@ class NicLinkManager(threading.Thread):
         self.has_moved = threading.Event()
         self.kill_switch = threading.Event()
         self.start_game = threading.Event()
+        ### threading lock ###
+        # used for access to critical vars to provent race conditions and such
+        self.lock = threading.Lock()
 
     def run(self):
         """run and wait for a game to begin"""
@@ -211,10 +214,11 @@ board we are using to check legal moves: \n{self.game_board}"
                 tmp_board.board_fen() == new_FEN
             ):  # Check if the board's FEN matches the new FEN
                 self.logger.info(move)
-                self.last_move = move
 
                 return move  # Return the last move
-            tmp_board.pop()  # Undo the move
+                
+
+            tmp_board.pop()  # Undo the move and try another
 
         error_board = chess.Board()
         error_board.set_board_fen(new_FEN)
@@ -260,8 +264,8 @@ board we are using to check for moves:\n{ self.game_board }"
             except ValueError:
                 self.logger.warn("last move is None")
                 return False
-
-            return self.last_move
+            with self.lock:
+                return self.last_move
 
         else:
             self.logger.info("no change.")
@@ -311,6 +315,7 @@ board we are using to check for moves:\n{ self.game_board }"
                 continue
 
             if move:
+                self.logger.info(f"move {move} made.")
                 # a move has been played
                 self.make_move_game_board(move)
                 self.logger.info(f"move detected and made on gameboard. move {move}")
@@ -321,10 +326,11 @@ board we are using to check for moves:\n{ self.game_board }"
 
     def get_last_move(self) -> str:
         """get the last move played on the chessboard"""
-        if self.last_move is None:
-            raise ValueError("ERROR: last move is None")
+        with self.lock:
+            if self.last_move is None:
+                raise ValueError("ERROR: last move is None")
 
-        return self.last_move
+            return self.last_move
 
     def make_move_game_board(self, move) -> None:
         """make a move on the internal rep. of the game_board. update the last move made"""
@@ -360,8 +366,9 @@ board we are using to check for moves:\n{ self.game_board }"
 
     def set_game_board(self, board) -> None:
         """set the game board"""
-        self.game_board = board
-        self.last_move = None
+        with self.lock:
+            self.game_board = board
+            self.last_move = None
 
     def gameover_lights(self) -> None:
         """ show some fireworks """

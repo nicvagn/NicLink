@@ -22,6 +22,7 @@ import berserk
 
 # NicLink shit
 from niclink import NicLinkManager
+from niclink.nl_exceptions import *
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--tokenfile")
@@ -37,8 +38,8 @@ correspondence = False
 if args.correspondence:
     correspondence = True
 
-#DEBUG = True
-DEBUG = False
+DEBUG = True
+#DEBUG = False
 if args.debug:
     DEBUG = True
 
@@ -91,6 +92,8 @@ class Game(threading.Thread):
         # current state from stream
         self.current_state = next(self.stream)
         self.stop_event = threading.Event()
+
+
 
         # stuff about cur game
         self.playing_white = playing_white
@@ -340,9 +343,9 @@ def main():
     try:
         nl_inst = NicLinkManager(refresh_delay=REFRESH_DELAY)
         nl_inst.start()
-        nl_inst.run()
     except ExitNicLink:
         print("Thank's for using NicLink")
+        nl_inst.killswitch.set()
         sys.exit(0)
 
     except:
