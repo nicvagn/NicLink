@@ -17,3 +17,13 @@ class IllegalMove(Exception):
 
     def __init__(self, message):
         self.message = message
+
+class ExitNicLink(Exception):
+    """Exception raised to quit NicLink"""
+    def __init__(self, message):
+        self.message = message
+
+class NicLinkGameOver(Exception):
+    """the game on NicLink is over"""
+    def __init__(self, message):
+        self.message = message

@@ -5,20 +5,23 @@
 #  you should have received a copy of the gnu general public license along with niclink. if not, see <https://www.gnu.org/licenses/>.
 import _niclink
 import nl_bluetooth
-from nl_exceptions import NoMove, IllegalMove
+from nl_exceptions import *
 import time
 import chess
 import readchar
 import sys
-
+import threading
 import logging
 
 
-class NicLinkManager:
-    """manage Chessnut air external board"""
+class NicLinkManager(threading.Thread):
+    """manage Chessnut air external board in it's own thread"""
 
     def __init__(self, refresh_delay, logger=None, bluetooth=False):
         """initialize the link to the chessboard, and set up NicLink"""
+
+        # initialize the thread
+        threading.Thread.__init__(self)
 
         if logger != None:
             self.logger = logger
@@ -53,8 +56,49 @@ class NicLinkManager:
 
         self.connect()
 
+        ### Treading Events ###
         # a way to kill the program from outside
-        self.kill_switch = False 
+        self.game_over = threading.Event()
+        self.has_moved = threading.Event()
+        self.kill_switch = threading.Event()
+        self.start_game = threading.Event()
+
+    def run(self):
+        """run and wait for a game to begin"""
+        # run while kill_switch is not set
+        while not self.kill_switch.is_set():
+            if self.start_game.is_set():
+               self.logger.info("_run_game is set. (run)")
+               self._run_game()
+            time.sleep(self.refresh_delay)
+
+        # disconnect from board
+        self.disconnect()
+
+        raise ExitNicLink("Thank you for using NicLink")
+
+
+    def _run_game(self):
+        """handle a chessgame over NicLink"""
+
+        # run a game
+        while not self.game_over.is_set() and not self.kill_switch.is_set():
+
+
+            exit = "n"
+            while exit == "n":
+                currentFEN = self.get_FEN()
+                self.show_FEN_on_board(currentFEN)
+                print("do you want to exit? 'n' for no \n")
+                exit = readchar.readkey()
+
+            self.logger.info(f"move made: {self.last_move}")
+            # set the has moved flag to signal the move
+            self.has_moved.set()
+
+            time.sleep(self.refresh_delay)
+
+       
 
     def connect(self, bluetooth=False):
         """connect to the chessboard"""
@@ -142,7 +186,7 @@ class NicLinkManager:
         """
         old_FEN = self.game_board.board_fen()
         if new_FEN == old_FEN: 
-            print( "no fen diffrance" )
+            print( "no fen differance" )
             self.turn_off_all_leds()
             raise NoMove("No FEN differance")
 
@@ -248,10 +292,11 @@ board we are using to check for moves:\n{ self.game_board }"
         """wait for legal move, and return it in coordinate notation after making it on internal board"""
         # loop until we get a valid move
         attempts = 0
-        while not self.kill_switch:
+        while not self.game_over.is_set():
             # check for a move. If it move, return it else False
             try:
-                move = self.check_for_move()
+                if self.check_for_move():
+                    move = self.get_last_move()
             except NoMove:
                 # no move made, wait refresh_delay and continue
                 attempts += 1
@@ -268,6 +313,7 @@ board we are using to check for moves:\n{ self.game_board }"
             if move:
                 # a move has been played
                 self.make_move_game_board(move)
+                self.logger.info(f"move detected and made on gameboard. move {move}")
                 return move
 
             # if no move has been played, sleep and check again
@@ -377,7 +423,7 @@ def test_usb():
 
     nl_instance = NicLinkManager(2)
     nl_instance.connect()
-    print("set up the board and press enter.")
+    print("(test usb connection) set up the board and press enter.")
     nl_instance.show_game_board()
     print("===============")
     readchar.readkey()
@@ -390,4 +436,5 @@ def test_usb():
 
 if __name__ == "__main__":
     #test_bt()
-    test_usb()
+    #test_usb()
+    pass

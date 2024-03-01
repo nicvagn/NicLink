@@ -121,7 +121,7 @@ class Game(threading.Thread):
                 elif event["type"] == "chatLine":
                     self.handle_chat_line(event)
                 elif event["type"] == "gameFull":
-                    nl_inst.killswitch = True
+                    nl_inst.killswitch.set()
                     self.game_done()
             else:
                 break
@@ -134,10 +134,10 @@ class Game(threading.Thread):
         logger.info("game_done entered")
         nl_inst.beep()
         nl_inst.gameover_lights()
-        nl_inst.killswitch = True
+        nl_inst.game_over.set()
         # stop the thread
         self.stop_event.set()
-        raise Exception("Game over") 
+        raise NicLinkGameOver("Game over") 
 
     def make_move(self, move) -> None:
         """make a move in a lichess game"""
@@ -339,6 +339,12 @@ def main():
     # init NicLink
     try:
         nl_inst = NicLinkManager(refresh_delay=REFRESH_DELAY)
+        nl_inst.start()
+        nl_inst.run()
+    except ExitNicLink:
+        print("Thank's for using NicLink")
+        sys.exit(0)
+
     except:
         e = sys.exc_info()[0]
         print( f"error: { e } on NicLink connection. Exiting")
