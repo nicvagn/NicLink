@@ -41,8 +41,8 @@ correspondence = False
 if args.correspondence:
     correspondence = True
 
-DEBUG = True
-#DEBUG = False
+#DEBUG = True
+DEBUG = False
 if args.debug:
     DEBUG = True
 
@@ -150,6 +150,8 @@ class Game(threading.Thread):
         logger.info(f"move made: { move }")
         while True:
             try:
+                if move is None:
+                    raise IllegalMove("Move is None") 
                 self.berserk_board_client.make_move(self.game_id, move)
             except berserk.exceptions.ResponseError as err:
                 print(err)
