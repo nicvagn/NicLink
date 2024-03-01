@@ -296,7 +296,8 @@ board we are using to check for moves:\n{ self.game_board }"
         """wait for legal move, and return it in coordinate notation after making it on internal board"""
         # loop until we get a valid move
         attempts = 0
-        while not self.game_over.is_set():
+        while not self.game_over.is_set() and not self.kill_switch.is_set():
+            self.logger.info(f"is game_over threading event set? {self.game_over.is_set()}")
             # check for a move. If it move, return it else False
             try:
                 if self.check_for_move():

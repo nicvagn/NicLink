@@ -15,6 +15,9 @@ import argparse
 import threading
 import importlib
 
+
+import traceback
+
 # chess stuff
 import chess.pgn
 import chess
@@ -149,7 +152,6 @@ class Game(threading.Thread):
             try:
                 self.berserk_board_client.make_move(self.game_id, move)
             except berserk.exceptions.ResponseError as err:
-                breakpoint()
                 print(err)
                 self.game_done()
                 # game is over
@@ -229,7 +231,8 @@ class Game(threading.Thread):
                 sys.exit(0)
             except:
                 e = sys.exc_info()[0]
-                logger.info(f"exception on make_move: {e}")
+                logger.info(f"exception on make_move: {e} message {e.message}")
+                traceback.print_exc()
             finally:
                 if attempt > 1:
                     logger.debug(f"sleeping before retry")
@@ -413,8 +416,7 @@ def main():
                     # a game is starting, it is handled by a function
                     handle_game_start(event)               
                 elif event["type"] == "gameFull":
-                    nl_inst.killswitch = True
-                    breakpoint()
+                    nl_inst.game_over.set()
                     print("GAME FULL received")
 
 
