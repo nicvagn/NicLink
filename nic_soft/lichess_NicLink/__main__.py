@@ -151,8 +151,10 @@ class Game(threading.Thread):
         while True:
             try:
                 if move is None:
-                    raise IllegalMove("Move is None") 
+                    raise IllegalMove("Move is None")
                 self.berserk_board_client.make_move(self.game_id, move)
+                # show move w lights
+                nl_inst.set_move_LEDs(move)
             except berserk.exceptions.ResponseError as err:
                 print(err)
                 self.game_done()
@@ -166,7 +168,7 @@ class Game(threading.Thread):
     def make_first_move(self):
         global nl_inst
         """make the first move in a lichess game, before stream starts"""
-        logger.info("making the first move")
+        logger.info("making the first move in the game")
         move = nl_inst.await_move()
         # make the move
         self.make_move(move)
@@ -284,7 +286,6 @@ def handle_game_start(event) -> None:
         game = Game(
             game_data["id"], playing_white, starting_fen=game_fen
         )  # ( game_data['color'] == "white" ) is used to set is_white bool
-        game.daemon = True
         game.start()  # start the game thread
 
     except berserk.exceptions.ResponseError as e:
@@ -348,14 +349,16 @@ def main():
     try:
         nl_inst = NicLinkManager(refresh_delay=REFRESH_DELAY)
         nl_inst.start()
+
     except ExitNicLink:
         print("Thank's for using NicLink")
-        nl_inst.killswitch.set()
         sys.exit(0)
 
     except:
         e = sys.exc_info()[0]
         print( f"error: { e } on NicLink connection. Exiting")
+        if e.message:
+            print(e.message)
         sys.exit(-1)
 
     try:
@@ -410,6 +413,7 @@ def main():
     while True:
         try:
             logger.debug(f"\n==== event loop ====\n")
+            print("=== Waiting for lichess event ===")
             for event in client.board.stream_incoming_events():
                 if event["type"] == "challenge":
                     print("\n==== Challenge received ====\n")
@@ -424,6 +428,12 @@ def main():
 
         except KeyboardInterrupt:
             print("KeyboardInterrupt: bye")
+            
+            try:
+                nl_inst.kill_switch.set()
+            except:
+                # quit down exit
+                pass
             sys.exit(0)
         except berserk.exceptions.ResponseError as e:
             print(f"ERROR: Invalid server response: {e}")

@@ -44,7 +44,7 @@ void connect()
     chessLink -> connect();
     chessLink -> beep();
 
-    cout << "Switch upload mode a success, setting callback for updating currentFen." << endl;
+    cout << "Setting callback for updating currentFen." << endl;
     chessLink -> setRealTimeCallback(
           [](string s) {
               //keep the current fen up to date

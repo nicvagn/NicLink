@@ -98,8 +98,11 @@ class NicLinkManager(threading.Thread):
             self.logger.info(f"move made: {self.last_move}")
             # set the has moved flag to signal the move
             self.has_moved.set()
-
             time.sleep(self.refresh_delay)
+    
+    def setDaemon() -> None:
+        """set through as a Daemon"""
+        super.setDaemon()
 
        
 
