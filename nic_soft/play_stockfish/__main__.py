@@ -117,7 +117,6 @@ have a nice day."
 
         # make move on the niclink internal board
         self.nl_inst.make_move_game_board(fish_move)
-        self.nl_inst.set_move_LEDs(fish_move)
 
         print(f"board after fish turn:")
         self.nl_inst.show_game_board()

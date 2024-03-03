@@ -35,7 +35,7 @@ parser.add_argument("--debug", action="store_true")
 args = parser.parse_args()
 
 # refresh refresh delay for NicLink and Lichess 
-REFRESH_DELAY = 0.5
+REFRESH_DELAY = 0.3
 
 correspondence = False
 if args.correspondence:
@@ -100,7 +100,7 @@ class Game(threading.Thread):
 
         # stuff about cur game
         self.playing_white = playing_white
-        if starting_fen and False: # TODO fix starting fen
+        if starting_fen and False: # TODO fix starting fen (for use w chess960)
             self.game_board = chess.Board(starting_fen)
             nl_inst.set_game_board(self.game_board)
             self.starting_fen = starting_fen
@@ -116,6 +116,9 @@ class Game(threading.Thread):
         # if white, make the first move
         if self.playing_white and self.current_state['state']['moves'] == '':
             self.make_first_move()
+        # if we are joining a game in progress or move second
+        else:
+            self.handle_state_change(self.current_state["state"])
 
     def run(self) -> None:
         global nl_inst
@@ -235,7 +238,9 @@ class Game(threading.Thread):
                 sys.exit(0)
             except:
                 e = sys.exc_info()[0]
-                logger.info(f"exception on make_move: {e} message {e.message}")
+                logger.info(f"exception on make_move: {e} message")
+                if e.message:
+                    logger.info(f"exception message: {e.message}")
                 traceback.print_exc()
             finally:
                 if attempt > 1:
