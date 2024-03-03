@@ -27,6 +27,7 @@ class NicLinkManager(threading.Thread):
             self.logger = logger
         else:
             self.logger = logging.getLogger()
+            self.logger.setLevel(logging.ERROR)
 
         if bluetooth:
             # connect the board w bluetooth
@@ -310,13 +311,14 @@ board we are using to check for moves:\n{ self.game_board }"
                 attempts += 1
                 self.logger.info(f"NoMove from chessboard. Attempt: {attempts}")
                 time.sleep(self.refresh_delay)
-                continue
+                move = False
+
             except IllegalMove as err:
                 # IllegalMove made, waiting then trying again
                 attempts += 1
                 self.logger.error(f"\n{ err } | waiting refresh_delay={self.refresh_delay} and checking again.\n")
                 time.sleep(self.refresh_delay)
-                continue
+                move = False
 
             if move:
                 self.logger.info(f"move {move} made.")
@@ -379,7 +381,7 @@ board we are using to check for moves:\n{ self.game_board }"
         self.nl_interface.gameover_lights()
 
     def show_board_diff(self, board1, board2) -> None:
-        """show the differance between two boards and output differance"""
+        """show the differance between two boards and output differance on the chessboard"""
         # go through the squares and turn on the light for ones that are in error
         self.nl_interface.lightsOut()
         for n in range(1, 9):
@@ -393,8 +395,6 @@ board we are using to check for moves:\n{ self.game_board }"
                     )
                     self.set_led(square, True)
                     self.beep()
-                    # sleep to give a chanch to fix
-                    time.sleep(1)
 
     def get_game_FEN(self) -> str:
         """get the game board FEN"""
