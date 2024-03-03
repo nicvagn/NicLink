@@ -69,14 +69,13 @@ formatter = logging.Formatter("%(asctime)s %(levelname)s %(module)s %(message)s"
 consoleHandler.setFormatter(formatter)
 logger.addHandler(consoleHandler)
 
-logger.debug("ttttt")
 # log unhandled exceptions to the log file
 #def my_excepthook(excType, excValue, traceback, logger=logger):
 #    logger.error("Uncaught exception", exc_info=(excType, excValue, traceback))
 #uys.excepthook = my_excepthook
 
 print(
-    "\n\n========================== \n NicLink_lichess startup\n==========================\n\n"
+    "\n\n==========================\nNicLink on Lichess startup\n==========================\n\n"
 )
 
 
@@ -97,6 +96,13 @@ class Game(threading.Thread):
         # current state from stream
         self.current_state = next(self.stream)
 
+        self.white_time = self.current_state["state"]["wtime"]
+        self.black_time = self.current_state["state"]["btime"]        
+
+        # the white and black increment
+        self.white_inc = self.current_state["state"]["winc"]
+        self.black_inc = self.current_state["state"]["binc"]
+       
         # stuff about cur game
         self.playing_white = playing_white
         if starting_fen and False: # TODO fix starting fen (for use w chess960)
@@ -141,13 +147,16 @@ class Game(threading.Thread):
         nl_inst.beep()
         nl_inst.gameover_lights()
         nl_inst.game_over.set()
+
+        time.sleep(3)
+        nl_inst.turn_off_all_leds()
         # stop the thread
         raise NicLinkGameOver("Game over") 
 
     def make_move(self, move) -> None:
         """make a move in a lichess game"""
         logger.info(f"move made: { move }")
-        while True:
+        while not nl_inst.game_over.is_set():
             try:
                 if move is None:
                     raise IllegalMove("Move is None")
@@ -376,7 +385,7 @@ def main():
         nl_inst = NicLinkManager(refresh_delay=REFRESH_DELAY)
         nl_inst.start()
 
-    except nl_exceptions.ExitNicLink:
+    except ExitNicLink:
         print("Thank's for using NicLink")
         sys.exit(0)
 
@@ -466,6 +475,8 @@ def main():
             logger.info("Invalid server response: {e}")
             if "Too Many Requests for url" in str(e):
                 time.sleep(10)
+        except NicLinkGameOver:
+            print("game over, you can play another")
 
         finally:
             time.sleep(REFRESH_DELAY)

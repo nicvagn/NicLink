@@ -38,10 +38,7 @@ class NicLinkManager(threading.Thread):
 
         self.refresh_delay = refresh_delay
 
-        # this instances game board
-        self.game_board = chess.Board()
-        # the last move the user has played
-        self.last_move = None
+
         self.ALL_LIGHTS_OUT = [
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0],
@@ -52,17 +49,11 @@ class NicLinkManager(threading.Thread):
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0],
         ]
-        # the status of the leds. We have to keep track of this
-        self.led_status = self.ALL_LIGHTS_OUT
 
         self.connect()
+        # set NicLink values to defaults
+        self.reset()
 
-        ### Treading Events ###
-        # a way to kill the program from outside
-        self.game_over = threading.Event()
-        self.has_moved = threading.Event()
-        self.kill_switch = threading.Event()
-        self.start_game = threading.Event()
         ### threading lock ###
         # used for access to critical vars to provent race conditions and such
         self.lock = threading.Lock()
@@ -134,6 +125,22 @@ class NicLinkManager(threading.Thread):
     def beep(self) -> None:
         """make the chessboard beep"""
         self.nl_interface.beep()
+
+    def reset(self) -> None:
+        """reset NicLink"""
+        # this instances game board
+        self.game_board = chess.Board()
+        # the last move the user has played
+        self.last_move = None
+        # turn off all the lights
+        self.turn_off_all_leds()
+
+        ### Treading Events ###
+        # a way to kill the program from outside
+        self.game_over = threading.Event()
+        self.has_moved = threading.Event()
+        self.kill_switch = threading.Event()
+        self.start_game = threading.Event()
 
     def set_led(self, square, status):
         """set an LED at a given square to a status (square: a1, e4 etc)"""
