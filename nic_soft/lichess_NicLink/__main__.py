@@ -467,7 +467,7 @@ def main():
             try:
                 nl_inst.kill_switch.set()
             except:
-                # quit down exit
+                # quit down quit
                 pass
             sys.exit(0)
         except berserk.exceptions.ResponseError as e:
