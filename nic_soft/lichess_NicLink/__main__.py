@@ -56,9 +56,9 @@ if args.tokenfile is not None:
 if DEBUG:
     TOKEN_FILE = os.path.join(os.path.dirname(__file__), "lichess_token/dev_token")
 
-logger = logging.getLogger()
+logger = logging.getLogger("nl_lichess")
 
-consoleHandler = logging.StreamHandler()
+consoleHandler = logging.StreamHandler(sys.stdout)
 
 if DEBUG:
     logger.setLevel(logging.DEBUG)
@@ -84,13 +84,15 @@ print(
     "\n\n==========================\nNicLink on Lichess startup\n==========================\n\n"
 )
 
+logger.info("=== program startup ===\n")
+
 
 class Game(threading.Thread):
     """a game on lichess"""
 
     def __init__(self, game_id, playing_white, starting_fen=False, **kwargs):
         """Game, the client.board, niclink instance, the game id on lila, idk fam"""
-        global client, nl_inst
+        global client, nl_inst, logger
         super().__init__(**kwargs)
         # berserk board_client
         self.berserk_board_client = client.board
@@ -120,7 +122,7 @@ class Game(threading.Thread):
             nl_inst.set_game_board(self.game_board)
             self.starting_fen = None
 
-        logger.info(f"game init w id: { game_id }")
+        logger.info("game init w id: %s", game_id )
         logger.info(client.games.get_ongoing())
        
 
@@ -148,6 +150,7 @@ class Game(threading.Thread):
 
     def game_done(self):
         """stop the thread, game should be over, or maybe a rage quit"""
+        global logger, nl_inst
         print("good game")
         logger.info("game_done entered")
         nl_inst.beep()
@@ -161,7 +164,8 @@ class Game(threading.Thread):
 
     def make_move(self, move) -> None:
         """make a move in a lichess game"""
-        logger.info(f"move made: { move }")
+        global logger, nl_inst
+        logger.info("move made: %s", move)
         while not nl_inst.game_over.is_set():
             try:
                 if move is None:
@@ -183,7 +187,7 @@ class Game(threading.Thread):
                 break
 
     def make_first_move(self):
-        global nl_inst
+        global nl_inst, logger
         """make the first move in a lichess game, before stream starts"""
         logger.info("making the first move in the game")
         move = nl_inst.await_move()
@@ -196,15 +200,13 @@ class Game(threading.Thread):
 
     def handle_state_change(self, game_state) -> None:
         """Handle a state change in the lichess game."""
-        global nl_inst
+        global nl_inst, logger
         # {'type': 'gameState', 'moves': 'd2d3 e7e6 b1c3', 'wtime': datetime.datetime( 1970, 1, 25, 20, 31, 23, 647000, tzinfo=datetime.timezone.utc ), 'btime': datetime.datetime( 1970, 1, 25, 20, 31, 23, 647000, tzinfo=datetime.timezone.utc ), 'winc': datetime.datetime( 1970, 1, 1, 0, 0, tzinfo=datetime.timezone.utc ), 'binc': datetime.datetime( 1970, 1, 1, 0, 0, tzinfo=datetime.timezone.utc ), 'bdraw': False, 'wdraw': False}
 
-        logger.info(game_state)
+        logger.info("game_state: %s", game_state)
 
         if self.check_for_game_over(self.current_state["state"]):
             self.game_over()
-
-        print(f"\n\n{game_state}\n")
 
         # tmp_chessboard is used to get the current game state from API and parse it into something we can use
         if self.starting_fen:
@@ -246,11 +248,11 @@ class Game(threading.Thread):
         if tmp_chessboard.turn == self.playing_white:
             logger.info("it is our turn")
 
-            print( f"board prior to move\n{tmp_chessboard}\n board I see:\n")
+            print( f"board prior to move FEN %s\n FEN I see external: %s\n", tmp_chessboard, nl_inst.get_FEN())
             try:
                 for attempt in range(3):
                     move = nl_inst.await_move()  # await move from e-board the move from niclink
-                    logger.info(f"move from chessboard { move }")
+                    logger.info("move from chessboard %s",  move)
 
                     # make the move
                     self.make_move(move)
@@ -263,11 +265,11 @@ class Game(threading.Thread):
 
             except:
                 e = sys.exc_info()[0]
-                logger.info(f"exception on make_move: {e}")
+                logger.info("exception on make_move:\n")
                 traceback.print_exc()
             finally:
                 if attempt > 1:
-                    logger.debug(f"sleeping before retry")
+                    logger.debug("sleeping before retry")
                     time.sleep(3)
 
     def handle_chat_line(self, chat_line) -> None:
@@ -277,6 +279,7 @@ class Game(threading.Thread):
 
     def check_for_game_over(self, game_state) -> bool:
         """check a game state to see if the game is through if so raise an exception. If not return True"""
+        global logger
 
         logger.info(game_state)
         print(game_state)
@@ -299,19 +302,19 @@ def show_FEN_on_board(FEN) -> None:
 
 def handle_game_start(event) -> None:
     """handle game start event"""
-    global client
+    global client, logger, game
     game_data = event["game"]
 
     # check if game speed is correspondence, skip those if --correspondence argument is not set
     if not correspondence:
         if is_correspondence(game_data["id"]):
-            logger.info(f"skipping correspondence game: {game_data['id']}")
+            logger.info("skipping correspondence game w/ id: %s", game_data['id'])
             return
 
     playing_white = game_data["color"] == "white"
 
     logger.info(
-        f"\ngame start received: { game_data['id']}\nyou play: { game_data['color'] }"
+        "\ngame start received: \nyou play: %s", game_data['color'] 
     )
 
     game_fen = game_data["fen"]
@@ -333,10 +336,12 @@ def handle_game_start(event) -> None:
     except berserk.exceptions.ResponseError as e:
         if "This game cannot be played with the Board API" in str(e):
             print("cannot play this game via board api")
-        logger.info(f"ERROR: {e}")
+        logger.info("ERROR: %s", e)
         return
     except KeyboardInterrupt:
-        print("KeyboardInterrupt: bye")
+        print("bye")
+        nl_inst.game_done()
+        logger.info("KeyboardInterrupt. halting")
         sys.exit(0)
 
 
@@ -351,10 +356,16 @@ def handle_ongoing_game(game_data):
     else:
         print("it is your opponents turn.")
 
+def handle_resign() -> None:
+    """handle ending the game in the case where you resign"""
+    global nl_inst, logger, game
+    logger.info("handle_resign entered")
+    # end the game
+    game.game_done()
 
 def is_correspondence(gameId) -> bool:
     """is the game a correspondence game?"""
-    global client
+    global client, logger
     try:
         for game in client.games.get_ongoing():
             if game["gameId"] == gameId:
@@ -366,17 +377,18 @@ def is_correspondence(gameId) -> bool:
     except:
         e = sys.exc_info()[0]
         print(f"cannot determine game speed: {e}")
-        logger.info(f"cannot determine if game is correspondence: {e}")
+        logger.info("cannot determine if game is correspondence: ", e)
         return False
     return False
 
 # globals, because why not
 client = None
 nl_inst = None
+game = None
 
 
 def main():
-    global client, nl_inst, REFRESH_DELAY
+    global client, nl_inst, REFRESH_DELAY, logger
 
     print("=== NicLink lichess main entered ===")
     simplejson_spec = importlib.util.find_spec("simplejson")
@@ -400,7 +412,7 @@ def main():
         sys.exit(-1)
 
     try:
-        logger.info(f"reading token from {TOKEN_FILE}")
+        logger.info("reading token from %s", TOKEN_FILE)
         with open(TOKEN_FILE) as f:
             token = f.read().strip()
     
@@ -415,7 +427,7 @@ def main():
     except:
         e = sys.exc_info()[0]
         print(f"cannot create session: {e}")
-        logger.info(f"cannot create session {e}")
+        logger.info("cannot create session", e)
         sys.exit(-1)
 
     try:
@@ -429,7 +441,7 @@ def main():
         sys.exit(0)
     except:
         e = sys.exc_info()[0]
-        logger.info(f"cannot create lichess client: {e}")
+        logger.info("cannot create lichess client: %s", e)
         print(f"cannot create lichess client: {e}")
         sys.exit(-1)
 
@@ -450,7 +462,7 @@ def main():
     # main program loop
     while True:
         try:
-            logger.debug(f"\n==== event loop ====\n")
+            logger.debug("\n==== event loop ====\n")
             print("=== Waiting for lichess event ===")
             for event in client.board.stream_incoming_events():
                 if event["type"] == "challenge":
@@ -461,12 +473,12 @@ def main():
                     handle_game_start(event)               
                 elif event["type"] == "gameFull":
                     nl_inst.game_over.set()
+                    handle_resign(event)
                     print("GAME FULL received")
 
 
         except KeyboardInterrupt:
-            print("KeyboardInterrupt: bye")
-            
+            logger.info("KeyboardInterrupt: bye") 
             try:
                 nl_inst.kill_switch.set()
             except:

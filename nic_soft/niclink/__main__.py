@@ -212,10 +212,9 @@ class NicLinkManager(threading.Thread):
 
         tmp_board = self.game_board.copy()
         self.logger.info(
-            f"+++ find_move_from_FEN_change(...) called +++\n\
-current board: { self.show_board_FEN_on_board(self.get_FEN() ) } \n\
-board we are using to check legal moves: \n{self.game_board}"
-        )
+            "+++ find_move_from_FEN_change(...) called +++\n\
+current board: \n %s\n board we are using to check legal moves: \n %s",
+         self.show_board_FEN_on_board(self.get_FEN()), self.game_board)
 
         for move in legal_moves:
             # self.logger.info(move)
@@ -260,8 +259,8 @@ board we are using to check legal moves: \n{self.game_board}"
             except RuntimeError as err:
                 self.logger.error(err)
                 self.logger.warning(
-                    f"\n===== move not valid, undue it and try again. it is white's turn? { self.game_board.turn } =====\n\
-board we are using to check for moves:\n{ self.game_board }"
+                    "\n===== move not valid, undue it and try again. it is white's turn? %s =====\n\
+board we are using to check for moves:\n %s", self.game_board.turn, self.game_board 
                 )
                 # show the board diff from what we are checking for legal moves
                 print(f"diff from board we are checking legal moves on:\n")
@@ -295,10 +294,10 @@ board we are using to check for moves:\n{ self.game_board }"
                 message = f"{err} was raised exception on trying to convert move { move } to uci."
                 self.logger.error(message)
 
-        self.logger.info(f"led on(origin): { move[:2] }")
+        self.logger.info("led on(origin): %s", move[:2] )
         self.set_led(move[:2], True)  # source
 
-        self.logger.info(f"led on(dest): { move[2:4] }")
+        self.logger.info("led on(dest): %s", move[2:4])
         self.set_led(move[2:4], True)  # dest
 
 
@@ -308,7 +307,7 @@ board we are using to check for moves:\n{ self.game_board }"
         # loop until we get a valid move
         attempts = 0
         while not self.game_over.is_set() and not self.kill_switch.is_set():
-            self.logger.info(f"is game_over threading event set? {self.game_over.is_set()}")
+            self.logger.info("is game_over threading event set? %s", self.game_over.is_set())
             # check for a move. If it move, return it else False
             try:
                 if self.check_for_move():
@@ -316,22 +315,22 @@ board we are using to check for moves:\n{ self.game_board }"
             except NoMove:
                 # no move made, wait refresh_delay and continue
                 attempts += 1
-                self.logger.info(f"NoMove from chessboard. Attempt: {attempts}")
+                self.logger.info("NoMove from chessboard. Attempt: %s", attempts)
                 time.sleep(self.refresh_delay)
                 move = False
 
             except IllegalMove as err:
                 # IllegalMove made, waiting then trying again
                 attempts += 1
-                self.logger.error(f"\n{ err } | waiting refresh_delay={self.refresh_delay} and checking again.\n")
+                self.logger.error("\n %s | waiting refresh_delay= %s and checking again.\n", err, self.refresh_delay)
                 time.sleep(self.refresh_delay)
                 move = False
 
             if move:
-                self.logger.info(f"move {move} made.")
+                self.logger.info("move %s made.", move)
                 # a move has been played
                 self.make_move_game_board(move)
-                self.logger.info(f"move detected and made on gameboard. move {move}")
+                self.logger.info("move detected and made on gameboard. move %s", move)
                 return move
 
             # if no move has been played, sleep and check again
@@ -351,7 +350,7 @@ board we are using to check for moves:\n{ self.game_board }"
         # update the last move
         self.last_move = move
         self.logger.info(
-            f"made move on internal board \nBOARD POST MOVE:\n{ self.game_board }"
+            "made move on internal board \nBOARD POST MOVE:\n %s", self.game_board 
         )
 
     def set_board_FEN(self, board, FEN) -> None:
