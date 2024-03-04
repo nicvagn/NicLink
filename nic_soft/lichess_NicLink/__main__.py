@@ -23,6 +23,9 @@ import chess.pgn
 import chess
 import berserk
 
+# for the clock
+import datetime
+
 # NicLink shit
 from niclink import NicLinkManager
 from niclink.nl_exceptions import *
@@ -61,8 +64,11 @@ if DEBUG:
     logger.setLevel(logging.DEBUG)
     consoleHandler.setLevel(logging.DEBUG)
 else:
-    logger.setLevel(logging.ERROR)
-    consoleHandler.setLevel(logging.ERROR)
+    # for dev
+    logger.setLevel(logging.DEBUG)
+    consoleHandler.setLevel(logging.DEBUG)
+    #logger.setLevel(logging.ERROR) for production
+    #consoleHandler.setLevel(logging.ERROR)
 
 formatter = logging.Formatter("%(asctime)s %(levelname)s %(module)s %(message)s")
 
@@ -257,7 +263,7 @@ class Game(threading.Thread):
 
             except:
                 e = sys.exc_info()[0]
-                logger.info(f"exception on make_move: {e} message")
+                logger.info(f"exception on make_move: {e}")
                 traceback.print_exc()
             finally:
                 if attempt > 1:
@@ -390,10 +396,7 @@ def main():
         sys.exit(0)
 
     except:
-        e = sys.exc_info()[0]
-        print( f"error: { e } on NicLink connection. Exiting")
-        if e.message:
-            print(e.message)
+        print( f"error: { traceback.format_exc() } on NicLink connection.")
         sys.exit(-1)
 
     try:
