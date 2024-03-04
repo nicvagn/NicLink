@@ -47,9 +47,7 @@ logger.addHandler(ch)
 class Game(threading.Thread):
     """a chessgame with stockfish handled in it's own thread"""
 
-    def __init__(
-        self, NicLinkManager, playing_white, **kwargs
-    ) -> None:
+    def __init__(self, NicLinkManager, playing_white, **kwargs) -> None:
         super().__init__(**kwargs)
         self.nl_inst = NicLinkManager
         # bool of if your playing white
@@ -81,7 +79,7 @@ have a nice day."
 
     def handle_human_turn(self) -> None:
         """Handle a human turn in the game"""
-        global logger 
+        global logger
         logger.info("\n--- human turn ---\n")
 
         try:
@@ -93,7 +91,6 @@ have a nice day."
             print("Bye!")
             sys.exit(0)
 
-
         logger.info(f"move from chessboard { move }")
 
         # check if the game is done
@@ -104,13 +101,11 @@ have a nice day."
         global logger
         logger.info("handle opponent turn")
 
-
         print(f"board after opponent turn:")
         self.nl_inst.show_game_board()
 
         # check for game over
         self.check_for_game_over()
-
 
     def start(self) -> None:
         """start playing the game"""
@@ -123,7 +118,7 @@ have a nice day."
     def run(self) -> None:
         """run the game thread"""
 
-       # main game loop
+        # main game loop
         while True:
             if self.playing_white:
                 # if we go first, go first
@@ -144,7 +139,6 @@ def main():
     nl_inst.connect()
 
     print("\n%%%%%% NicLink vs x %%%%%%\n")
-
 
     while True:
         sf_lvl = input("level (1 - 33):")

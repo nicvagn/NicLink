@@ -37,15 +37,15 @@ parser.add_argument("--quiet", action="store_true")
 parser.add_argument("--debug", action="store_true")
 args = parser.parse_args()
 
-# refresh refresh delay for NicLink and Lichess 
-REFRESH_DELAY = 0.3
+# refresh refresh delay for NicLink and Lichess
+REFRESH_DELAY = 0.5
 
 correspondence = False
 if args.correspondence:
     correspondence = True
 
-#DEBUG = True
 DEBUG = False
+DEBUG = True
 if args.debug:
     DEBUG = True
 
@@ -67,8 +67,8 @@ else:
     # for dev
     logger.setLevel(logging.DEBUG)
     consoleHandler.setLevel(logging.DEBUG)
-    #logger.setLevel(logging.ERROR) for production
-    #consoleHandler.setLevel(logging.ERROR)
+    # logger.setLevel(logging.ERROR) for production
+    # consoleHandler.setLevel(logging.ERROR)
 
 formatter = logging.Formatter("%(asctime)s %(levelname)s %(module)s %(message)s")
 
@@ -76,9 +76,9 @@ consoleHandler.setFormatter(formatter)
 logger.addHandler(consoleHandler)
 
 # log unhandled exceptions to the log file
-#def my_excepthook(excType, excValue, traceback, logger=logger):
+# def my_excepthook(excType, excValue, traceback, logger=logger):
 #    logger.error("Uncaught exception", exc_info=(excType, excValue, traceback))
-#uys.excepthook = my_excepthook
+# uys.excepthook = my_excepthook
 
 print(
     "\n\n==========================\nNicLink on Lichess startup\n==========================\n\n"
@@ -105,15 +105,15 @@ class Game(threading.Thread):
         self.current_state = next(self.stream)
 
         self.white_time = self.current_state["state"]["wtime"]
-        self.black_time = self.current_state["state"]["btime"]        
+        self.black_time = self.current_state["state"]["btime"]
 
         # the white and black increment
         self.white_inc = self.current_state["state"]["winc"]
         self.black_inc = self.current_state["state"]["binc"]
-       
+
         # stuff about cur game
         self.playing_white = playing_white
-        if starting_fen and False: # TODO fix starting fen (for use w chess960)
+        if starting_fen and False:  # TODO fix starting fen (for use w chess960)
             self.game_board = chess.Board(starting_fen)
             nl_inst.set_game_board(self.game_board)
             self.starting_fen = starting_fen
@@ -122,12 +122,11 @@ class Game(threading.Thread):
             nl_inst.set_game_board(self.game_board)
             self.starting_fen = None
 
-        logger.info("game init w id: %s", game_id )
+        logger.info("game init w id: %s", game_id)
         logger.info(client.games.get_ongoing())
-       
 
         # if white, make the first move
-        if self.playing_white and self.current_state['state']['moves'] == '':
+        if self.playing_white and self.current_state["state"]["moves"] == "":
             self.make_first_move()
         # if we are joining a game in progress or move second
         else:
@@ -143,10 +142,11 @@ class Game(threading.Thread):
             elif event["type"] == "chatLine":
                 self.handle_chat_line(event)
             elif event["type"] == "gameFull":
+                logger.info("\n\n +++ Game Full got +++\n\n")
                 self.game_done()
             else:
                 break
-        
+
         self.game_done()
 
     def game_done(self):
@@ -161,7 +161,7 @@ class Game(threading.Thread):
         time.sleep(3)
         nl_inst.turn_off_all_leds()
         # stop the thread
-        raise NicLinkGameOver("Game over") 
+        raise NicLinkGameOver("Game over")
 
     def make_move(self, move) -> None:
         """make a move in a lichess game"""
@@ -178,9 +178,9 @@ class Game(threading.Thread):
                 print(err)
                 self.game_done()
                 # game is over
-                #print("ResponseError: trying again after three seconds")
-                #time.sleep(3)
-                #continue
+                # print("ResponseError: trying again after three seconds")
+                # time.sleep(3)
+                # continue
             except IllegalMove:
                 print("Illegal move")
                 break
@@ -198,7 +198,6 @@ class Game(threading.Thread):
         # make the move
         self.make_move(move)
 
-
     def handle_state_change(self, game_state) -> None:
         """Handle a state change in the lichess game."""
         global nl_inst, logger
@@ -212,14 +211,14 @@ class Game(threading.Thread):
         # tmp_chessboard is used to get the current game state from API and parse it into something we can use
         if self.starting_fen:
             # allows for different starting position
-            tmp_chessboard = chess.Board(self.starting_fen) 
+            tmp_chessboard = chess.Board(self.starting_fen)
         else:
             tmp_chessboard = chess.Board()
 
         moves = game_state["moves"].split(" ")
         last_move = None
-       
-        if moves != ['']:
+
+        if moves != [""]:
             for move in moves:
                 # make the moves on a board
                 tmp_chessboard.push_uci(move)
@@ -236,11 +235,12 @@ class Game(threading.Thread):
             else:
                 winner = "Black"
 
-            print( f"\n--- GAME OVER ---\nreason: {result.termination}\nwinner: {winner}")
-            
+            print(
+                f"\n--- GAME OVER ---\nreason: {result.termination}\nwinner: {winner}"
+            )
+            logger.info("game done detected, calling game_done()")
             # stop the tread
             self.game_done()
-
 
         # set this board as NicLink game board
         nl_inst.set_game_board(tmp_chessboard)
@@ -249,11 +249,17 @@ class Game(threading.Thread):
         if tmp_chessboard.turn == self.playing_white:
             logger.info("it is our turn")
 
-            print( f"board prior to move FEN %s\n FEN I see external: %s\n", tmp_chessboard, nl_inst.get_FEN())
+            logger.info(
+                "board prior to move FEN %s\n FEN I see external: %s\n",
+                tmp_chessboard.fen(),
+                nl_inst.get_FEN(),
+            )
             try:
                 for attempt in range(3):
-                    move = nl_inst.await_move()  # await move from e-board the move from niclink
-                    logger.info("move from chessboard %s",  move)
+                    move = (
+                        nl_inst.await_move()
+                    )  # await move from e-board the move from niclink
+                    logger.info("move from chessboard %s", move)
 
                     # make the move
                     self.make_move(move)
@@ -309,20 +315,17 @@ def handle_game_start(event) -> None:
     # check if game speed is correspondence, skip those if --correspondence argument is not set
     if not correspondence:
         if is_correspondence(game_data["id"]):
-            logger.info("skipping correspondence game w/ id: %s", game_data['id'])
+            logger.info("skipping correspondence game w/ id: %s", game_data["id"])
             return
 
     playing_white = game_data["color"] == "white"
 
-    logger.info(
-        "\ngame start received: \nyou play: %s", game_data['color'] 
-    )
+    logger.info("\ngame start received: \nyou play: %s", game_data["color"])
 
     game_fen = game_data["fen"]
     print(
         f"game start:\ngame board: \n{ chess.Board(game_fen) }\nyour turn?: { game_data['isMyTurn'] }\n"
     )
-
 
     if game_data["hasMoved"]:
         """handle ongoing game"""
@@ -357,12 +360,14 @@ def handle_ongoing_game(game_data):
     else:
         print("it is your opponents turn.")
 
+
 def handle_resign() -> None:
     """handle ending the game in the case where you resign"""
     global nl_inst, logger, game
     logger.info("handle_resign entered")
     # end the game
     game.game_done()
+
 
 def is_correspondence(gameId) -> bool:
     """is the game a correspondence game?"""
@@ -381,6 +386,7 @@ def is_correspondence(gameId) -> bool:
         logger.info("cannot determine if game is correspondence: ", e)
         return False
     return False
+
 
 # globals, because why not
 client = None
@@ -401,7 +407,7 @@ def main():
 
     # init NicLink
     try:
-        nl_inst = NicLinkManager(refresh_delay=REFRESH_DELAY)
+        nl_inst = NicLinkManager(refresh_delay=REFRESH_DELAY, logger=logger)
         nl_inst.start()
 
     except ExitNicLink:
@@ -409,14 +415,14 @@ def main():
         sys.exit(0)
 
     except:
-        print( f"error: { traceback.format_exc() } on NicLink connection.")
+        print(f"error: { traceback.format_exc() } on NicLink connection.")
         sys.exit(-1)
 
     try:
         logger.info("reading token from %s", TOKEN_FILE)
         with open(TOKEN_FILE) as f:
             token = f.read().strip()
-    
+
     except FileNotFoundError:
         print(f"ERROR: cannot find token file")
         sys.exit(-1)
@@ -471,15 +477,15 @@ def main():
                     print(event)
                 elif event["type"] == "gameStart":
                     # a game is starting, it is handled by a function
-                    handle_game_start(event)               
+                    handle_game_start(event)
                 elif event["type"] == "gameFull":
                     nl_inst.game_over.set()
                     handle_resign(event)
                     print("GAME FULL received")
-
+                time.sleep(refresh_delay)
 
         except KeyboardInterrupt:
-            logger.info("KeyboardInterrupt: bye") 
+            logger.info("KeyboardInterrupt: bye")
             try:
                 nl_inst.kill_switch.set()
             except:

@@ -38,18 +38,6 @@ class NicLinkManager(threading.Thread):
 
         self.refresh_delay = refresh_delay
 
-
-        self.ALL_LIGHTS_OUT = [
-            [0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0],
-        ]
-
         self.connect()
         # set NicLink values to defaults
         self.reset()
@@ -63,8 +51,8 @@ class NicLinkManager(threading.Thread):
         # run while kill_switch is not set
         while not self.kill_switch.is_set():
             if self.start_game.is_set():
-               self.logger.info("_run_game is set. (run)")
-               self._run_game()
+                self.logger.info("_run_game is set. (run)")
+                self._run_game()
             time.sleep(self.refresh_delay)
 
         # disconnect from board
@@ -72,13 +60,11 @@ class NicLinkManager(threading.Thread):
 
         raise ExitNicLink("Thank you for using NicLink")
 
-
     def _run_game(self):
         """handle a chessgame over NicLink"""
 
         # run a game
         while not self.game_over.is_set() and not self.kill_switch.is_set():
-
 
             exit = "n"
             while exit == "n":
@@ -91,12 +77,10 @@ class NicLinkManager(threading.Thread):
             # set the has moved flag to signal the move
             self.has_moved.set()
             time.sleep(self.refresh_delay)
-    
+
     def setDaemon() -> None:
         """set through as a Daemon"""
         super.setDaemon()
-
-       
 
     def connect(self, bluetooth=False):
         """connect to the chessboard"""
@@ -168,29 +152,23 @@ class NicLinkManager(threading.Thread):
             led = 1
         else:
             led = 0
-        self.led_status[7 - num][file_num] = led
 
-        # log the led status
-        self.logger.info("led status after change:")
-        for i in range(8):
-            self.logger.info(self.led_status[i])
         # this is supper fucked, but the chessboard interaly starts counting at h8
         self.nl_interface.setLED(7 - num, 7 - file_num, status)
 
     def turn_off_all_leds(self):
         """turn off all the leds"""
-        self.led_status = self.ALL_LIGHTS_OUT
         self.nl_interface.lightsOut()
 
     def get_FEN(self) -> str:
         """get the board FEN from chessboard"""
         return self.nl_interface.getFEN()
-    
-    def show_board_FEN_on_board( self, boardFEN ):
+
+    def show_board_FEN_on_board(self, boardFEN):
         """show just the board part of FEN on asci chessboard"""
         tmp_board = chess.Board()
-        tmp_board.set_board_fen( boardFEN )
-        print( tmp_board )
+        tmp_board.set_board_fen(boardFEN)
+        print(tmp_board)
 
     def find_move_from_FEN_change(
         self, new_FEN
@@ -199,13 +177,13 @@ class NicLinkManager(threading.Thread):
         return the move in coordinate notation
         """
         old_FEN = self.game_board.board_fen()
-        if new_FEN == old_FEN: 
-            print( "no fen differance" )
+        if new_FEN == old_FEN:
+            print("no fen differance")
             self.turn_off_all_leds()
             raise NoMove("No FEN differance")
 
-        self.logger.debug( "new_FEN" + new_FEN )
-        self.logger.debug( "old FEN" + old_FEN ) 
+        self.logger.debug("new_FEN" + new_FEN)
+        self.logger.debug("old FEN" + old_FEN)
 
         # get a list of the legal moves
         legal_moves = list(self.game_board.legal_moves)
@@ -213,8 +191,10 @@ class NicLinkManager(threading.Thread):
         tmp_board = self.game_board.copy()
         self.logger.info(
             "+++ find_move_from_FEN_change(...) called +++\n\
-current board: \n %s\n board we are using to check legal moves: \n %s",
-         self.show_board_FEN_on_board(self.get_FEN()), self.game_board)
+current board: \n%s\n board we are using to check legal moves: \n%s",
+            self.show_board_FEN_on_board(self.get_FEN()),
+            self.game_board,
+        )
 
         for move in legal_moves:
             # self.logger.info(move)
@@ -226,7 +206,6 @@ current board: \n %s\n board we are using to check legal moves: \n %s",
                 self.logger.info(move)
 
                 return move  # Return the last move
-                
 
             tmp_board.pop()  # Undo the move and try another
 
@@ -260,7 +239,9 @@ current board: \n %s\n board we are using to check legal moves: \n %s",
                 self.logger.error(err)
                 self.logger.warning(
                     "\n===== move not valid, undue it and try again. it is white's turn? %s =====\n\
-board we are using to check for moves:\n %s", self.game_board.turn, self.game_board 
+board we are using to check for moves:\n %s",
+                    self.game_board.turn,
+                    self.game_board,
                 )
                 # show the board diff from what we are checking for legal moves
                 print(f"diff from board we are checking legal moves on:\n")
@@ -294,20 +275,20 @@ board we are using to check for moves:\n %s", self.game_board.turn, self.game_bo
                 message = f"{err} was raised exception on trying to convert move { move } to uci."
                 self.logger.error(message)
 
-        self.logger.info("led on(origin): %s", move[:2] )
+        self.logger.info("led on(origin): %s", move[:2])
         self.set_led(move[:2], True)  # source
 
         self.logger.info("led on(dest): %s", move[2:4])
         self.set_led(move[2:4], True)  # dest
-
-
 
     def await_move(self) -> str:
         """wait for legal move, and return it in coordinate notation after making it on internal board"""
         # loop until we get a valid move
         attempts = 0
         while not self.game_over.is_set() and not self.kill_switch.is_set():
-            self.logger.info("is game_over threading event set? %s", self.game_over.is_set())
+            self.logger.info(
+                "is game_over threading event set? %s", self.game_over.is_set()
+            )
             # check for a move. If it move, return it else False
             try:
                 if self.check_for_move():
@@ -322,7 +303,11 @@ board we are using to check for moves:\n %s", self.game_board.turn, self.game_bo
             except IllegalMove as err:
                 # IllegalMove made, waiting then trying again
                 attempts += 1
-                self.logger.error("\n %s | waiting refresh_delay= %s and checking again.\n", err, self.refresh_delay)
+                self.logger.error(
+                    "\n %s | waiting refresh_delay= %s and checking again.\n",
+                    err,
+                    self.refresh_delay,
+                )
                 time.sleep(self.refresh_delay)
                 move = False
 
@@ -350,7 +335,7 @@ board we are using to check for moves:\n %s", self.game_board.turn, self.game_bo
         # update the last move
         self.last_move = move
         self.logger.info(
-            "made move on internal board \nBOARD POST MOVE:\n %s", self.game_board 
+            "made move on internal board: BOARD POST MOVE:\n %s", self.game_board
         )
 
     def set_board_FEN(self, board, FEN) -> None:
@@ -383,7 +368,7 @@ board we are using to check for moves:\n %s", self.game_board.turn, self.game_bo
             self.last_move = None
 
     def gameover_lights(self) -> None:
-        """ show some fireworks """
+        """show some fireworks"""
         self.nl_interface.gameover_lights()
 
     def show_board_diff(self, board1, board2) -> None:
@@ -430,10 +415,11 @@ board we are using to check for moves:\n %s", self.game_board.turn, self.game_bo
 
 
 def test_bt():
-    """ test nl_bluetooth """
+    """test nl_bluetooth"""
 
     nl_instance = NicLinkManager(2, bluetooth=True)
     nl_instance.connect()
+
 
 def test_usb():
     """test usb connection"""
@@ -451,7 +437,8 @@ def test_usb():
         move = nl_instance.await_move()
         print(move)
 
+
 if __name__ == "__main__":
-    #test_bt()
-    #test_usb()
+    # test_bt()
+    # test_usb()
     pass

@@ -87,7 +87,7 @@ have a nice day."
 
     def handle_human_turn(self) -> None:
         """Handle a human turn in the game"""
-        global logger 
+        global logger
         logger.info("\n--- human turn ---\n")
 
         try:
@@ -98,7 +98,6 @@ have a nice day."
         except KeyboardInterrupt:
             print("Bye!")
             sys.exit(0)
-
 
         logger.info(f"move from chessboard { move }")
 
@@ -124,7 +123,6 @@ have a nice day."
         # check for game over
         self.check_for_game_over()
 
-
     def start(self) -> None:
         """start playing the game"""
 
@@ -136,7 +134,7 @@ have a nice day."
     def run(self) -> None:
         """run the game thread"""
 
-       # main game loop
+        # main game loop
         while True:
             if self.playing_white:
                 # if we go first, go first

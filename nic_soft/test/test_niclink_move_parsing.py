@@ -31,9 +31,7 @@ while leave == "n":
         continue
 
     # show the internal board state
-    #nl_inst.show_game_board()
-
-    
+    # nl_inst.show_game_board()
 
     print(f"\n==== { move } ====\n")
     print("leave? 'n' for no, != 'n' yes: ")

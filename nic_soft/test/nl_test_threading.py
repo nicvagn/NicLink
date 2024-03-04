@@ -17,6 +17,7 @@ nl_thread = NicLinkManager(2, logger)
 
 nl_thread.start()
 
+
 def test_threading():
     """test usb connection"""
 
@@ -33,12 +34,9 @@ def test_threading():
         print("leave test_threading? ('n' for no)")
         leave = readchar.readkey()
 
-
-
     nl_thread.gameover_lights()
     # set the nl_thread kill switch
     nl_thread.kill_switch.set()
 
-test_threading()
 
-    
+test_threading()
