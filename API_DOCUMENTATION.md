@@ -1,6 +1,7 @@
 # NicLink Python API to EasyLink SDK
 
 > WARN: not guarinteed to be up to date
+> is not up to date
 
     The main gateway that you will interact with is a class called NicLinkManeger
 
