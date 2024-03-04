@@ -137,6 +137,7 @@ class Game(threading.Thread):
         global nl_inst
 
         for event in self.stream:
+            logger.debug("event: %s", event)
             if event["type"] == "gameState":
                 self.handle_state_change(event)
             elif event["type"] == "chatLine":
