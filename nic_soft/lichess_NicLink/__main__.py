@@ -38,14 +38,14 @@ parser.add_argument("--debug", action="store_true")
 args = parser.parse_args()
 
 # refresh refresh delay for NicLink and Lichess
-REFRESH_DELAY = 0.5
+REFRESH_DELAY = 0.4
 
 correspondence = False
 if args.correspondence:
     correspondence = True
 
 DEBUG = False
-DEBUG = True
+#DEBUG = True
 if args.debug:
     DEBUG = True
 
@@ -84,7 +84,7 @@ print(
     "\n\n==========================\nNicLink on Lichess startup\n==========================\n\n"
 )
 
-logger.info("=== program startup ===\n")
+logger.info("=== NicLink Lichess startup ===\n")
 
 
 class Game(threading.Thread):
@@ -133,11 +133,14 @@ class Game(threading.Thread):
             self.handle_state_change(self.current_state["state"])
 
     def run(self) -> None:
-        global nl_inst
+        global nl_inst, logger
 
         for event in self.stream:
             logger.debug("event: %s", event)
             if event["type"] == "gameState":
+                self.white_time = self.current_state["state"]["wtime"]
+                self.black_time = self.current_state["state"]["btime"]
+                logger.info("\n*** time remaining(in seconds): [B] - %s [W] - %s***\n", self.white_time, self.black_time)
                 self.handle_state_change(event)
             elif event["type"] == "chatLine":
                 self.handle_chat_line(event)
@@ -482,7 +485,7 @@ def main():
                     nl_inst.game_over.set()
                     handle_resign(event)
                     print("GAME FULL received")
-                time.sleep(refresh_delay)
+                time.sleep(REFRESH_DELAY)
 
         except KeyboardInterrupt:
             logger.info("KeyboardInterrupt: bye")
