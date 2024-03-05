@@ -25,6 +25,7 @@ import berserk
 
 # for the clock
 import datetime
+import unotimer
 
 # NicLink shit
 from niclink import NicLinkManager

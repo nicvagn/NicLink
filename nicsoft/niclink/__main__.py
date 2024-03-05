@@ -1,8 +1,8 @@
-#  niclink is free software: you can redistribute it and/or modify it under the terms of the gnu general public license as published by the free software foundation, either version 3 of the license, or (at your option) any later version.
+#  NicLink is free software: you can redistribute it and/or modify it under the terms of the gnu general public license as published by the free software foundation, either version 3 of the license, or (at your option) any later version.
 #
-#  niclink is distributed in the hope that it will be useful, but without any warranty; without even the implied warranty of merchantability or fitness for a particular purpose. see the gnu general public license for more details.
+#  NicLink is distributed in the hope that it will be useful, but without any warranty; without even the implied warranty of merchantability or fitness for a particular purpose. see the gnu general public license for more details.
 #
-#  you should have received a copy of the gnu general public license along with niclink. if not, see <https://www.gnu.org/licenses/>.
+#  you should have received a copy of the gnu general public license along with NicLink. if not, see <https://www.gnu.org/licenses/>.
 import _niclink
 import nl_bluetooth
 from nl_exceptions import *
@@ -12,6 +12,8 @@ import readchar
 import sys
 import threading
 import logging
+
+import uno_timer
 
 
 class NicLinkManager(threading.Thread):
