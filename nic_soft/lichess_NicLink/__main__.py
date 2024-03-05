@@ -347,7 +347,7 @@ def handle_game_start(event) -> None:
         return
     except KeyboardInterrupt:
         print("bye")
-        nl_inst.game_done()
+        nl_inst.game_over()
         logger.info("KeyboardInterrupt. halting")
         sys.exit(0)
 
