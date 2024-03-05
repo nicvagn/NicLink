@@ -14,9 +14,13 @@ import sys
 import argparse
 import threading
 import importlib
-
-
 import traceback
+
+# import shinanigans. I don't fully comprehend how python importing works, but this works
+script_dir = os.path.dirname(__file__)
+parent_dir = os.path.dirname(script_dir)
+
+sys.path.append(parent_dir)
 
 # chess stuff
 import chess.pgn
@@ -25,11 +29,13 @@ import berserk
 
 # for the clock
 import datetime
-import unotimer
+from uno_timer import chess_clock
 
 # NicLink shit
 from niclink import NicLinkManager
 from niclink.nl_exceptions import *
+
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--tokenfile")
@@ -46,16 +52,16 @@ if args.correspondence:
     correspondence = True
 
 DEBUG = False
-#DEBUG = True
+DEBUG = True
 if args.debug:
     DEBUG = True
 
-TOKEN_FILE = os.path.join(os.path.dirname(__file__), "lichess_token/token")
+TOKEN_FILE = os.path.join(script_dir, "lichess_token/token")
 if args.tokenfile is not None:
     TOKEN_FILE = args.tokenfile
 
 if DEBUG:
-    TOKEN_FILE = os.path.join(os.path.dirname(__file__), "lichess_token/dev_token")
+    TOKEN_FILE = os.path.join(script_dir, "lichess_token/dev_token")
 
 logger = logging.getLogger("nl_lichess")
 
@@ -105,6 +111,8 @@ class Game(threading.Thread):
         # current state from stream
         self.current_state = next(self.stream)
 
+        # stuff about current game
+        # whites total game time
         self.white_time = self.current_state["state"]["wtime"]
         self.black_time = self.current_state["state"]["btime"]
 
@@ -112,7 +120,6 @@ class Game(threading.Thread):
         self.white_inc = self.current_state["state"]["winc"]
         self.black_inc = self.current_state["state"]["binc"]
 
-        # stuff about cur game
         self.playing_white = playing_white
         if starting_fen and False:  # TODO fix starting fen (for use w chess960)
             self.game_board = chess.Board(starting_fen)
@@ -126,12 +133,23 @@ class Game(threading.Thread):
         logger.info("game init w id: %s", game_id)
         logger.info(client.games.get_ongoing())
 
+
+
         # if white, make the first move
         if self.playing_white and self.current_state["state"]["moves"] == "":
             self.make_first_move()
         # if we are joining a game in progress or move second
         else:
             self.handle_state_change(self.current_state["state"])
+
+    def start_clock(game_state) -> None:
+        # whites total game time
+        self.white_time = self.current_state["state"]["wtime"]
+        self.black_time = self.current_state["state"]["btime"]
+
+        # the white and black increment
+        self.white_inc = self.current_state["state"]["winc"]
+        self.black_inc = self.current_state["state"]["binc"]
 
     def run(self) -> None:
         global nl_inst, logger
@@ -415,6 +433,7 @@ def main():
         nl_inst.start()
 
     except ExitNicLink:
+        logger.info("ExitNicLink exception caught in main()")
         print("Thank's for using NicLink")
         sys.exit(0)
 

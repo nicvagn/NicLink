@@ -1,1 +1,1 @@
-import niclink
+import .niclink

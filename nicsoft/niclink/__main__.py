@@ -3,17 +3,24 @@
 #  NicLink is distributed in the hope that it will be useful, but without any warranty; without even the implied warranty of merchantability or fitness for a particular purpose. see the gnu general public license for more details.
 #
 #  you should have received a copy of the gnu general public license along with NicLink. if not, see <https://www.gnu.org/licenses/>.
-import _niclink
-import nl_bluetooth
-from nl_exceptions import *
+
+# get the dir this script is in, and add it to the path. For importing the _niclink file. Yes, I know it is a hack, but Fuck ME 
+import os
+import sys
 import time
 import chess
 import readchar
-import sys
 import threading
 import logging
 
-import uno_timer
+script_dir = os.path.dirname(__file__)
+sys.path.append(script_dir)
+
+import _niclink
+import nl_bluetooth
+from nl_exceptions import *
+
+
 
 
 class NicLinkManager(threading.Thread):
@@ -442,5 +449,5 @@ def test_usb():
 
 if __name__ == "__main__":
     # test_bt()
-    # test_usb()
+    test_usb()
     pass

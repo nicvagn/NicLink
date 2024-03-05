@@ -4,5 +4,9 @@ build/*
 EasyLinkSDK
 etc
 **/__pycache__
-nic_soft/niclink_lichess/niclink
+nicsoft/niclink_lichess/niclink
 .vscode
+nicsoft/bin
+nicsoft/lib*
+nicsoft/include
+
