@@ -29,6 +29,7 @@ import berserk
 
 # for the clock
 import datetime
+from uno_timer import ChessClock
 
 # NicLink shit
 from niclink import NicLinkManager
