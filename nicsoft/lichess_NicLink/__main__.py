@@ -35,8 +35,6 @@ from uno_timer import chess_clock
 from niclink import NicLinkManager
 from niclink.nl_exceptions import *
 
-
-
 parser = argparse.ArgumentParser()
 parser.add_argument("--tokenfile")
 parser.add_argument("--correspondence", action="store_true")
@@ -52,7 +50,7 @@ if args.correspondence:
     correspondence = True
 
 DEBUG = False
-DEBUG = True
+#DEBUG = True
 if args.debug:
     DEBUG = True
 
@@ -68,9 +66,11 @@ logger = logging.getLogger("nl_lichess")
 consoleHandler = logging.StreamHandler(sys.stdout)
 
 if DEBUG:
+    logger.info("DEBUG is set.")
     logger.setLevel(logging.DEBUG)
     consoleHandler.setLevel(logging.DEBUG)
 else:
+    logger.info("not DEBUG. DEBUG not set")
     # for dev
     logger.setLevel(logging.DEBUG)
     consoleHandler.setLevel(logging.DEBUG)

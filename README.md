@@ -15,6 +15,11 @@
         - master: behind the times. More likely to be solid
         - dev: the wild west of new features
         - bluetooth: in dev, not in a good place yet
+## Setting up python venv
+
+In order to use NicLink while it is in development, it is advised to use a virtual environment. I do not have a good enough understanding,
+but you have the internet. Go ham. It is now at a point where it should be portable, if you are reeding this, and want to realy help me out,
+it would be swell to hear how installing NicLink goes. The pyproject.toml should have the requirements. There is a requirements.txt too.
 
 ## Using the board on lichess with the board api
         

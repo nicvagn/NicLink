@@ -248,7 +248,7 @@ current board: \n%s\n board we are using to check legal moves: \n%s",
                 self.logger.error(err)
                 self.logger.warning(
                     "\n===== move not valid, undue it and try again. it is white's turn? %s =====\n\
-board we are using to check for moves:\n %s",
+board we are using to check for moves:\n%s",
                     self.game_board.turn,
                     self.game_board,
                 )
@@ -344,7 +344,7 @@ board we are using to check for moves:\n %s",
         # update the last move
         self.last_move = move
         self.logger.info(
-            "made move on internal board: BOARD POST MOVE:\n %s", self.game_board
+            "made move on internal board, BOARD POST MOVE:\n%s", self.game_board
         )
 
     def set_board_FEN(self, board, FEN) -> None:
@@ -384,6 +384,7 @@ board we are using to check for moves:\n %s",
         """show the differance between two boards and output differance on the chessboard"""
         # go through the squares and turn on the light for ones that are in error
         self.nl_interface.lightsOut()
+        is_diff = False
         for n in range(1, 9):
             for a in range(ord("a"), ord("h") + 1):
                 square = chr(a) + str(n)
@@ -394,7 +395,10 @@ board we are using to check for moves:\n %s",
 { board1.piece_at(py_square) } \n board2: { board2.piece_at(py_square) }"
                     )
                     self.set_led(square, True)
-                    self.beep()
+                    is_diff = True
+        # if there is a diff beep
+        if is_diff:
+            self.beep()
 
     def get_game_FEN(self) -> str:
         """get the game board FEN"""
