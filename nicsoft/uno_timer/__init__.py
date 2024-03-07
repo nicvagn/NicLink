@@ -1,1 +1,1 @@
-import .chess_clock
+from . import chess_clock

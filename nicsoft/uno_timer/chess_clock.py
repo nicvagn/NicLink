@@ -6,7 +6,7 @@
 #
 #  you should have received a copy of the gnu general public license along with NicLink. if not, see <https://www.gnu.org/licenses/>.
 
-if __name__ == __main__:
+if __name__ == '__main__':
     # import shinanigans. If this is not __main__ this should already be done
     script_dir = os.path.dirname(__file__)
     parent_dir = os.path.dirname(script_dir)
@@ -16,19 +16,15 @@ import pyfirmata
 import threading
 import time
 
-
-
-from lichess import Game
-
 ARDUINO_ADDRESS = "/dev/ttyACM0"
 # the wait time for refreshing the clock
 CLOCK_REFRESH = 0.3
 
 
-class ChessClock(threading.Thread)
+class ChessClock(threading.Thread):
     """in charge of the time in a chessgame"""
 
-    def __init__(self, game: Game, arduino_address=None **kwargs):
+    def __init__(self, game, arduino_address=None, **kwargs):
         super.__init__(**kwargs)
         if arduino_address is not None:
             arduino = pyfirmata.Arduino(arduino_address)
@@ -61,8 +57,9 @@ class ChessClock(threading.Thread)
 
     def run():
         """run the chessclock"""
-
+        
         while True:
+            pass
 
 
 

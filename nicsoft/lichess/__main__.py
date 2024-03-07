@@ -107,17 +107,8 @@ class Game(threading.Thread):
         # current state from stream
         self.current_state = next(self.stream)
 
-        # init chess_clock
-        chess_clock.start(self.current_state["state"])
 
-        # stuff about current game
-        # whites total game time
-        self.white_time = self.current_state["state"]["wtime"]
-        self.black_time = self.current_state["state"]["btime"]
 
-        # the white and black increment
-        self.white_inc = self.current_state["state"]["winc"]
-        self.black_inc = self.current_state["state"]["binc"]
 
         self.playing_white = playing_white
         if starting_fen and False:  # TODO fix starting fen (for use w chess960)
@@ -142,13 +133,9 @@ class Game(threading.Thread):
             self.handle_state_change(self.current_state["state"])
 
     def start_clock(game_state) -> None:
-        # whites total game time
-        self.white_time = self.current_state["state"]["wtime"]
-        self.black_time = self.current_state["state"]["btime"]
-
-        # the white and black increment
-        self.white_inc = self.current_state["state"]["winc"]
-        self.black_inc = self.current_state["state"]["binc"]
+        """handle starting external chess clock""" 
+        # init chess_clock
+        chess_clock.start(self.current_state["state"])
 
     def run(self) -> None:
         """run the thread until game is through, ie: while the game stream is open then kill it w self.game_done()"""
@@ -179,7 +166,6 @@ class Game(threading.Thread):
         nl_inst.beep()
         nl_inst.gameover_lights()
         nl_inst.game_over.set()
-
         time.sleep(3)
         nl_inst.turn_off_all_leds()
         # stop the thread
@@ -294,7 +280,7 @@ class Game(threading.Thread):
 
             except:
                 e = sys.exc_info()[0]
-                logger.info("exception on make_move:\n")
+                logger.info("!!! exception on make_move: !!!\nRecord what it is, and try to replace the arbitrary except")
                 traceback.print_exc()
             finally:
                 if attempt > 1:
@@ -522,7 +508,7 @@ def main():
             if "Too Many Requests for url" in str(e):
                 time.sleep(10)
         except NicLinkGameOver:
-            print("game over, you can play another")
+            print("game over, you can play another. Waiting for lichess event...")
 
         finally:
             time.sleep(REFRESH_DELAY)
