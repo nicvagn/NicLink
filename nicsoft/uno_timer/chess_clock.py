@@ -6,17 +6,19 @@
 #
 #  you should have received a copy of the gnu general public license along with NicLink. if not, see <https://www.gnu.org/licenses/>.
 
+
+import pyfirmata
+import threading
+import time
+import os
+import sys
 if __name__ == '__main__':
     # import shinanigans. If this is not __main__ this should already be done
     script_dir = os.path.dirname(__file__)
     parent_dir = os.path.dirname(script_dir)
     sys.path.append(parent_dir)
 
-import pyfirmata
-import threading
-import time
-
-ARDUINO_ADDRESS = "/dev/ttyACM0"
+arduino_address = "/dev/ttyACM0"
 # the wait time for refreshing the clock
 CLOCK_REFRESH = 0.3
 
@@ -63,4 +65,16 @@ class ChessClock(threading.Thread):
 
 
 
+arduino = pyfirmata.Arduino(arduino_address)
+def test_clock() -> None:
+    """test the external Arduino chess clock"""
+    toggle = False
+    while True:
+        if toggle:
+            arduino.digital[7].write(1)
+        else:
+            arduino.digital[7].write(0)
+        time.sleep(1)
+        toggle = not toggle
 
+test_clock()

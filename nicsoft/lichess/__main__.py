@@ -29,7 +29,6 @@ import berserk
 
 # for the clock
 import datetime
-from uno_timer import ChessClock
 
 # NicLink shit
 from niclink import NicLinkManager
@@ -109,9 +108,6 @@ class Game(threading.Thread):
         # current state from stream
         self.current_state = next(self.stream)
 
-
-
-
         self.playing_white = playing_white
         if starting_fen and False:  # TODO fix starting fen (for use w chess960)
             self.game_board = chess.Board(starting_fen)
@@ -125,19 +121,12 @@ class Game(threading.Thread):
         logger.info("game init w id: %s", game_id)
         logger.info(client.games.get_ongoing())
 
-
-
         # if white, make the first move
         if self.playing_white and self.current_state["state"]["moves"] == "":
             self.make_first_move()
         # if we are joining a game in progress or move second
         else:
             self.handle_state_change(self.current_state["state"])
-
-    def start_clock(game_state) -> None:
-        """handle starting external chess clock""" 
-        # init chess_clock
-        chess_clock.start(self.current_state["state"])
 
     def run(self) -> None:
         """run the thread until game is through, ie: while the game stream is open then kill it w self.game_done()"""
