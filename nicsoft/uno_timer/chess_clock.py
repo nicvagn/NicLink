@@ -21,10 +21,10 @@ arduino_address = "/dev/ttyACM0"
 # the wait time for refreshing the clock
 CLOCK_REFRESH = 0.3
 
-class ChessClock(threading.Thread)
+class ChessClock(threading.Thread):
     """in charge of the time in a chessgame"""
 
-    def __init__(self, game: Game, arduino_address=None **kwargs):
+    def __init__(self, game, arduino_address=None, **kwargs):
         super.__init__(**kwargs)
         if arduino_address is not None:
             arduino = pyfirmata.Arduino(arduino_address)
@@ -74,4 +74,6 @@ def test_clock() -> None:
             arduino.digital[7].write(0)
         time.sleep(1)
         toggle = not toggle
+
+test_clock()
 

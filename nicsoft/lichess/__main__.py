@@ -29,7 +29,6 @@ import berserk
 
 # for the clock
 import datetime
-from uno_timer import ChessClock
 
 # NicLink shit
 from niclink import NicLinkManager
@@ -82,10 +81,22 @@ formatter = logging.Formatter("%(asctime)s %(levelname)s %(module)s %(message)s"
 consoleHandler.setFormatter(formatter)
 logger.addHandler(consoleHandler)
 
+fileHandler = logging.FileHandler("NicLink.log")
+fileHandler.setLevel(logging.DEBUG)
+
+logger.addHandler(fileHandler)
+
 # log unhandled exceptions to the log file
-# def my_excepthook(excType, excValue, traceback, logger=logger):
-#    logger.error("Uncaught exception", exc_info=(excType, excValue, traceback))
-# uys.excepthook = my_excepthook
+def log_excepthook(excType, excValue, traceback):
+    global logger
+    logger.error("Uncaught exception", exc_info=(excType, excValue, traceback))
+
+sys.excepthook = log_excepthook
+
+def log_handled_exception(exception: Exception) -> None:
+    """log a handled exception"""
+    logger.error("Exception handled: %s", exception)
+
 
 print(
     "\n\n==========================\nNicLink on Lichess startup\n==========================\n\n"
@@ -175,13 +186,15 @@ class Game(threading.Thread):
                 # show move w lights
                 nl_inst.set_move_LEDs(move)
             except berserk.exceptions.ResponseError as err:
+                log_handled_exception(err)
                 print(err)
                 self.game_done()
                 # game is over
                 # print("ResponseError: trying again after three seconds")
                 # time.sleep(3)
                 # continue
-            except IllegalMove:
+            except IllegalMove as err:
+                log_handled_exception(err)
                 print("Illegal move")
                 break
             else:
@@ -265,15 +278,16 @@ class Game(threading.Thread):
                     self.make_move(move)
                     break
 
-            except KeyboardInterrupt:
+            except KeyboardInterrupt as err:
+                log_handled_exception(err)
                 print("KeyboardInterrupt: bye")
                 raise ExitNicLink("have a nice day")
                 sys.exit(0)
 
-            except:
-                e = sys.exc_info()[0]
-                logger.info("!!! exception on make_move: !!!\nRecord what it is, and try to replace the arbitrary except")
-                traceback.print_exc()
+#            except:
+#                e = sys.exc_info()[0]
+#                logger.info("!!! exception on make_move: !!!\nRecord what it is, and try to replace the arbitrary except")
+#                traceback.print_exc()
             finally:
                 if attempt > 1:
                     logger.debug("sleeping before retry")
@@ -341,8 +355,7 @@ def handle_game_start(event) -> None:
     except berserk.exceptions.ResponseError as e:
         if "This game cannot be played with the Board API" in str(e):
             print("cannot play this game via board api")
-        logger.info("ERROR: %s", e)
-        return
+        log_handled_exception(e)
     except KeyboardInterrupt:
         print("bye")
         nl_inst.game_over()
@@ -378,13 +391,15 @@ def is_correspondence(gameId) -> bool:
             if game["gameId"] == gameId:
                 if game["speed"] == "correspondence":
                     return True
-    except KeyboardInterrupt:
+    except KeyboardInterrupt as err:
+        log_handled_exception(err)
         print("KeyboardInterrupt: bye")
         sys.exit(0)
     except:
         e = sys.exc_info()[0]
         print(f"cannot determine game speed: {e}")
         logger.info("cannot determine if game is correspondence: ", e)
+        log_handled_exception(e)
         return False
     return False
 
@@ -416,7 +431,8 @@ def main():
         print("Thank's for using NicLink")
         sys.exit(0)
 
-    except:
+    except as err:
+        log_handled_exception(err)
         print(f"error: { traceback.format_exc() } on NicLink connection.")
         sys.exit(-1)
 
@@ -435,17 +451,18 @@ def main():
         session = berserk.TokenSession(token)
     except:
         e = sys.exc_info()[0]
+        log_handled_exception(e)
         print(f"cannot create session: {e}")
         logger.info("cannot create session", e)
         sys.exit(-1)
-
+ 
     try:
         if DEBUG:
             client = berserk.Client(session, base_url="https://lichess.dev")
-
         else:
             client = berserk.Client(session)
-    except KeyboardInterrupt:
+    except KeyboardInterrupt as err:
+        log_handled_exception(err)
         print("KeyboardInterrupt: bye")
         sys.exit(0)
     except:
@@ -464,7 +481,7 @@ def main():
         sys.exit(0)
     except:
         e = sys.exc_info()[0]
-        logger.info(f"cannot get lichess acount info: {e}")
+        logger.info("cannot get lichess acount info: %s", e)
         print(f"cannot get lichess acount info: {e}")
         sys.exit(-1)
 
@@ -475,6 +492,7 @@ def main():
             print("=== Waiting for lichess event ===")
             for event in client.board.stream_incoming_events():
                 if event["type"] == "challenge":
+                    logger.info("challenge received: %s", event)
                     print("\n==== Challenge received ====\n")
                     print(event)
                 elif event["type"] == "gameStart":
@@ -484,6 +502,7 @@ def main():
                     nl_inst.game_over.set()
                     handle_resign(event)
                     print("GAME FULL received")
+                    logger.info("\ngameFull received\n")
                 time.sleep(REFRESH_DELAY)
 
         except KeyboardInterrupt:
@@ -491,19 +510,21 @@ def main():
             try:
                 nl_inst.kill_switch.set()
             except:
-                # quit down quit
+                # quit down quiett
                 pass
             sys.exit(0)
         except berserk.exceptions.ResponseError as e:
             print(f"ERROR: Invalid server response: {e}")
-            logger.info("Invalid server response: {e}")
+            logger.info("Invalid server response: %s", e)
             if "Too Many Requests for url" in str(e):
                 time.sleep(10)
         except NicLinkGameOver:
+            logger.info("NicLinkGameOver excepted, good game?")
             print("game over, you can play another. Waiting for lichess event...")
 
         finally:
             time.sleep(REFRESH_DELAY)
+            logger.info("main loop: sleeping REFRESH_DELAY")
 
 
 if __name__ == "__main__":
