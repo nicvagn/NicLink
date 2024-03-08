@@ -431,7 +431,7 @@ def main():
         print("Thank's for using NicLink")
         sys.exit(0)
 
-    except as err:
+    except Exception as err:
         log_handled_exception(err)
         print(f"error: { traceback.format_exc() } on NicLink connection.")
         sys.exit(-1)
