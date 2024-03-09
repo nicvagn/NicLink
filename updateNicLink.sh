@@ -15,6 +15,6 @@ cmake ../src
 make
 
 # move into the niclink module
-cp -f _nic*.so ../nic_soft/niclink
+cp -f _nic*.so ../nicsoft/niclink
 
-echo "Moved _niclinkCPYTHONNONSENSE.so to ../nic_soft/niclink"
+echo "Moved _niclinkCPYTHONNONSENSE.so to ../nicsoft/niclink"
