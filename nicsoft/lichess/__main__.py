@@ -159,7 +159,8 @@ class Game(threading.Thread):
             else:
                 break
 
-        self.game_done()
+        # when the stream ends, the game is over
+        self.game_done() 
 
     def game_done(self):
         """stop the thread, game should be over, or maybe a rage quit"""
@@ -180,33 +181,23 @@ class Game(threading.Thread):
         global logger, nl_inst
         logger.info("move made: %s", move)
 
-
-        self.berserk_board_client.make_move(self.game_id, move)
-        # set the moves lights
-        nl_inst.set_move_LEDs(move)
-        """
         while not nl_inst.game_over.is_set():
+            logger.info("make_move() attempt w move: %s nl_inst.game_over.is_set(): %s", move, str(nl_inst.game_over.is_set()))
             try:
                 if move is None:
                     raise IllegalMove("Move is None")
                 self.berserk_board_client.make_move(self.game_id, move)
-                # show move w lights
-                nl_inst.set_move_LEDs(move)
             except berserk.exceptions.ResponseError as err:
                 log_handled_exception(err)
-                print(err)
-                self.game_done()
-                # game is over
-                # print("ResponseError: trying again after three seconds")
-                # time.sleep(3)
-                # continue
+                print(f"ResponseError: { err }trying again after three seconds")
+                time.sleep(3)
+                continue
             except IllegalMove as err:
                 log_handled_exception(err)
                 print("Illegal move")
                 break
             else:
                 break
-    """
     def make_first_move(self):
         """make the first move in a lichess game, before stream starts"""
         global nl_inst, logger
@@ -244,8 +235,8 @@ class Game(threading.Thread):
                 tmp_chessboard.push_uci(move)
                 last_move = move
 
-        # highlight last made move
-        nl_inst.set_move_LEDs( last_move )
+            # highlight last made move
+            nl_inst.set_move_LEDs( last_move )
 
         # check for game over
         result = tmp_chessboard.outcome()
@@ -291,7 +282,7 @@ class Game(threading.Thread):
             except KeyboardInterrupt as err:
                 log_handled_exception(err)
                 print("KeyboardInterrupt: bye")
-                raise ExitNicLink("have a nice day")
+                raise NicLinkGameOver("Game exited via a KeyboardInterrupt")
                 sys.exit(0)
 
                 #except:
@@ -385,10 +376,10 @@ def handle_ongoing_game(game_data):
         print("it is your opponents turn.")
 
 
-def handle_resign() -> None:
+def handle_resign(event) -> None:
     """handle ending the game in the case where you resign"""
     global nl_inst, logger, game
-    logger.info("handle_resign entered")
+    logger.info("handle_resign entered: event: %", event)
     # end the game
     game.game_done()
 
@@ -522,7 +513,7 @@ def main():
             except:
                 # quit down quiett
                 pass
-            sys.exit(0)
+            raise ExitNicLink("editing b/c of keyboard intrupt") 
         except berserk.exceptions.ResponseError as e:
             print(f"ERROR: Invalid server response: {e}")
             logger.info("Invalid server response: %s", e)
@@ -535,6 +526,8 @@ def main():
         finally:
             time.sleep(REFRESH_DELAY)
             logger.info("main loop: sleeping REFRESH_DELAY")
+
+            continue
 
 
 if __name__ == "__main__":
