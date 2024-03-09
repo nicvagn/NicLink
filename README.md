@@ -3,10 +3,10 @@
 # Notice
 > version 0.7
 
-> checkout this software, it solves the problem's I wannted to solve with NicLink:
+> checkout this software, it solves the problem's I wanted to solve with NicLink:
     https://chromewebstore.google.com/detail/chessconnect/dmkkcjpbclkkhbdnjgcciohfbnpoaiam?hl=en-GB
 
-# overview 
+# overview
 
     - see the python requirements.txt for external requirements
     - run updateNicLink.sh to compile and prepaire the env
@@ -18,11 +18,11 @@
 ## Setting up python venv
 
 In order to use NicLink while it is in development, it is advised to use a virtual environment. I do not have a good enough understanding,
-but you have the internet. Go ham. It is now at a point where it should be portable, if you are reeding this, and want to realy help me out,
+but you have the internet. Go ham. It is now at a point where it should be portable, if you are reeding this, and want to really help me out,
 it would be swell to hear how installing NicLink goes. The pyproject.toml should have the requirements. There is a requirements.txt too.
 
 ## Using the board on lichess with the board api
-        
+
     In the ROOT/nic_soft/niclink_lichess dir create a dir called lichess_token.
     in this dir create a file called token. This will be a plain text file containing
     only the text of your lichess auth token.
@@ -40,7 +40,7 @@ it would be swell to hear how installing NicLink goes. The pyproject.toml should
 
 ## Use with gnu/linux:
 
-    In order to use NicLink as a user in the wheel group 
+    In order to use NicLink as a user in the wheel group
     ( group can be arbitrary )
     You must give the user read and write permissions for the Chessnut air.
     This can be done through a udev rule.
@@ -69,7 +69,7 @@ it would be swell to hear how installing NicLink goes. The pyproject.toml should
 
     In order to do so, you should read ./play_stockfish/README.md for further info
 
-## Connecty w bluetooth
+## Connect w bluetooth
 
     not mature enough to doc, but exists (Is a broken mess, save yourself)
 
@@ -81,5 +81,5 @@ contact me:
 
 or, make a pull request!
 
-# have a great day! 
+# have a great day!
 

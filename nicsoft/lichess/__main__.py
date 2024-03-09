@@ -165,7 +165,8 @@ class Game(threading.Thread):
         """stop the thread, game should be over, or maybe a rage quit"""
         global logger, nl_inst
         print("good game")
-        logger.info("game_done entered")
+        logger.info("Game.game_done() entered")
+        # tell the user and NicLink the game is through
         nl_inst.beep()
         nl_inst.gameover_lights()
         nl_inst.game_over.set()
@@ -178,6 +179,12 @@ class Game(threading.Thread):
         """make a move in a lichess game"""
         global logger, nl_inst
         logger.info("move made: %s", move)
+
+
+        self.berserk_board_client.make_move(self.game_id, move)
+        # set the moves lights
+        nl_inst.set_move_LEDs(move)
+        """
         while not nl_inst.game_over.is_set():
             try:
                 if move is None:
@@ -199,7 +206,7 @@ class Game(threading.Thread):
                 break
             else:
                 break
-
+    """
     def make_first_move(self):
         """make the first move in a lichess game, before stream starts"""
         global nl_inst, logger
@@ -229,13 +236,16 @@ class Game(threading.Thread):
             tmp_chessboard = chess.Board()
 
         moves = game_state["moves"].split(" ")
+        # last move is to highlight last move on board
         last_move = None
-
         if moves != [""]:
             for move in moves:
                 # make the moves on a board
                 tmp_chessboard.push_uci(move)
                 last_move = move
+
+        # highlight last made move
+        nl_inst.set_move_LEDs( last_move )
 
         # check for game over
         result = tmp_chessboard.outcome()
@@ -252,7 +262,7 @@ class Game(threading.Thread):
                 f"\n--- GAME OVER ---\nreason: {result.termination}\nwinner: {winner}"
             )
             logger.info("game done detected, calling game_done()")
-            # stop the tread
+            # stop the tread (this does some cleanup and throws an exception)
             self.game_done()
 
         # set this board as NicLink game board
@@ -284,10 +294,10 @@ class Game(threading.Thread):
                 raise ExitNicLink("have a nice day")
                 sys.exit(0)
 
-#            except:
-#                e = sys.exc_info()[0]
-#                logger.info("!!! exception on make_move: !!!\nRecord what it is, and try to replace the arbitrary except")
-#                traceback.print_exc()
+                #except:
+                #    e = sys.exc_info()[0]
+                #    logger.info("!!! exception on make_move: !!!\nRecord what it is, and try to replace the arbitrary except")
+                #    traceback.print_exc()
             finally:
                 if attempt > 1:
                     logger.debug("sleeping before retry")
