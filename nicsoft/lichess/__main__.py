@@ -315,8 +315,7 @@ class Game(threading.Thread):
         if game_state["status"] == "gameFull":
             breakpoint()
             self.game_done()
-        if "winner" in game_state:
-            breakpoint()
+        if "winner" in game_state:   # confirmed worked once on their resign
             self.game_done()
 
 

@@ -15,8 +15,11 @@
         - master: behind the times. More likely to be solid
         - dev: the wild west of new features
         - bluetooth: in dev, not in a good place yet
+## requirements
+- python modules listed in requirements.txt
+- cmake (3.2 or better I think)
+-
 ## Setting up python venv
-
 In order to use NicLink while it is in development, it is advised to use a virtual environment. I do not have a good enough understanding,
 but you have the internet. Go ham. It is now at a point where it should be portable, if you are reeding this, and want to really help me out,
 it would be swell to hear how installing NicLink goes. The pyproject.toml should have the requirements. There is a requirements.txt too.
@@ -26,10 +29,10 @@ In order to setup your python path correctly, put the niclink.pth file someware 
 to find out you existing python path:
 
 1. go into your python interpreter
-2.
-   - >> import sys
-   - >> print('\n'.join(sys.path))"
-4. create a .pth file pointing to the .../NicLink/nicsoft dir
+2. following:
+   - ">> import sys"
+   - ">> print('\n'.join(sys.path))"
+4. create a .pth file pointing to the .../NicLink/nicsoft dir in one of the listed dirs in your pythonpath
 5. profit
 
 ## Using the board on lichess with the board api
