@@ -20,7 +20,16 @@ import _niclink
 import nl_bluetooth
 from nl_exceptions import *
 
+#  === exception logging ===
+# log unhandled exceptions to the log file
+def log_except_hook(excType, excValue, traceback):
+    global logger
+    logger.error("Uncaught exception", exc_info=(excType, excValue, traceback))
+sys.excepthook = log_except_hook
 
+def log_handled_exeption(exception: Exception) -> None:
+    """log a handled exception"""
+    logger.error("Exception handled: %s", exception)
 
 
 class NicLinkManager(threading.Thread):
@@ -50,6 +59,15 @@ class NicLinkManager(threading.Thread):
         self.connect()
         # set NicLink values to defaults
         self.reset()
+        """
+        IE:
+        ### Treading Events ###
+        # a way to kill the program from outside
+        self.game_over = threading.Event()
+        self.has_moved = threading.Event()
+        self.kill_switch = threading.Event()
+        self.start_game = threading.Event()
+        """
 
         ### threading lock ###
         # used for access to critical vars to provent race conditions and such
@@ -245,7 +263,7 @@ current board: \n%s\n board we are using to check legal moves: \n%s",
                 self.logger.info("KeyboardInterrupt: bye")
                 sys.exit(0)
             except RuntimeError as err:
-                self.logger.error(err)
+                log_handled_exeption(err)
                 self.logger.warning(
                     "\n===== move not valid, undue it and try again. it is white's turn? %s =====\n\
 board we are using to check for moves:\n%s",
@@ -262,7 +280,7 @@ board we are using to check for moves:\n%s",
                 return False
 
             except ValueError:
-                self.logger.warn("last move is None")
+                self.logger.warn("self.find_move_from_FEN_change(new_FEN) returned None. No move was found.")
                 return False
             with self.lock:
                 return self.last_move
@@ -273,10 +291,10 @@ board we are using to check for moves:\n%s",
         return False
 
     def set_move_LEDs(self, move) -> None:
-        """highlight the last move. Light up the origin and destination LED"""
+        """highlight a move. Light up the origin and destination LED"""
         # turn out move led's
         self.turn_off_all_leds()
-        # make sure last move is of type str
+        # make sure move is of type str
         if type(move) != str:
             try:
                 move = move.uci()
@@ -307,7 +325,8 @@ board we are using to check for moves:\n%s",
                 attempts += 1
                 self.logger.info("NoMove from chessboard. Attempt: %s", attempts)
                 time.sleep(self.refresh_delay)
-                move = False
+
+                continue
 
             except IllegalMove as err:
                 # IllegalMove made, waiting then trying again
@@ -318,14 +337,13 @@ board we are using to check for moves:\n%s",
                     self.refresh_delay,
                 )
                 time.sleep(self.refresh_delay)
-                move = False
+                continue
 
-            if move:
-                self.logger.info("move %s made.", move)
-                # a move has been played
-                self.make_move_game_board(move)
-                self.logger.info("move detected and made on gameboard. move %s", move)
-                return move
+            self.logger.info("move %s made.", move)
+            # a move has been played
+            self.make_move_game_board(move)
+            self.logger.info("move detected and made on gameboard. move %s", move)
+            return move
 
             # if no move has been played, sleep and check again
             time.sleep(self.refresh_delay)
@@ -374,7 +392,6 @@ board we are using to check for moves:\n%s",
         """set the game board"""
         with self.lock:
             self.game_board = board
-            self.last_move = None
 
     def gameover_lights(self) -> None:
         """show some fireworks"""
@@ -399,6 +416,9 @@ board we are using to check for moves:\n%s",
         # if there is a diff beep
         if is_diff:
             self.beep()
+        else:
+            # set the last move leds
+            self.set_move_LEDs(self.last_move())
 
     def get_game_FEN(self) -> str:
         """get the game board FEN"""
@@ -425,7 +445,6 @@ board we are using to check for moves:\n%s",
             }
 
         return False
-
 
 def test_bt():
     """test nl_bluetooth"""

@@ -44,6 +44,9 @@ args = parser.parse_args()
 # refresh refresh delay for NicLink and Lichess
 REFRESH_DELAY = 0.4
 
+# POLL_DELAY for checking for new games
+POLL_DELAY = 5
+
 correspondence = False
 if args.correspondence:
     correspondence = True
@@ -87,14 +90,15 @@ fileHandler.setLevel(logging.DEBUG)
 logger.addHandler(fileHandler)
 
 # log unhandled exceptions to the log file
-def log_excepthook(excType, excValue, traceback):
+def log_except_hook(excType, excValue, traceback):
     global logger
     logger.error("Uncaught exception", exc_info=(excType, excValue, traceback))
 
-sys.excepthook = log_excepthook
+sys.excepthook = log_except_hook
 
 def log_handled_exception(exception: Exception) -> None:
     """log a handled exception"""
+    global logger
     logger.error("Exception handled: %s", exception)
 
 
@@ -160,7 +164,7 @@ class Game(threading.Thread):
                 break
 
         # when the stream ends, the game is over
-        self.game_done() 
+        self.game_done()
 
     def game_done(self):
         """stop the thread, game should be over, or maybe a rage quit"""
@@ -216,8 +220,9 @@ class Game(threading.Thread):
 
         logger.info("game_state: %s", game_state)
 
-        if self.check_for_game_over(self.current_state["state"]):
-            self.game_over()
+        # check if game has ended
+        self.check_for_game_over(game_state)
+        
 
         # tmp_chessboard is used to get the current game state from API and parse it into something we can use
         if self.starting_fen:
@@ -282,7 +287,6 @@ class Game(threading.Thread):
             except KeyboardInterrupt as err:
                 log_handled_exception(err)
                 print("KeyboardInterrupt: bye")
-                raise NicLinkGameOver("Game exited via a KeyboardInterrupt")
                 sys.exit(0)
 
                 #except:
@@ -300,20 +304,17 @@ class Game(threading.Thread):
         print(chat_line)
         pass
 
-    def check_for_game_over(self, game_state) -> bool:
-        """check a game state to see if the game is through if so raise an exception. If not return True"""
+    def check_for_game_over(self, game_state) -> None:
+        """check a game state to see if the game is through if so raise an exception."""
         global logger
 
-        logger.info(game_state)
-        print(game_state)
-
+        logger.debug("check_for_game_over(self, game_state) entered w/ gamestate: %s", game_state)
         if game_state["status"] == "gameFull":
             breakpoint()
             self.game_done()
         if "winner" in game_state:
             breakpoint()
             self.game_done()
-        return False
 
 
 def show_FEN_on_board(FEN) -> None:
@@ -504,27 +505,43 @@ def main():
                     handle_resign(event)
                     print("GAME FULL received")
                     logger.info("\ngameFull received\n")
-                time.sleep(REFRESH_DELAY)
+
+                # check for kill switch
+                if nl_inst.kill_switch.is_set():
+                    sys.exit(0)
+
+            
+            print("out of event loop, i don't know what to do")
+            breakpoint()
+
 
         except KeyboardInterrupt:
             logger.info("KeyboardInterrupt: bye")
             try:
                 nl_inst.kill_switch.set()
-            except:
+            except Exception as err:
+                log_handled_exception(err)
                 # quit down quiett
-                pass
-            raise ExitNicLink("editing b/c of keyboard intrupt") 
+                # pass
+            finally:
+                raise ExitNicLink("KeyboardInterrupt in __main__")
         except berserk.exceptions.ResponseError as e:
             print(f"ERROR: Invalid server response: {e}")
             logger.info("Invalid server response: %s", e)
             if "Too Many Requests for url" in str(e):
                 time.sleep(10)
+
+        except ExitNicLink:
+            # exit NicLink lichess
+
+            sys.exit(0)
+            
         except NicLinkGameOver:
             logger.info("NicLinkGameOver excepted, good game?")
             print("game over, you can play another. Waiting for lichess event...")
 
         finally:
-            time.sleep(REFRESH_DELAY)
+            time.sleep(POLL_DELAY)
             logger.info("main loop: sleeping REFRESH_DELAY")
 
             continue
