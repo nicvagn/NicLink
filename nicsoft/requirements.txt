@@ -14,7 +14,7 @@ jsonschema-specifications==2023.12.1
 ndjson==0.3.1
 prompt-toolkit==3.0.39
 pybind11==2.11.1
-pyFirmata @ file:///home/nrv/git/pyFirmata
+pyFirmata==1.1.0
 pyproject-toml==0.0.10
 pyserial==3.5
 python-dateutil==2.9.0.post0
