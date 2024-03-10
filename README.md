@@ -17,7 +17,7 @@
         - bluetooth: in dev, not in a good place yet
 ## requirements
 - python modules listed in requirements.txt
-- cmake (3.2 or better I think) some distros are behind, so I recomend "pip install cmake" after uninstalling the one from your distro
+- cmake (3.4...3.18) some distros are behind signifigantly, so I recomend "pip install cmake" after uninstalling the one from your distro
 - if cmake can not find python packages (probably) see setting up a python environment and run cmake from the venv 
 ## Setting up python venv
 In order to use NicLink while it is in development, it is advised to use a virtual environment. I do not have a good enough understanding,

@@ -41,11 +41,14 @@ add_library(easylink SHARED ${SOURCE_FILES})
 #add_executable(NicLink)
 
 # link it with the libraies I replaced linking with the created lib to linking directly
-link_libraries(easylink hidapi::hidapi spdlog::spdlog pybind11::headers ${PYTHON_LIBRARIES})
-# C++ standard 11
-# add the pibind module
+target_link_libraries(easylink hidapi::hidapi spdlog::spdlog pybind11::headers ${PYTHON_LIBRARIES})
 
+
+# add the pibind module
 add_executable(NicLinkcpp NicLink.cpp)
+# link the pybind module
+target_link_libraries(NicLinkcpp easylink)
+
 # following pep 8 convention
 pybind11_add_module(_niclink NicLink.cpp)
 
