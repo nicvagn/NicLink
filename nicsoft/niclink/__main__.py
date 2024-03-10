@@ -38,8 +38,8 @@ class NicLinkManager(threading.Thread):
     def __init__(self, refresh_delay, logger=None, bluetooth=False):
         """initialize the link to the chessboard, and set up NicLink"""
 
-        # initialize the thread
-        threading.Thread.__init__(self)
+        # initialize the thread, as a daemon
+        threading.Thread.__init__(self, daemon=True)
 
         if logger != None:
             self.logger = logger
@@ -104,10 +104,6 @@ class NicLinkManager(threading.Thread):
             # set the has moved flag to signal the move
             self.has_moved.set()
             time.sleep(self.refresh_delay)
-
-    def setDaemon() -> None:
-        """set through as a Daemon"""
-        super.setDaemon()
 
     def connect(self, bluetooth=False):
         """connect to the chessboard"""
@@ -418,7 +414,7 @@ board we are using to check for moves:\n%s",
             self.beep()
         else:
             # set the last move leds
-            self.set_move_LEDs(self.last_move())
+            self.set_move_LEDs(self.get_last_move())
 
     def get_game_FEN(self) -> str:
         """get the game board FEN"""
