@@ -16,12 +16,6 @@ import threading
 import importlib
 import traceback
 
-# import shinanigans. I don't fully comprehend how python importing works, but this works
-script_dir = os.path.dirname(__file__)
-parent_dir = os.path.dirname(script_dir)
-
-sys.path.append(parent_dir)
-
 # chess stuff
 import chess.pgn
 import chess
@@ -34,6 +28,7 @@ import datetime
 from niclink import NicLinkManager
 from niclink.nl_exceptions import *
 
+# parsing command line arguments
 parser = argparse.ArgumentParser()
 parser.add_argument("--tokenfile")
 parser.add_argument("--correspondence", action="store_true")
@@ -41,12 +36,11 @@ parser.add_argument("--quiet", action="store_true")
 parser.add_argument("--debug", action="store_true")
 args = parser.parse_args()
 
+### constants ###
 # refresh refresh delay for NicLink and Lichess
 REFRESH_DELAY = 0.4
-
 # POLL_DELAY for checking for new games
 POLL_DELAY = 5
-
 correspondence = False
 if args.correspondence:
     correspondence = True
@@ -56,6 +50,10 @@ DEBUG = False
 if args.debug:
     DEBUG = True
 
+# the script dir, used to import the lila token file
+script_dir = os.path.dirname(__file__)
+
+### lichess token parsing ###
 TOKEN_FILE = os.path.join(script_dir, "lichess_token/token")
 if args.tokenfile is not None:
     TOKEN_FILE = args.tokenfile
@@ -63,6 +61,7 @@ if args.tokenfile is not None:
 if DEBUG:
     TOKEN_FILE = os.path.join(script_dir, "lichess_token/dev_token")
 
+### logger stuff ###
 logger = logging.getLogger("nl_lichess")
 
 consoleHandler = logging.StreamHandler(sys.stdout)
@@ -89,6 +88,8 @@ fileHandler.setLevel(logging.DEBUG)
 
 logger.addHandler(fileHandler)
 
+### exception logging and except hook ###
+
 # log unhandled exceptions to the log file
 def log_except_hook(excType, excValue, traceback):
     global logger
@@ -100,6 +101,8 @@ def log_handled_exception(exception: Exception) -> None:
     """log a handled exception"""
     global logger
     logger.error("Exception handled: %s", exception)
+
+### pre-amble fin ###
 
 
 print(
@@ -317,12 +320,12 @@ class Game(threading.Thread):
             self.game_done()
 
 
+### helper functions ###
 def show_FEN_on_board(FEN) -> None:
     """show board FEN on an ascii chessboard"""
     tmp_chessboard = chess.Board()
     tmp_chessboard.set_fen(FEN)
     print(tmp_chessboard)
-
 
 def handle_game_start(event) -> None:
     """handle game start event"""
@@ -359,7 +362,6 @@ def handle_game_start(event) -> None:
             print("cannot play this game via board api")
         log_handled_exception(e)
 
-
 def handle_ongoing_game(game_data):
     """handle joining a game that is alredy underway"""
 
@@ -371,14 +373,12 @@ def handle_ongoing_game(game_data):
     else:
         print("it is your opponents turn.")
 
-
 def handle_resign(event) -> None:
     """handle ending the game in the case where you resign"""
     global nl_inst, logger, game
     logger.info("handle_resign entered: event: %", event)
     # end the game
     game.game_done()
-
 
 def is_correspondence(gameId) -> bool:
     """is the game a correspondence game?"""
@@ -400,14 +400,13 @@ def is_correspondence(gameId) -> bool:
         return False
     return False
 
-
 # globals, because why not
 client = None
 nl_inst = None
 game = None
 
-
 def main():
+    """handle startup, and initiation of stuff"""
     global client, nl_inst, REFRESH_DELAY, logger
 
     print("=== NicLink lichess main entered ===")
@@ -530,13 +529,15 @@ def main():
         except NicLinkGameOver:
             logger.info("NicLinkGameOver excepted, good game?")
             print("game over, you can play another. Waiting for lichess event...")
+        except ExitNicLink:
+            breakpoint()
+            sys.exit()
 
         finally:
             time.sleep(POLL_DELAY)
             logger.info("main loop: sleeping REFRESH_DELAY")
 
             continue
-
 
 if __name__ == "__main__":
     main()

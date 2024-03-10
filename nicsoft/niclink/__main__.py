@@ -4,7 +4,6 @@
 #
 #  you should have received a copy of the gnu general public license along with NicLink. if not, see <https://www.gnu.org/licenses/>.
 
-# get the dir this script is in, and add it to the path. For importing the _niclink file. Yes, I know it is a hack, but Fuck ME 
 import os
 import sys
 import time
@@ -13,23 +12,10 @@ import readchar
 import threading
 import logging
 
-script_dir = os.path.dirname(__file__)
-sys.path.append(script_dir)
 
-import _niclink
-import nl_bluetooth
-from nl_exceptions import *
-
-#  === exception logging ===
-# log unhandled exceptions to the log file
-def log_except_hook(excType, excValue, traceback):
-    global logger
-    logger.error("Uncaught exception", exc_info=(excType, excValue, traceback))
-sys.excepthook = log_except_hook
-
-def log_handled_exeption(exception: Exception) -> None:
-    """log a handled exception"""
-    logger.error("Exception handled: %s", exception)
+import niclink._niclink as _niclink
+import niclink.nl_bluetooth
+from niclink.nl_exceptions import *
 
 
 class NicLinkManager(threading.Thread):
@@ -44,7 +30,7 @@ class NicLinkManager(threading.Thread):
         if logger != None:
             self.logger = logger
         else:
-            self.logger = logging.getLogger()
+            self.logger = logging.getLogger("niclink")
             self.logger.setLevel(logging.ERROR)
 
         if bluetooth:
@@ -444,16 +430,15 @@ board we are using to check for moves:\n%s",
 
 def test_bt():
     """test nl_bluetooth"""
-
-    nl_instance = NicLinkManager(2, bluetooth=True)
-    nl_instance.connect()
+    global logger
+    nl_instance = NicLinkManager(2,logger=logger, bluetooth=True)
 
 
 def test_usb():
     """test usb connection"""
+    global logger
 
-    nl_instance = NicLinkManager(2)
-    nl_instance.connect()
+    nl_instance = NicLinkManager(2, logger=logger)
     print("(test usb connection) set up the board and press enter.")
     nl_instance.show_game_board()
     print("===============")
@@ -465,8 +450,24 @@ def test_usb():
         move = nl_instance.await_move()
         print(move)
 
-
-if __name__ == "__main__":
+logger = logging.getLogger("niclink")
+logger.setLevel(logging.DEBUG)
+if "__name__" == "__main__":
     # test_bt()
     test_usb()
-    pass
+
+#  === exception logging ===
+# log unhandled exceptions to the log file
+def log_except_hook(excType, excValue, traceback):
+    global logger
+    logger.error("Uncaught exception", exc_info=(excType, excValue, traceback))
+
+# setup except hook
+sys.excepthook = log_except_hook
+
+def log_handled_exeption(exception: Exception) -> None:
+    """log a handled exception"""
+    global logger
+    logger.error("Exception handled: %s", exception)
+
+
