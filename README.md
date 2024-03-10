@@ -26,10 +26,11 @@ In order to setup your python path correctly, put the niclink.pth file someware 
 to find out you existing python path:
 
 1. go into your python interpreter
-2. >> import sys
-.. >> print('\n'.join(sys.path))"
-3. create a .pth file pointing to the .../NicLink/nicsoft dir
-4. profit
+2.
+   - >> import sys
+   - >> print('\n'.join(sys.path))"
+4. create a .pth file pointing to the .../NicLink/nicsoft dir
+5. profit
 
 ## Using the board on lichess with the board api
 
