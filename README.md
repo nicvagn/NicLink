@@ -17,16 +17,28 @@
         - bluetooth: in dev, not in a good place yet
 ## requirements
 - python modules listed in requirements.txt
-- cmake (3.2 or better I think)
--
+- cmake (3.2 or better I think) some distros are behind, so I recomend "pip install cmake" after uninstalling the one from your distro
+- if cmake can not find python packages (probably) see setting up a python environment and run cmake from the venv 
 ## Setting up python venv
 In order to use NicLink while it is in development, it is advised to use a virtual environment. I do not have a good enough understanding,
-but you have the internet. Go ham. It is now at a point where it should be portable, if you are reeding this, and want to really help me out,
+but you have the internet. ( here is a start: https://python.land/virtual-environments/virtualenv ) Go ham. It is now at a point where it should be portable, if you are reeding this, and want to really help me out,
 it would be swell to hear how installing NicLink goes. The pyproject.toml should have the requirements. There is a requirements.txt too.
 
-In order to setup your python path correctly, put the niclink.pth file someware in your existing python path.
+what I did (bash):
+    python -m venv nicsoft  - This creates a python venv in nicsoft
+    . ./source_pyvenv.sh    - this uses a litle convieniance script, but basically all you have to do is source ./bin/activate (other file extensions if not in bash)
 
-to find out you existing python path:
+In order to setup your python path correctly, put the niclink.pth file someware in your venv python path.
+
+for me I modified the niclink.pth file to be:
+    1. /home/nrv/NicLink
+
+and ran:
+    - cp niclink.pth nicsoft/lib/python3.9/site-packages/
+
+to find out your venv's python path:
+
+( while in the venv )
 
 1. go into your python interpreter
 2. following:
@@ -34,6 +46,16 @@ to find out you existing python path:
    - ">> print('\n'.join(sys.path))"
 4. create a .pth file pointing to the .../NicLink/nicsoft dir in one of the listed dirs in your pythonpath
 5. profit
+
+
+then I ran:
+
+">>> import sys"
+">>> print('/n'.join(sys.path))"
+and it outputted:
+/n/usr/lib/python39.zip/n/usr/lib/python3.9/n/usr/lib/python3.9/lib-dynload/n/home/nrv/NicLink/nicsoft/lib/python3.9/site-packages/n/home/nrv/NicLink
+
+*** jazz hands ***
 
 ## Using the board on lichess with the board api
 
