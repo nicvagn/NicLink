@@ -21,6 +21,16 @@ In order to use NicLink while it is in development, it is advised to use a virtu
 but you have the internet. Go ham. It is now at a point where it should be portable, if you are reeding this, and want to really help me out,
 it would be swell to hear how installing NicLink goes. The pyproject.toml should have the requirements. There is a requirements.txt too.
 
+In order to setup your python path correctly, put the niclink.pth file someware in your existing python path.
+
+to find out you existing python path:
+
+1. go into your python interpreter
+2. >> import sys
+.. >> print('\n'.join(sys.path))"
+3. create a .pth file pointing to the .../NicLink/nicsoft dir
+4. profit
+
 ## Using the board on lichess with the board api
 
     In the ROOT/nic_soft/niclink_lichess dir create a dir called lichess_token.
