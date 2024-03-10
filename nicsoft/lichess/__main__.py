@@ -218,7 +218,7 @@ class Game(threading.Thread):
         global nl_inst, logger
         # {'type': 'gameState', 'moves': 'd2d3 e7e6 b1c3', 'wtime': datetime.datetime( 1970, 1, 25, 20, 31, 23, 647000, tzinfo=datetime.timezone.utc ), 'btime': datetime.datetime( 1970, 1, 25, 20, 31, 23, 647000, tzinfo=datetime.timezone.utc ), 'winc': datetime.datetime( 1970, 1, 1, 0, 0, tzinfo=datetime.timezone.utc ), 'binc': datetime.datetime( 1970, 1, 1, 0, 0, tzinfo=datetime.timezone.utc ), 'bdraw': False, 'wdraw': False}
 
-        logger.info("game_state: %s", game_state)
+        logger.info("\ngame_state: %s\n", game_state)
 
         # check if game has ended
         self.check_for_game_over(game_state)
@@ -358,11 +358,6 @@ def handle_game_start(event) -> None:
         if "This game cannot be played with the Board API" in str(e):
             print("cannot play this game via board api")
         log_handled_exception(e)
-    except KeyboardInterrupt:
-        print("bye")
-        nl_inst.game_over()
-        logger.info("KeyboardInterrupt. halting")
-        sys.exit(0)
 
 
 def handle_ongoing_game(game_data):
@@ -510,7 +505,8 @@ def main():
                 if nl_inst.kill_switch.is_set():
                     sys.exit(0)
 
-            
+            # set the niclink game over switch
+            nl_inst.game_over.set() 
             print("out of event loop, i don't know what to do")
             breakpoint()
 
@@ -530,11 +526,6 @@ def main():
             logger.info("Invalid server response: %s", e)
             if "Too Many Requests for url" in str(e):
                 time.sleep(10)
-
-        except ExitNicLink:
-            # exit NicLink lichess
-
-            sys.exit(0)
             
         except NicLinkGameOver:
             logger.info("NicLinkGameOver excepted, good game?")
