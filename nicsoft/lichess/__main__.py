@@ -354,6 +354,7 @@ def handle_game_start(event) -> None:
         game = Game(
             game_data["id"], playing_white, starting_fen=game_fen
         )  # ( game_data['color'] == "white" ) is used to set is_white bool
+        game.daemon = True
         game.start()  # start the game thread
 
     except berserk.exceptions.ResponseError as e:
@@ -400,9 +401,9 @@ def is_correspondence(gameId) -> bool:
     return False
 
 # globals, because why not
-client = None
-nl_inst = None
-game = None
+client = None  # the berserk client
+nl_inst = None  # the NicLinkManager object
+game = None # the active game, there can only be on, because on board
 
 def main():
     """handle startup, and initiation of stuff"""
@@ -479,64 +480,63 @@ def main():
         logger.info("cannot get lichess acount info: %s", e)
         print(f"cannot get lichess acount info: {e}")
         sys.exit(-1)
-
-    # main program loop
-    while True:
-        try:
-            logger.debug("\n==== event loop ====\n")
-            print("=== Waiting for lichess event ===")
-            for event in client.board.stream_incoming_events():
-                if event["type"] == "challenge":
-                    logger.info("challenge received: %s", event)
-                    print("\n==== Challenge received ====\n")
-                    print(event)
-                elif event["type"] == "gameStart":
-                    # a game is starting, it is handled by a function
-                    handle_game_start(event)
-                elif event["type"] == "gameFull":
-                    nl_inst.game_over.set()
-                    handle_resign(event)
-                    print("GAME FULL received")
-                    logger.info("\ngameFull received\n")
-
-                # check for kill switch
-                if nl_inst.kill_switch.is_set():
-                    sys.exit(0)
-
-            # set the niclink game over switch
-            nl_inst.game_over.set() 
-            print("out of event loop, i don't know what to do")
-            breakpoint()
-
-
-        except KeyboardInterrupt:
-            logger.info("KeyboardInterrupt: bye")
+    try:
+        # main program loop
+        while True:
             try:
-                nl_inst.kill_switch.set()
-            except Exception as err:
-                log_handled_exception(err)
-                # quit down quiett
-                # pass
-            finally:
-                raise ExitNicLink("KeyboardInterrupt in __main__")
-        except berserk.exceptions.ResponseError as e:
-            print(f"ERROR: Invalid server response: {e}")
-            logger.info("Invalid server response: %s", e)
-            if "Too Many Requests for url" in str(e):
-                time.sleep(10)
-            
-        except NicLinkGameOver:
-            logger.info("NicLinkGameOver excepted, good game?")
-            print("game over, you can play another. Waiting for lichess event...")
-        except ExitNicLink:
-            breakpoint()
-            sys.exit()
+                logger.debug("\n==== event loop ====\n")
+                print("=== Waiting for lichess event ===")
+                for event in client.board.stream_incoming_events():
+                    if event["type"] == "challenge":
+                        logger.info("challenge received: %s", event)
+                        print("\n==== Challenge received ====\n")
+                        print(event)
+                    elif event["type"] == "gameStart":
+                        # a game is starting, it is handled by a function
+                        handle_game_start(event)
+                    elif event["type"] == "gameFull":
+                        nl_inst.game_over.set()
+                        handle_resign(event)
+                        print("GAME FULL received")
+                        logger.info("\ngameFull received\n")
 
-        finally:
-            time.sleep(POLL_DELAY)
-            logger.info("main loop: sleeping REFRESH_DELAY")
+                    # check for kill switch
+                    if nl_inst.kill_switch.is_set():
+                        sys.exit(0)
 
-            continue
+                # set the niclink game over switch
+                nl_inst.game_over.set() 
+                print("out of event loop, i don't know what to do")
+                breakpoint()
+
+
+            except KeyboardInterrupt:
+                logger.info("KeyboardInterrupt: bye")
+                try:
+                    nl_inst.kill_switch.set()
+                except Exception as err:
+                    log_handled_exception(err)
+                    # quit down quiett
+                    # pass
+                finally:
+                    raise ExitNicLink("KeyboardInterrupt in __main__")
+            except berserk.exceptions.ResponseError as e:
+                print(f"ERROR: Invalid server response: {e}")
+                logger.info("Invalid server response: %s", e)
+                if "Too Many Requests for url" in str(e):
+                    time.sleep(10)
+                
+            except NicLinkGameOver:
+                logger.info("NicLinkGameOver excepted, good game?")
+                print("game over, you can play another. Waiting for lichess event...")
+
+            else:
+                time.sleep(POLL_DELAY)
+                logger.info("main loop: sleeping REFRESH_DELAY")
+
+    except ExitNicLink:
+        print("Have a nice life")
+        sys.exit(0)
 
 if __name__ == "__main__":
     main()
