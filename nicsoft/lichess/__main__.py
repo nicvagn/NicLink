@@ -83,6 +83,7 @@ formatter = logging.Formatter("%(asctime)s %(levelname)s %(module)s %(message)s"
 consoleHandler.setFormatter(formatter)
 logger.addHandler(consoleHandler)
 
+# logging to a file
 fileHandler = logging.FileHandler("NicLink.log")
 fileHandler.setLevel(logging.DEBUG)
 
@@ -245,6 +246,7 @@ class Game(threading.Thread):
 
             # highlight last made move
             nl_inst.set_move_LEDs( last_move )
+            logger.info("The last move was found to be: %s", last_move)
 
         # check for game over
         result = tmp_chessboard.outcome()
@@ -405,6 +407,7 @@ client = None  # the berserk client
 nl_inst = None  # the NicLinkManager object
 game = None # the active game, there can only be on, because on board
 
+# entry point
 def main():
     """handle startup, and initiation of stuff"""
     global client, nl_inst, REFRESH_DELAY, logger

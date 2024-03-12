@@ -355,11 +355,12 @@ board we are using to check for moves:\n%s",
         """set the internal game board FEN"""
         self.set_board_FEN(self.game_board, FEN)
 
-    def show_FEN_on_board(self, FEN) -> None:
+    def show_FEN_on_board(self, FEN) -> chess.Board:
         """print a FEN on on a chessboard"""
         board = chess.Board()
         self.set_board_FEN(board, FEN)
         print(board)
+        return board # for logging purposes
 
     def show_board_state(self) -> None:
         """show the state of the real world board"""
