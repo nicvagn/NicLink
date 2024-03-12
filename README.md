@@ -5,7 +5,9 @@
 
 > checkout this software, it solves the problem's I wanted to solve with NicLink:
     https://chromewebstore.google.com/detail/chessconnect/dmkkcjpbclkkhbdnjgcciohfbnpoaiam?hl=en-GB
-
+# gotchas
+    - if: ModuleNotFoundError: No module named 'niclink' make sure your venve is setup, with the .pth file configured. 
+    - Make sure you are in said venv
 # overview
 
     - see the python requirements.txt for external requirements
