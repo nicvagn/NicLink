@@ -16,13 +16,12 @@
     - branches:
         - master: behind the times. More likely to be solid
         - dev: the wild west of new features
-        - bluetooth: in dev, not in a good place yet
+
 ## requirements
 
-- you must have the hidapi-dev avalible on your system (to compile the src): https://github.com/libusb/hidapi
-  ie: sudo apt install libhidapi-dev on debian based systems
+- hidraw and spdlog they are internal in src/thirdparty
 - python modules listed in requirements.txt
-- cmake (3.4...3.18) some distros are behind signifigantly, so I recomend "pip install cmake" after uninstalling the one from your distro
+- cmake (3.20...3.28) some distros are behind signifigantly, so I recomend "pip install cmake" after uninstalling the one from your distro
 - if cmake can not find python packages (probably) see setting up a python environment and run cmake from the venv 
 
 - If you attempt getting nl set up on your system, I will give you a hand if you need it. I would be intrested in reading a log, too!
