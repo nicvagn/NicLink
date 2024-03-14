@@ -16,16 +16,14 @@
     - branches:
         - master: behind the times. More likely to be solid
         - dev: the wild west of new features
-        - bluetooth: in dev, not in a good place yet
+
 ## requirements
 
-- you must have the hidapi-dev libusb-1.0-0-dev libudev-dev
-  avalible on your system (to compile the src): https://github.com/libusb/hidapi
-  ie: sudo apt install libhidapi-dev libusb-1.0-0-dev libudev-dev on debian based systems
-
+- hidraw and spdlog they are internal in src/thirdparty
+- in order to compile them on Debian you need the package libudev-dev
 - python modules listed in requirements.txt
+- cmake (3.4 ... 3.20) some distros are behind signifigantly, so I recomend "pip install cmake" after uninstalling the one from your distro
 
-- cmake (3.4...3.18) some distros are behind signifigantly, so I recomend "pip install cmake" after uninstalling the one from your distro
 - if cmake can not find python packages (probably) see setting up a python environment and run cmake from the venv 
 
 - If you attempt getting nl set up on your system, I will give you a hand if you need it. I would be intrested in reading a log, too!
@@ -47,8 +45,14 @@ In order to setup your python path correctly, put the niclink.pth file someware 
 for me I modified the niclink.pth file to be:
     1. /home/nrv/NicLink
 
-and ran:
-    - cp niclink.pth nicsoft/lib/python3.9/site-packages/
+and modified:
+    - nicsoft/lib/python3.9/site-packages/niclink.pth to add {whatever}/NicLink/nicsoft
+    - to my pythonpath with:
+```
+import os; var = 'SETUPTOOLS_USE_DISTUTILS'; enabled = os.environ.get(var, 'local') == 'local'; enabled and __import__('_distutils_hack').add_shim(); 
+/home/nrv/dev/NicLink/nicsoft/
+```
+(I no longer recal what the first line does, but if it aint broke, don't fix)
 
 to find out your venv's python path:
 

@@ -26,10 +26,30 @@ find_package(Python COMPONENTS Interpreter Development REQUIRED)
 find_package(PythonLibs REQUIRED)
 # using te add_subdir method
 find_package(pybind11 CONFIG REQUIRED)
-#add_subdirectory(pybind11)
-# EasyLinkSDK
-find_package(hidapi REQUIRED)
-find_package(spdlog REQUIRED)
+
+# easylink SDK setup #
+
+# use internal hidapi and spdlog
+
+add_subdirectory("thirdparty/hidapi")
+add_subdirectory("thirdparty/spdlog")
+
+if(CMAKE_HOST_APPLE)
+  link_libraries(hidapi)
+elseif(CMAKE_HOST_UNIX)
+  link_libraries(hidapi_hidraw)
+elseif(CMAKE_HOST_WIN32)
+  link_libraries(hidapi)
+else()
+  link_libraries(hidapi)
+endif()
+
+
+# Debug mode
+# ADD_DEFINITIONS(-D_DEBUG_FLAG)
+
+link_libraries(spdlog_header_only)
+
 # pybind and python include dirs
 include_directories(PUBLIC ${PYBIND11_INCLUDE_DIRS})
 include_directories(PUBLIC ${Python_INCLUDE_DIRS})
