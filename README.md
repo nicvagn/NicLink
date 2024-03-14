@@ -22,12 +22,16 @@
 - hidraw and spdlog they are internal in src/thirdparty
 - in order to compile them on Debian you need the package libudev-dev
 - python modules listed in requirements.txt
-- cmake (3.20...3.28) some distros are behind signifigantly, so I recomend "pip install cmake" after uninstalling the one from your distro
+- cmake (3.4 ... 3.20) some distros are behind signifigantly, so I recomend "pip install cmake" after uninstalling the one from your distro
+
 - if cmake can not find python packages (probably) see setting up a python environment and run cmake from the venv 
 
 - If you attempt getting nl set up on your system, I will give you a hand if you need it. I would be intrested in reading a log, too!
 
 ## Setting up python venv
+
+make sure  python-dev libusb-1.0-0-dev libudev-dev
+
 In order to use NicLink while it is in development, it is advised to use a virtual environment. I do not have a good enough understanding,
 but you have the internet. ( here is a start: https://python.land/virtual-environments/virtualenv ) Go ham. It is now at a point where it should be portable, if you are reeding this, and want to really help me out,
 it would be swell to hear how installing NicLink goes. The pyproject.toml should have the requirements. There is a requirements.txt too.
