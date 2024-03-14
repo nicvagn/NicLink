@@ -118,6 +118,12 @@ class Game(threading.Thread):
         """Game, the client.board, niclink instance, the game id on lila, idk fam"""
         global client, nl_inst, logger
         super().__init__(**kwargs)
+        
+        # make sure the nl_inst is reset
+        nl_inst.reset()
+
+        # for await move to signal a move has been made
+        self.has_moved = threading.Event()
         # berserk board_client
         self.berserk_board_client = client.board
         # id of the game we are playing
@@ -128,8 +134,11 @@ class Game(threading.Thread):
         # current state from stream
         self.current_state = next(self.stream)
 
+        # current cur_game_state in the game stream
+        self.cur_game_state = None
+
         self.playing_white = playing_white
-        if starting_fen and False:  # TODO fix starting fen (for use w chess960)
+        if starting_fen and False:  # TODO: fix starting fen (for use w chess960)
             self.game_board = chess.Board(starting_fen)
             nl_inst.set_game_board(self.game_board)
             self.starting_fen = starting_fen
@@ -153,8 +162,10 @@ class Game(threading.Thread):
         global nl_inst, logger
 
         for event in self.stream:
+            # update current state
             logger.debug("event: %s", event)
             if event["type"] == "gameState":
+                self.cur_game_state = event
                 self.white_time = self.current_state["state"]["wtime"]
                 self.black_time = self.current_state["state"]["btime"]
                 logger.info("\n*** time remaining(in seconds): [B] - %s [W] - %s***\n", self.white_time, self.black_time)
@@ -170,7 +181,7 @@ class Game(threading.Thread):
         # when the stream ends, the game is over
         self.game_done()
 
-    def game_done(self):
+    def game_done(self) -> None:
         """stop the thread, game should be over, or maybe a rage quit"""
         global logger, nl_inst
         print("good game")
@@ -183,6 +194,33 @@ class Game(threading.Thread):
         nl_inst.turn_off_all_leds()
         # stop the thread
         raise NicLinkGameOver("Game over")
+
+    def await_move(self, fetch_list: list) -> None:
+        """await move in a way that does not stop the user from exiting and when move is found, 
+        set it to index 0 on fetch_list in UCI"""
+        global logger, nl_inst
+        logger.info("Game.await_move(...) entered")
+        try:
+            move = (
+                nl_inst.await_move()
+            )  # await move from e-board the move from niclink
+            logger.info("await_(...): move from chessboard %s. setting it to index 0 of the passed list, and setting moved event", move)
+            
+            fetch_list.insert(0, move)
+            self.has_moved.set() # set the Event
+
+        except KeyboardInterrupt as err:
+                log_handled_exception(err)
+                print("KeyboardInterrupt: bye")
+                sys.exit(0)
+        except ResponseError as err:
+            logger.info("\nResponseError on make_move(). This causes us to just return\n\n")
+            log_handled_exception(err)
+            raise NoMove("ResponseError in Game.await_move thread.")
+        else:
+            logger.info("Game.await_move(...) Thread got move: %s", move)
+            raise SystemExit("exiting Game.await_move thread, everything is good.")
+
 
     def make_move(self, move) -> None:
         """make a move in a lichess game"""
@@ -206,7 +244,8 @@ class Game(threading.Thread):
                 break
             else:
                 break
-    def make_first_move(self):
+
+    def make_first_move(self) -> None:
         """make the first move in a lichess game, before stream starts"""
         global nl_inst, logger
         logger.info("making the first move in the game")
@@ -216,6 +255,7 @@ class Game(threading.Thread):
             move = nl_inst.await_move()
         # make the move
         self.make_move(move)
+
 
     def handle_state_change(self, game_state) -> None:
         """Handle a state change in the lichess game."""
@@ -278,30 +318,23 @@ class Game(threading.Thread):
                 tmp_chessboard.fen(),
                 nl_inst.get_FEN(),
             )
-            try:
-                for attempt in range(3):
-                    move = (
-                        nl_inst.await_move()
-                    )  # await move from e-board the move from niclink
-                    logger.info("move from chessboard %s", move)
+            # the move_fetch_list is for getting the move and await_move in a thread is it does not block
+            move_fetch_list = []
+            await_move_thread = threading.Thread(target = self.await_move, args=(move_fetch_list,), daemon=True)
+            
+            await_move_thread.start()
 
-                    # make the move
-                    self.make_move(move)
+            while not self.check_for_game_over(game_state):
+                if self.has_moved.is_set():
+                    move = move_fetch_list[0]
+                    self.has_moved.clear()
                     break
+                time.sleep(REFRESH_DELAY)
 
-            except KeyboardInterrupt as err:
-                log_handled_exception(err)
-                print("KeyboardInterrupt: bye")
-                sys.exit(0)
+            # make the move
+            logger.info("calling self.make_move(%s)", move) 
+            self.make_move(move)
 
-                #except:
-                #    e = sys.exc_info()[0]
-                #    logger.info("!!! exception on make_move: !!!\nRecord what it is, and try to replace the arbitrary except")
-                #    traceback.print_exc()
-            finally:
-                if attempt > 1:
-                    logger.debug("sleeping before retry")
-                    time.sleep(3)
 
     def handle_chat_line(self, chat_line) -> None:
         """handle when the other person types something in gamechat"""
@@ -311,11 +344,14 @@ class Game(threading.Thread):
 
     def check_for_game_over(self, game_state) -> None:
         """check a game state to see if the game is through if so raise an exception."""
-        global logger
+        global logger, nl_inst
 
         logger.debug("check_for_game_over(self, game_state) entered w/ gamestate: %s", game_state)
         if game_state["status"] == "gameFull":
-            breakpoint()
+            logger.error("\n\ngameFull received !!!")
+            while True: # be obnozios so I know
+                nl_inst.beep()
+                time.sleep(1)
             self.game_done()
         if "winner" in game_state:   # confirmed worked once on their resign
             self.game_done()
