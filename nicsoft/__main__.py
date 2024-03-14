@@ -11,6 +11,8 @@ import niclink
 import readchar
 
 nl_instance = niclink.NicLinkManager(2)
+print("press enter when a move is on a board")
+readchar.readkey()
 
 leave = "n"
 while leave == "n":

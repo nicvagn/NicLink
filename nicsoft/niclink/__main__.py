@@ -228,7 +228,7 @@ current board: \n%s\n board we are using to check legal moves: \n%s",
         """check if there has been a move on the chessboard, and see if it is valid. If so update self.last_move"""
 
         # ensure the move was valid
-
+        
         # get current FEN on the external board
         new_FEN = self.nl_interface.getFEN()
 
@@ -241,9 +241,11 @@ current board: \n%s\n board we are using to check legal moves: \n%s",
             # check if the move is valid, and set last move
             try:
                 self.last_move = self.find_move_from_FEN_change(new_FEN)
-            except KeyboardInterrupt:
-                self.logger.info("KeyboardInterrupt: bye")
-                sys.exit(0)
+                """ I do not think this is needed, as we want keyboard except's to bubble up
+                    except KeyboardInterrupt:
+                    self.logger.info("KeyboardInterrupt: bye")
+                    sys.exit(0)
+                """
             except RuntimeError as err:
                 log_handled_exeption(err)
                 self.logger.warning(
@@ -321,14 +323,13 @@ board we are using to check for moves:\n%s",
                 time.sleep(self.refresh_delay)
                 continue
 
-            self.logger.info("move %s made.", move)
+            self.logger.info("move %s made. there where %s attempts", move, attempts)
             # a move has been played
             self.make_move_game_board(move)
-            self.logger.info("move detected and made on gameboard. move %s", move)
-            return move
+            self.logger.info("move made on gameboard. move %s", move)
 
-            # if no move has been played, sleep and check again
-            time.sleep(self.refresh_delay)
+
+            return move
 
     def get_last_move(self) -> str:
         """get the last move played on the chessboard"""

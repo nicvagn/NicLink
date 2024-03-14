@@ -319,7 +319,8 @@ class Game(threading.Thread):
             self.game_done()
         if "winner" in game_state:   # confirmed worked once on their resign
             self.game_done()
-
+        if nl_inst.game_over.is_set():
+            self.game_done()
 
 ### helper functions ###
 def show_FEN_on_board(FEN) -> None:
