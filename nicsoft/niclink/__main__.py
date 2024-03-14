@@ -173,11 +173,12 @@ class NicLinkManager(threading.Thread):
         """get the board FEN from chessboard"""
         return self.nl_interface.getFEN()
 
-    def show_board_FEN_on_board(self, boardFEN):
-        """show just the board part of FEN on asci chessboard"""
+    def put_board_FEN_on_board(self, boardFEN) -> chess.Board:
+        """show just the board part of FEN on asci chessboard, then return it for logging purposes"""
         tmp_board = chess.Board()
         tmp_board.set_board_fen(boardFEN)
         print(tmp_board)
+        return tmp_board
 
     def find_move_from_FEN_change(
         self, new_FEN
@@ -201,7 +202,7 @@ class NicLinkManager(threading.Thread):
         self.logger.info(
             "+++ find_move_from_FEN_change(...) called +++\n\
 current board: \n%s\n board we are using to check legal moves: \n%s",
-            self.show_board_FEN_on_board(self.get_FEN()),
+            self.put_board_FEN_on_board(self.get_FEN()),
             self.game_board,
         )
 
@@ -368,8 +369,8 @@ board we are using to check for moves:\n%s",
         curFEN = self.get_FEN()
         self.show_FEN_on_board(curFEN)
 
-    def show_game_board(self) -> None:
-        """print the internal game_board"""
+    def show_game_board(self) -> chess.Board:
+        """print the internal game_board. Return it for logging purposes"""
         print(self.game_board)
 
     def set_game_board(self, board) -> None:
