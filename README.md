@@ -1,21 +1,25 @@
 # NicLink - A python interface for the Chessnut Air
 
 # Notice
-> version 0.7
+
+> version 0.8
 
 > checkout this software, it solves the problem's I wanted to solve with NicLink:
     https://chromewebstore.google.com/detail/chessconnect/dmkkcjpbclkkhbdnjgcciohfbnpoaiam?hl=en-GB
 # gotchas
-    - if: ModuleNotFoundError: No module named 'niclink' make sure your venve is setup, with the .pth file configured. 
-    - Make sure you are in said venv
+
+- if: ModuleNotFoundError: No module named 'niclink' make sure your venve is setup, with the .pth file configured. 
+- Make sure you are in said venv
+- make sure you can build the community fork of EasyLinkSDK because I use a bassicaly unmodified version, just w python bindings
+    Link: `https://github.com/miguno/EasyLinkSDK`
 # overview
 
-    - see the python requirements.txt for external requirements
-    - run updateNicLink.sh to compile and prepaire the env
-    - only tested on gnu/linux with a chessnut air.
-    - branches:
-        - master: behind the times. More likely to be solid
-        - dev: the wild west of new features
+- see the python requirements.txt for external requirements
+- run updateNicLink.sh to compile and prepaire the env
+- only tested on gnu/linux with a chessnut air.
+- branches:
+    - master: behind the times. More likely to be solid
+    - dev: the wild west of new features
 
 ## requirements
 
@@ -77,55 +81,55 @@ and it outputted:
 
 ## Using the board on lichess with the board api
 
-    In the ROOT/nic_soft/niclink_lichess dir create a dir called lichess_token.
-    in this dir create a file called token. This will be a plain text file containing
-    only the text of your lichess auth token.
+In the ROOT/nic_soft/niclink_lichess dir create a dir called lichess_token.
+in this dir create a file called token. This will be a plain text file containing
+only the text of your lichess auth token.
 
-    example:
-         `filename: nic_sof/niclink_lichess/token`
-         `content: lip_5PIkq4soaF3XyFGvelx`
+example:
+     `filename: nic_sof/niclink_lichess/token`
+     `content: lip_5PIkq4soaF3XyFGvelx`
 
-    then cd .. and run python niclink_lichess
+then cd .. and run python niclink_lichess
 
-    It can play games that can be played w board API ( only tested rapid and classical ).
+It can play games that can be played w board API ( only tested rapid and classical ).
 
-    The board will beap at you when an inncorect position is on the board.
+The board will beap at you when an inncorect position is on the board.
 
 
 ## Use with gnu/linux:
 
-    In order to use NicLink as a user in the wheel group
-    ( group can be arbitrary )
-    You must give the user read and write permissions for the Chessnut air.
-    This can be done through a udev rule.
+In order to use NicLink as a user in the wheel group
+( group can be arbitrary )
+You must give the user read and write permissions for the Chessnut air.
+This can be done through a udev rule.
 
-    create a 99-chessnutair.rules file: /etc/udev/rules.d/99-chessnutair.rules,
-    with the following:
+create a 99-chessnutair.rules file: /etc/udev/rules.d/99-chessnutair.rules,
+with the following:
 
-        SUBSYSTEM=="usb", ATTRS{idVendor}:="2d80", /
-        ATTRS{idProduct}:="8002", GROUP="wheel", MODE="0660"
+    SUBSYSTEM=="usb", ATTRS{idVendor}:="2d80", /
+    ATTRS{idProduct}:="8002", GROUP="wheel", MODE="0660"
 
-        # set the permissions for device files
-        KERNEL=="hidraw*", GROUP="wheel", MODE="0660"
+    # set the permissions for device files
+    KERNEL=="hidraw*", GROUP="wheel", MODE="0660"
 
-    my chessnutair has the following properties, if your's differs, adjust.
+my chessnutair has the following properties, if your's differs, adjust.
 
-        ID:  {vendor id} 2d80 : {product id} 8002
+    ID:  {vendor id} 2d80 : {product id} 8002
 
-        mount poin: /dev/hidraw2
+    mount poin: /dev/hidraw2
 
-    This gives wheel group access to all of your hidraw devices,
-    but wheel usualy has sudo access so they have that anyway with sudo
+This gives wheel group access to all of your hidraw devices,
+but wheel usualy has sudo access so they have that anyway with sudo
 
 ## playing with stockfish
 
-    > you can play with stockfish with NicLink!
+> you can play with stockfish with NicLink!
 
-    In order to do so, you should read ./play_stockfish/README.md for further info
-
+In order to do so, you should read ./play_stockfish/README.md for further info
+> be warned, I have not touched this in a while.
 ## Connect w bluetooth
 
-    not mature enough to doc, but exists (Is a broken mess, save yourself)
+not mature enough to doc, but exists (Is a broken mess, save yourself)
 
 ## have something to add/suggest?
 
