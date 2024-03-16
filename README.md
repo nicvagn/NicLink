@@ -24,33 +24,49 @@
 ## requirements
 
 - hidraw and spdlog they are internal in src/thirdparty
-- in order to compile them on Debian you need the package libudev-dev
+- in order to compile them on Debian you need the package libudev-dev or equivalent on your distro
+- python-dev or python-devel or whatever it is on your distro
+- pip also obviosly
 - python modules listed in requirements.txt
 - cmake (3.4 ... 3.20) some distros are behind signifigantly, so I recomend "pip install cmake" after uninstalling the one from your distro
+- modern gcc (I used gcc 13.2)
+
+> I satisfied the requirement via: sudo dnf install gcc cmake
 
 - if cmake can not find python packages (probably) see setting up a python environment and run cmake from the venv 
 
 - If you attempt getting nl set up on your system, I will give you a hand if you need it. I would be intrested in reading a log, too!
+## compiling C++ Easylink and pybind11 module code
+> after setting up requirements, ofc
+
+- under gnu/linux + Tux Racer run the bash script updateNicLink.sh. It handles usind cmake
+  to create the make files, and compiling them in the build dir. It then moves the .so created
+  into the niclink dir for use in the pyenv.
+
+- I do not develop under any other os, so figure it out I guess. Or, install gentoo.
 
 ## Setting up python venv
 
-make sure  python-dev libusb-1.0-0-dev libudev-dev
+make sure  python-dev (or python-devel or ...) libusb-1.0-0-dev libudev-dev or equivelent are installed
 
 In order to use NicLink while it is in development, it is advised to use a virtual environment. I do not have a good enough understanding,
 but you have the internet. ( here is a start: https://python.land/virtual-environments/virtualenv ) Go ham. It is now at a point where it should be portable, if you are reeding this, and want to really help me out,
-it would be swell to hear how installing NicLink goes. The pyproject.toml should have the requirements. There is a requirements.txt too.
+it would be swell to hear how installing NicLink goes. requirements.txt should have the requirements. 
 
-what I did (bash):
-    python -m venv nicsoft  - This creates a python venv in nicsoft
+> what I did (bash):
+    python -m venv nicsoft  - This creates a python venv in nicsoft, and should be ran in the NicLink root dir
+    cd nicsoft              - enter nicsoft
     . ./source_pyvenv.sh    - this uses a litle convieniance script, but basically all you have to do is source ./bin/activate (other file extensions if not in bash)
+   
+   python -m pip install -r requirements.txt   - install python requirements, needed to compile and run NicLink
 
-In order to setup your python path correctly, put the niclink.pth file someware in your venv python path.
+> In order to setup your python path correctly, put the niclink.pth file someware in your venv python path.
 
 for me I modified the niclink.pth file to be:
     1. /home/nrv/NicLink
 
 and modified:
-    - nicsoft/lib/python3.9/site-packages/niclink.pth to add {whatever}/NicLink/nicsoft
+    - nicsoft/lib/python3.12/site-packages/niclink.pth to add {whatever}/NicLink/nicsoft
     - to my pythonpath with:
 ```
 import os; var = 'SETUPTOOLS_USE_DISTUTILS'; enabled = os.environ.get(var, 'local') == 'local'; enabled and __import__('_distutils_hack').add_shim(); 
@@ -62,34 +78,37 @@ to find out your venv's python path:
 
 ( while in the venv )
 
-1. go into your python interpreter
-2. following:
-   - ">> import sys"
-   - ">> print('\n'.join(sys.path))"
-4. create a .pth file pointing to the .../NicLink/nicsoft dir in one of the listed dirs in your pythonpath
-5. profit
+1. go into your python interpreter and do:
+```
+>> import sys
+>> print('\n'.join(sys.path))
+```
+> this will tell you your pythonpath
+2. create a .pth file pointing to the .../NicLink/nicsoft dir in one of the listed dirs in your pythonpath
+3. profit
 
 
-then I ran:
-
-">>> import sys"
-">>> print('/n'.join(sys.path))"
+to test that NicLink dir was added to your python path:
+```
+>>> import sys
+>>> print('/n'.join(sys.path))
+```
 and it outputted:
-/n/usr/lib/python39.zip/n/usr/lib/python3.9/n/usr/lib/python3.9/lib-dynload/n/home/nrv/NicLink/nicsoft/lib/python3.9/site-packages/n/home/nrv/NicLink
+/n/usr/lib64/python312.zip/n/usr/lib64/python3.12/n/usr/lib64/python3.12/lib-dynload/n/home/nrv/.local/lib/python3.12/site-packages/n__editable__.nicsoft-0.1.0.finder.__path_hook__/n/usr/local/lib64/python3.12/site-packages/n/usr/local/lib/python3.12/site-packages/n/usr/lib64/python3.12/site-packages/n/usr/lib/python3.12/site-packages
 
 *** jazz hands ***
 
 ## Using the board on lichess with the board api
 
-In the ROOT/nic_soft/niclink_lichess dir create a dir called lichess_token.
+In the ROOT/nicsoft/lichess dir create a dir called lichess_token.
 in this dir create a file called token. This will be a plain text file containing
 only the text of your lichess auth token.
 
 example:
-     `filename: nic_sof/niclink_lichess/token`
+     `filename: nicsoft/lichess/token`
      `content: lip_5PIkq4soaF3XyFGvelx`
 
-then cd .. and run python niclink_lichess
+then cd .. and run python lichess
 
 It can play games that can be played w board API ( only tested rapid and classical ).
 
