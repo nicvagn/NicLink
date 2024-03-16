@@ -24,7 +24,7 @@
 ## requirements
 
 - hidraw and spdlog they are internal in src/thirdparty
-- in order to compile them on Debian you need the package libudev-dev or equivalent on your distro
+- in order to compile them on Debian you need the package libudev-dev or on fedora libudev-devel or equivalent on your distro
 - python-dev or python-devel or whatever it is on your distro
 - pip also obviosly
 - python modules listed in requirements.txt
