@@ -53,7 +53,7 @@ link_libraries(spdlog_header_only)
 # pybind and python include dirs
 include_directories(PUBLIC ${PYBIND11_INCLUDE_DIRS})
 include_directories(PUBLIC ${Python_INCLUDE_DIRS})
-include_directories(PUBLIC /usr/include/python3.12)
+include_directories(PUBLIC nicsoft/lib/nicsoft/lib/python3.12/site-packages)
 
 # setup and build the easylink library
 set(SOURCE_FILES EasyLink.h EasyLink.cpp easy_link_c.cpp easy_link_c.h)

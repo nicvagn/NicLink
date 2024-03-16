@@ -29,8 +29,8 @@
 - pip also obviosly
 - python modules listed in requirements.txt
 - cmake (3.4 ... 3.20) some distros are behind signifigantly, so I recomend "pip install cmake" after uninstalling the one from your distro
-- modern gcc (I used gcc 13.2)
-
+- modern gcc (I used gcc 13.2) and gcc-c++
+> so you need gcc, cmake, gcc-c++, python-devel, pybind11 and the kichen sink
 > I satisfied the requirement via: sudo dnf install gcc cmake
 
 - if cmake can not find python packages (probably) see setting up a python environment and run cmake from the venv 
@@ -97,6 +97,16 @@ and it outputted:
 /n/usr/lib64/python312.zip/n/usr/lib64/python3.12/n/usr/lib64/python3.12/lib-dynload/n/home/nrv/.local/lib/python3.12/site-packages/n__editable__.nicsoft-0.1.0.finder.__path_hook__/n/usr/local/lib64/python3.12/site-packages/n/usr/local/lib/python3.12/site-packages/n/usr/lib64/python3.12/site-packages/n/usr/lib/python3.12/site-packages
 
 *** jazz hands ***
+
+## compiling C++ Easylink and pybind11 module code
+
+> after you set up the python environment, and are in said environment
+
+- under gnu/linux + Tux Racer run the bash script updateNicLink.sh. It handles usind cmake
+  to create the make files, and compiling them in the build dir. It then moves the .so created
+  into the niclink dir for use in the pyenv.
+
+- I do not develop under any other os, so figure it out I guess. Or, install gentoo.
 
 ## Using the board on lichess with the board api
 
