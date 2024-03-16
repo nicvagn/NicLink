@@ -30,20 +30,13 @@
 - python modules listed in requirements.txt
 - cmake (3.4 ... 3.20) some distros are behind signifigantly, so I recomend "pip install cmake" after uninstalling the one from your distro
 - modern gcc (I used gcc 13.2) and gcc-c++
-> so you need gcc, cmake, gcc-c++, python-devel, pybind11 and the kichen sink
-> I satisfied the requirement via: sudo dnf install gcc cmake
+- pybind11-devel inorder to compile the code
+> so you need gcc, cmake, gcc-c++, python-devel, pybind11, pybind11-devel and the kichen sink
+> I satisfied the requirement via: sudo dnf install gcc cmake g++ python-devel pybind11-devel
 
 - if cmake can not find python packages (probably) see setting up a python environment and run cmake from the venv 
 
 - If you attempt getting nl set up on your system, I will give you a hand if you need it. I would be intrested in reading a log, too!
-## compiling C++ Easylink and pybind11 module code
-> after setting up requirements, ofc
-
-- under gnu/linux + Tux Racer run the bash script updateNicLink.sh. It handles usind cmake
-  to create the make files, and compiling them in the build dir. It then moves the .so created
-  into the niclink dir for use in the pyenv.
-
-- I do not develop under any other os, so figure it out I guess. Or, install gentoo.
 
 ## Setting up python venv
 
