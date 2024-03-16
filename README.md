@@ -24,7 +24,13 @@
 ## requirements
 
 - hidraw and spdlog they are internal in src/thirdparty
-- in order to compile them on Debian you need the package libudev-dev or on fedora libudev-devel or equivalent on your distro
+- in order to compile them on Debian you need:
+    - libudev-dev or on fedora libudev-devel or equivalent on your distros
+    - hidapi included in src tree.
+        - requirements:
+        - libusb (https://github.com/libusb/libusb/releases) - this is icluded as a submodule
+  checkout the community fork of the EasylinkSDK and get that building first.
+    Link: `https://github.com/miguno/EasyLinkSDK`
 - python-dev or python-devel or whatever it is on your distro
 - pip also obviosly
 - python modules listed in requirements.txt

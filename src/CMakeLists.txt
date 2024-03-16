@@ -18,6 +18,7 @@ set(CXX_STANDARD_REQUIRED On)
 set(CMAKE_CXX_FLAGS "-Wall -Wextra -fPIC")
 # set the standard version of C
 set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_FLAGS "-Wall -Wextra -fPIC")
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
 # find all the required packages
@@ -30,7 +31,7 @@ find_package(pybind11 CONFIG REQUIRED)
 # easylink SDK setup #
 
 # use internal hidapi and spdlog
-
+add_subdirectory("thirdparty/libusb-cmake")
 add_subdirectory("thirdparty/hidapi")
 add_subdirectory("thirdparty/spdlog")
 
