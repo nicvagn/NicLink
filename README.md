@@ -37,7 +37,8 @@
     - pybind11-devel inorder to compile the code
     - python-dev or python-devel or whatever it is on your distro
 
-- pip also obviosly
+
+- pip also obviously
 - python 3.12 and python-dev (or python-devel, you need python.h anyway) and python modules listed in requirements.txt
 - cmake (3.4 ... 3.20) some distros are behind signifigantly, so I recomend "pip install cmake" after uninstalling the one from your distro
 - modern gcc (I used gcc 13.2) and gcc-c++
