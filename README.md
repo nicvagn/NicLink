@@ -25,18 +25,22 @@
 
 - hidraw and spdlog they are internal in src/thirdparty
 - in order to compile them on Debian you need:
+    - checkout the community fork of the EasylinkSDK and get that building first.
+      You have to build that as a component of NicLink
+        Link: `https://github.com/miguno/EasyLinkSDK`
     - libudev-dev or on fedora libudev-devel or equivalent on your distros
     - hidapi included in src tree.
-        - requirements:
-        - libusb (https://github.com/libusb/libusb/releases) - this is icluded as a submodule
-  checkout the community fork of the EasylinkSDK and get that building first.
-    Link: `https://github.com/miguno/EasyLinkSDK`
-- python-dev or python-devel or whatever it is on your distro
+    
+      - requirements:
+      - libusb (https://github.com/libusb/libusb/releases) - this is icluded as a submodule
+
+    - pybind11-devel inorder to compile the code
+    - python-dev or python-devel or whatever it is on your distro
+
 - pip also obviosly
-- python modules listed in requirements.txt
+- python 3.12 and python-dev (or python-devel, you need python.h anyway) and python modules listed in requirements.txt
 - cmake (3.4 ... 3.20) some distros are behind signifigantly, so I recomend "pip install cmake" after uninstalling the one from your distro
 - modern gcc (I used gcc 13.2) and gcc-c++
-- pybind11-devel inorder to compile the code
 > so you need gcc, cmake, gcc-c++, python-devel, pybind11, pybind11-devel and the kichen sink
 > I satisfied the requirement via: sudo dnf install gcc cmake g++ python-devel pybind11-devel
 

@@ -41,6 +41,7 @@ args = parser.parse_args()
 REFRESH_DELAY = 0.4
 # POLL_DELAY for checking for new games
 POLL_DELAY = 5
+
 correspondence = False
 if args.correspondence:
     correspondence = True
@@ -95,7 +96,7 @@ logger.addHandler(fileHandler)
 def log_except_hook(excType, excValue, traceback):
     global logger
     logger.error("Uncaught exception", exc_info=(excType, excValue, traceback))
-
+# set exception hook
 sys.excepthook = log_except_hook
 
 def log_handled_exception(exception: Exception) -> None:
@@ -134,15 +135,17 @@ class Game(threading.Thread):
         # current state from stream
         self.current_state = next(self.stream)
 
-        # current cur_game_state in the game stream
+        # cur_game_state is None, updated in run
         self.cur_game_state = None
 
         self.playing_white = playing_white
         if starting_fen and False:  # TODO: fix starting fen (for use w chess960)
+            nl_inst.reset()
             self.game_board = chess.Board(starting_fen)
             nl_inst.set_game_board(self.game_board)
             self.starting_fen = starting_fen
         else:
+            nl_inst.reset() # reset niclink for a new game
             self.game_board = chess.Board()
             nl_inst.set_game_board(self.game_board)
             self.starting_fen = None
@@ -165,7 +168,7 @@ class Game(threading.Thread):
             # update current state
             logger.debug("event: %s", event)
             if event["type"] == "gameState":
-                self.cur_game_state = event
+                self.cur_game_state = self.current_state["state"]
                 self.white_time = self.current_state["state"]["wtime"]
                 self.black_time = self.current_state["state"]["btime"]
                 logger.info("\n*** time remaining(in seconds): [B] - %s [W] - %s***\n", self.white_time, self.black_time)
@@ -195,16 +198,16 @@ class Game(threading.Thread):
         # stop the thread
         raise NicLinkGameOver("Game over")
 
-    def await_move(self, fetch_list: list) -> None:
+    def await_move_thread(self, fetch_list: list) -> None:
         """await move in a way that does not stop the user from exiting and when move is found, 
-        set it to index 0 on fetch_list in UCI"""
+        set it to index 0 on fetch_list in UCI. This function should be ran in in i it's own Thread."""
         global logger, nl_inst
-        logger.info("Game.await_move(...) entered")
+        logger.info("\nGame.await_move_thread(...) entered\n")
         try:
             move = (
                 nl_inst.await_move()
             )  # await move from e-board the move from niclink
-            logger.info("await_(...): move from chessboard %s. setting it to index 0 of the passed list, and setting moved event", move)
+            logger.info("await_move_thread(...): move from chessboard %s. setting it to index 0 of the passed list, and setting moved event", move)
             
             fetch_list.insert(0, move)
             self.has_moved.set() # set the Event
@@ -216,10 +219,10 @@ class Game(threading.Thread):
         except ResponseError as err:
             logger.info("\nResponseError on make_move(). This causes us to just return\n\n")
             log_handled_exception(err)
-            raise NoMove("ResponseError in Game.await_move thread.")
+            raise NoMove("ResponseError in Game.await_move_thread thread.")
         else:
-            logger.info("Game.await_move(...) Thread got move: %s", move)
-            raise SystemExit("exiting Game.await_move thread, everything is good.")
+            logger.info("Game.await_move_thread(...) Thread got move: %s", move)
+            raise SystemExit("exiting Game.await_move_thread thread, everything is good.")
 
 
     def make_move(self, move) -> None:
@@ -235,6 +238,13 @@ class Game(threading.Thread):
                 self.berserk_board_client.make_move(self.game_id, move)
             except berserk.exceptions.ResponseError as err:
                 log_handled_exception(err)
+                
+                # check for game over or it is not your turn, If so, return
+                if "Not your turn, or game already over" in str(err):
+                    logger.error("Not your turn, or game is already over. Exiting make_move(...)")
+                    return
+
+                # if not, try again
                 print(f"ResponseError: { err }trying again after three seconds")
                 time.sleep(3)
                 continue
@@ -256,30 +266,45 @@ class Game(threading.Thread):
         # make the move
         self.make_move(move)
 
-
-    def handle_state_change(self, game_state) -> None:
-        """Handle a state change in the lichess game."""
+    def get_move_from_chessboard(self, tmp_chessboard: chess.Board) -> str:
+        """get a move from the chessboard, and return it in UCI"""
         global nl_inst, logger
-        # {'type': 'gameState', 'moves': 'd2d3 e7e6 b1c3', 'wtime': datetime.datetime( 1970, 1, 25, 20, 31, 23, 647000, tzinfo=datetime.timezone.utc ), 'btime': datetime.datetime( 1970, 1, 25, 20, 31, 23, 647000, tzinfo=datetime.timezone.utc ), 'winc': datetime.datetime( 1970, 1, 1, 0, 0, tzinfo=datetime.timezone.utc ), 'binc': datetime.datetime( 1970, 1, 1, 0, 0, tzinfo=datetime.timezone.utc ), 'bdraw': False, 'wdraw': False}
-
-        logger.info("\ngame_state: %s\n", game_state)
-
-        # check if game has ended
-        self.check_for_game_over(game_state)
+        logger.info("get_move_from_chessboard() entered. Our turn to move.\n")
         
+        # set this board as NicLink game board
+        nl_inst.set_game_board(tmp_chessboard)
 
-        # tmp_chessboard is used to get the current game state from API and parse it into something we can use
-        if self.starting_fen:
-            # allows for different starting position
-            tmp_chessboard = chess.Board(self.starting_fen)
+        logger.info(
+            "NicLink set_game_board(tmp_chessboard) set. board prior to move FEN %s\n FEN I see external: %s\n",
+            tmp_chessboard.fen(),
+            nl_inst.get_FEN(),
+        )
+        # the move_fetch_list is for getting the move and await_move_thread in a thread is it does not block
+        move_fetch_list = []
+        get_move_thread = threading.Thread(target = self.await_move_thread, args=(move_fetch_list,), daemon=True)
+        
+        get_move_thread.start()
+        # wait for a move on chessboard
+        while not nl_inst.game_over.is_set():
+            if self.has_moved.is_set():
+                move = move_fetch_list[0]
+                self.has_moved.clear()
+                break
+
+        return move
+
+    def update_tmp_chessboard(self, move_list: list[str]) -> chess.Board:
+        """create a tmp chessboard with the given move list played on it."""
+        global nl_inst, logger
+        # if there is a starting FEN, use it
+        if self.starting_fen is not None: 
+            tmp_chessboard = chess.Board(starting_fen)
         else:
             tmp_chessboard = chess.Board()
-
-        moves = game_state["moves"].split(" ")
-        # last move is to highlight last move on board
-        last_move = None
-        if moves != [""]:
-            for move in moves:
+        
+        if move_list != [""]:
+            last_move = None
+            for move in move_list:
                 # make the moves on a board
                 tmp_chessboard.push_uci(move)
                 last_move = move
@@ -287,6 +312,24 @@ class Game(threading.Thread):
             # highlight last made move
             nl_inst.set_move_LEDs( last_move )
             logger.info("The last move was found to be: %s", last_move)
+
+        return tmp_chessboard
+
+    def handle_state_change(self, game_state) -> None:
+        """Handle a state change in the lichess game."""
+        global nl_inst, logger
+        # {'type': 'gameState', 'moves': 'd2d3 e7e6 b1c3', 'wtime': datetime.datetime( 1970, 1, 25, 20, 31, 23, 647000, tzinfo=datetime.timezone.utc ), 'btime': datetime.datetime( 1970, 1, 25, 20, 31, 23, 647000, tzinfo=datetime.timezone.utc ), 'winc': datetime.datetime( 1970, 1, 1, 0, 0, tzinfo=datetime.timezone.utc ), 'binc': datetime.datetime( 1970, 1, 1, 0, 0, tzinfo=datetime.timezone.utc ), 'bdraw': False, 'wdraw': False}
+
+        logger.info("\ngame_state: %s\n", game_state)
+        
+        logger.info("cur_game_state updated")
+        self.cur_game_state = game_state
+        # check if game has ended
+        self.check_for_game_over(game_state)
+        # update a tmp chessboard with the current state
+        moves = game_state["moves"].split(" ")
+        # update tmp chessboard
+        tmp_chessboard = self.update_tmp_chessboard(moves)
 
         # check for game over
         result = tmp_chessboard.outcome()
@@ -302,34 +345,14 @@ class Game(threading.Thread):
             print(
                 f"\n--- GAME OVER ---\nreason: {result.termination}\nwinner: {winner}"
             )
-            logger.info("game done detected, calling game_done()")
+            logger.info("game done detected, calling game_done(). winner: %s\n", winner)
             # stop the tread (this does some cleanup and throws an exception)
             self.game_done()
 
-        # set this board as NicLink game board
-        nl_inst.set_game_board(tmp_chessboard)
-
         # tmp_chessboard.turn == True when white, false when black playing_white is same
         if tmp_chessboard.turn == self.playing_white:
-            logger.info("it is our turn")
-
-            logger.info(
-                "board prior to move FEN %s\n FEN I see external: %s\n",
-                tmp_chessboard.fen(),
-                nl_inst.get_FEN(),
-            )
-            # the move_fetch_list is for getting the move and await_move in a thread is it does not block
-            move_fetch_list = []
-            await_move_thread = threading.Thread(target = self.await_move, args=(move_fetch_list,), daemon=True)
-            
-            await_move_thread.start()
-
-            while not self.check_for_game_over(game_state):
-                if self.has_moved.is_set():
-                    move = move_fetch_list[0]
-                    self.has_moved.clear()
-                    break
-                time.sleep(REFRESH_DELAY)
+            # get our move from chessboard
+            move = self.get_move_from_chessboard(tmp_chessboard)
 
             # make the move
             logger.info("calling self.make_move(%s)", move) 
@@ -338,6 +361,7 @@ class Game(threading.Thread):
 
     def handle_chat_line(self, chat_line) -> None:
         """handle when the other person types something in gamechat"""
+        global nl_inst
         nl_inst.beep()
         print(chat_line)
         pass
@@ -412,10 +436,11 @@ def handle_ongoing_game(game_data):
     else:
         print("it is your opponents turn.")
 
-def handle_resign(event) -> None:
+def handle_resign(event = None) -> None:
     """handle ending the game in the case where you resign"""
     global nl_inst, logger, game
-    logger.info("handle_resign entered: event: %", event)
+    if event is not None:
+        logger.info("handle_resign entered: event: %", event)
     # end the game
     game.game_done()
 
@@ -547,7 +572,6 @@ def main():
                 # set the niclink game over switch
                 nl_inst.game_over.set() 
                 print("out of event loop, i don't know what to do")
-                breakpoint()
 
 
             except KeyboardInterrupt:
@@ -569,6 +593,7 @@ def main():
             except NicLinkGameOver:
                 logger.info("NicLinkGameOver excepted, good game?")
                 print("game over, you can play another. Waiting for lichess event...")
+                handle_resign()
 
             else:
                 time.sleep(POLL_DELAY)

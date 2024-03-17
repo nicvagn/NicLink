@@ -4,6 +4,7 @@
 #
 #  you should have received a copy of the gnu general public license along with NicLink. if not, see <https://www.gnu.org/licenses/>.
 
+# system 
 import os
 import sys
 import time
@@ -12,7 +13,7 @@ import readchar
 import threading
 import logging
 
-
+# mine
 import niclink._niclink as _niclink
 import niclink.nl_bluetooth
 from niclink.nl_exceptions import *
@@ -283,7 +284,7 @@ board we are using to check for moves:\n%s",
         if type(move) != str:
             try:
                 move = move.uci()
-            except Exeption as err:
+            except Exception as err:
                 message = f"{err} was raised exception on trying to convert move { move } to uci."
                 self.logger.error(message)
 
