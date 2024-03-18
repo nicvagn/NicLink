@@ -12,6 +12,14 @@
 - Make sure you are in said venv
 - make sure you can build the community fork of EasyLinkSDK because I use a basically unmodified version, just w python bindings
     Link: `https://github.com/miguno/EasyLinkSDK`
+- if you need, install python3.12 from "deadsnakes" google is your bud.
+- if cmake can not find your PYTHON_INCLUDE_DIR OR PYTHON_LIBRARIES:
+        ``` bash:
+        
+        cmake ../src \
+        > -DPYTHON_INCLUDE_DIR=$(python3.12 -c "import sysconfig; print(sysconfig.get_path("include"))") \
+        > -DPYTHON_LIBRARY=$(python3.12 -c "import sysconfig.get_config_var('LIBDIR'))")
+        ```
 # overview
 
 - see the python requirements.txt for external requirements
