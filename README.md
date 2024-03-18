@@ -8,14 +8,14 @@
     https://chromewebstore.google.com/detail/chessconnect/dmkkcjpbclkkhbdnjgcciohfbnpoaiam?hl=en-GB
 # gotchas
 
-- if: ModuleNotFoundError: No module named 'niclink' make sure your venve is setup, with the .pth file configured. 
+- if: ModuleNotFoundError: No module named 'niclink' make sure your venv is setup, with the .pth file configured. 
 - Make sure you are in said venv
-- make sure you can build the community fork of EasyLinkSDK because I use a bassicaly unmodified version, just w python bindings
+- make sure you can build the community fork of EasyLinkSDK because I use a basically unmodified version, just w python bindings
     Link: `https://github.com/miguno/EasyLinkSDK`
 # overview
 
 - see the python requirements.txt for external requirements
-- run updateNicLink.sh to compile and prepaire the env
+- run updateNicLink.sh to compile and prepare the env
 - only tested on gnu/linux with a chessnut air.
 - branches:
     - master: behind the times. More likely to be solid
@@ -30,28 +30,28 @@
         Link: `https://github.com/miguno/EasyLinkSDK`
     - libudev-dev or on fedora libudev-devel or equivalent on your distros
     - hidapi included in src tree.
-    
-      - requirements:
-      - libusb (https://github.com/libusb/libusb/releases) - this is icluded as a submodule
 
-    - pybind11-devel inorder to compile the code
+      - requirements:
+      - libusb (https://github.com/libusb/libusb/releases) - this is included as a submodule
+
+    - pybind11-devel in order to compile the code
     - python-dev or python-devel or whatever it is on your distro
 
 
 - pip also obviously
 - python 3.12 and python-dev (or python-devel, you need python.h anyway) and python modules listed in requirements.txt
-- cmake (3.4 ... 3.20) some distros are behind signifigantly, so I recomend "pip install cmake" after uninstalling the one from your distro
+- cmake (3.4 ... 3.20) some distros are behind significantly, so I recommend "pip install cmake" after uninstalling the one from your distro
 - modern gcc (I used gcc 13.2) and gcc-c++
 > so you need gcc, cmake, gcc-c++, python-devel, pybind11, pybind11-devel and the kichen sink
 > I satisfied the requirement via: sudo dnf install gcc cmake g++ python-devel pybind11-devel
 
 - if cmake can not find python packages (probably) see setting up a python environment and run cmake from the venv 
 
-- If you attempt getting nl set up on your system, I will give you a hand if you need it. I would be intrested in reading a log, too!
+- If you attempt getting nl set up on your system, I will give you a hand if you need it. I would be interested in reading a log, too!
 
 ## Setting up python venv
 
-make sure  python-dev (or python-devel or ...) libusb-1.0-0-dev libudev-dev or equivelent are installed
+make sure  python-dev (or python-devel or ...) libusb-1.0-0-dev libudev-dev or equivalent are installed
 
 In order to use NicLink while it is in development, it is advised to use a virtual environment. I do not have a good enough understanding,
 but you have the internet. ( here is a start: https://python.land/virtual-environments/virtualenv ) Go ham. It is now at a point where it should be portable, if you are reeding this, and want to really help me out,
@@ -60,7 +60,7 @@ it would be swell to hear how installing NicLink goes. requirements.txt should h
 > what I did (bash):
     python -m venv nicsoft  - This creates a python venv in nicsoft, and should be ran in the NicLink root dir
     cd nicsoft              - enter nicsoft
-    . ./source_pyvenv.sh    - this uses a litle convieniance script, but basically all you have to do is source ./bin/activate (other file extensions if not in bash)
+    . ./source_pyvenv.sh    - this uses a lille convenance script, but basically all you have to do is source ./bin/activate (other file extensions if not in bash)
    
    python -m pip install -r requirements.txt   - install python requirements, needed to compile and run NicLink
 
@@ -126,7 +126,7 @@ then cd .. and run python lichess
 
 It can play games that can be played w board API ( only tested rapid and classical ).
 
-The board will beap at you when an inncorect position is on the board.
+The board will beep at you when an incorrect position is on the board.
 
 
 ## Use with gnu/linux:
@@ -149,10 +149,10 @@ my chessnutair has the following properties, if your's differs, adjust.
 
     ID:  {vendor id} 2d80 : {product id} 8002
 
-    mount poin: /dev/hidraw2
+    mount point: /dev/hidraw2
 
 This gives wheel group access to all of your hidraw devices,
-but wheel usualy has sudo access so they have that anyway with sudo
+but wheel usually has sudo access so they have that anyway with sudo
 
 ## playing with stockfish
 
