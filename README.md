@@ -30,20 +30,19 @@
     - dev: the wild west of new features
 
 ## requirements
-
+- get all the required submodules w `git pull recurse-submodules`
 - hidraw and spdlog they are internal in src/thirdparty
 - in order to compile them on Debian you need:
     - checkout the community fork of the EasylinkSDK and get that building first.
       You have to build that as a component of NicLink
         Link: `https://github.com/miguno/EasyLinkSDK`
     - libudev-dev or on fedora libudev-devel or equivalent on your distros
-    - hidapi included in src tree.
+    - hidapi and hidapi-devel (or -dev)
 
       - requirements:
       - libusb (https://github.com/libusb/libusb/releases) - this is included as a submodule
-
-    - pybind11-devel in order to compile the code
-    - python-dev or python-devel or whatever it is on your distro
+      - pybind11-devel in order to compile the code
+      - python-dev or python-devel or whatever it is on your distro needed to build pybind code
 
 
 - pip also obviously
