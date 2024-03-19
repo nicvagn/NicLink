@@ -38,7 +38,7 @@ args = parser.parse_args()
 
 ### constants ###
 # refresh refresh delay for NicLink and Lichess
-REFRESH_DELAY = 0.4
+REFRESH_DELAY = 0.02
 # POLL_DELAY for checking for new games
 POLL_DELAY = 5
 
@@ -597,7 +597,7 @@ def main():
 
             else:
                 time.sleep(POLL_DELAY)
-                logger.info("main loop: sleeping REFRESH_DELAY")
+                logger.info("main loop: sleeping POLL_DELAY")
 
     except ExitNicLink:
         print("Have a nice life")
