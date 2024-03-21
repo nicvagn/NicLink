@@ -40,7 +40,7 @@ args = parser.parse_args()
 # refresh refresh delay for NicLink and Lichess
 REFRESH_DELAY = 0.02
 # POLL_DELAY for checking for new games
-POLL_DELAY = 5
+POLL_DELAY = 20
 
 correspondence = False
 if args.correspondence:
@@ -568,10 +568,6 @@ def main():
                     # check for kill switch
                     if nl_inst.kill_switch.is_set():
                         sys.exit(0)
-
-                # set the niclink game over switch
-                nl_inst.game_over.set() 
-                print("out of event loop, i don't know what to do")
 
 
             except KeyboardInterrupt:
