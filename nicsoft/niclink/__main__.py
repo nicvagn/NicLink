@@ -279,7 +279,7 @@ board we are using to check for moves:\n%s",
     def set_move_LEDs(self, move) -> None:
         """highlight a move. Light up the origin and destination LED"""
         # turn out move led's
-        self.turn_off_all_leds()
+        # self.turn_off_all_leds() testing if this show's the opponents move
         # make sure move is of type str
         if type(move) != str:
             try:
@@ -304,8 +304,21 @@ board we are using to check for moves:\n%s",
             )
             # check for a move. If it move, return it else False
             try:
+                move = False
+
                 if self.check_for_move():
                     move = self.get_last_move()
+
+                if(move):
+                    self.logger.info("move %s made. there where %s attempts", move, attempts)
+                    # a move has been played
+                    self.make_move_game_board(move)
+                    self.logger.info("move made on gameboard. move %s", move)
+                else:
+                    # if move is false continue
+                    self.logger.info("no move")
+                    continue
+
             except NoMove:
                 # no move made, wait refresh_delay and continue
                 attempts += 1
@@ -324,11 +337,6 @@ board we are using to check for moves:\n%s",
                 )
                 time.sleep(self.refresh_delay)
                 continue
-
-            self.logger.info("move %s made. there where %s attempts", move, attempts)
-            # a move has been played
-            self.make_move_game_board(move)
-            self.logger.info("move made on gameboard. move %s", move)
 
 
             return move
@@ -402,6 +410,7 @@ board we are using to check for moves:\n%s",
         # if there is a diff beep
         if is_diff:
             self.beep()
+            self.set_move_LEDs(self.get_last_move())
         else:
             # set the last move leds
             self.set_move_LEDs(self.get_last_move())

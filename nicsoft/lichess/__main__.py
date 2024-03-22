@@ -20,6 +20,7 @@ import traceback
 import chess.pgn
 import chess
 import berserk
+from berserk.exceptions import *
 
 # for the clock
 import datetime
@@ -213,9 +214,9 @@ class Game(threading.Thread):
             self.has_moved.set() # set the Event
 
         except KeyboardInterrupt as err:
-                log_handled_exception(err)
-                print("KeyboardInterrupt: bye")
-                sys.exit(0)
+            log_handled_exception(err)
+            print("KeyboardInterrupt: bye")
+            sys.exit(0)
         except ResponseError as err:
             logger.info("\nResponseError on make_move(). This causes us to just return\n\n")
             log_handled_exception(err)
@@ -313,6 +314,10 @@ class Game(threading.Thread):
             nl_inst.set_move_LEDs( last_move )
             logger.info("The last move was found to be: %s", last_move)
 
+            # set the nl_inst.last move
+            nl_inst.last_move = last_move
+
+
         return tmp_chessboard
 
     def handle_state_change(self, game_state) -> None:
@@ -357,6 +362,7 @@ class Game(threading.Thread):
             # make the move
             logger.info("calling self.make_move(%s)", move) 
             self.make_move(move)
+
 
 
     def handle_chat_line(self, chat_line) -> None:

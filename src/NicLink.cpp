@@ -215,8 +215,8 @@ PYBIND11_MODULE(_niclink, m)
     m.def("disconnect", &disconnect, "disconnect from the chessboard.");
 
     // switch modes
-    m.def("uploadMode", &ChessLink::switchUploadMode, py::return_value_policy::copy, "Switch to upload mode.");
-    m.def("realTimeMode", &ChessLink::switchRealTimeMode, py::return_value_policy::copy, "Switch to realtime mode.");
+    m.def("uploadMode", &ChessLink::switchUploadMode, py::return_value_policy::copy, "Switch to upload mode. [[ () ]]");
+    m.def("realTimeMode", &ChessLink::switchRealTimeMode, py::return_value_policy::copy, "Switch to realtime mode. [[ () ]]");
     // doers
     m.def("setLED", &setLED, "Set a LED on the chessboard. [[ void setLED(int x, int y, bool LEDsetting)]]");
     m.def("lightsOut", &lightsOut, "turn of all the lights [[ () ]]");
