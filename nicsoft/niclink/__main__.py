@@ -27,6 +27,9 @@ class NicLinkManager(threading.Thread):
 
         # initialize the thread, as a daemon
         threading.Thread.__init__(self, daemon=True)
+        
+        # initialize the led helper thread
+        move_LED_man = threading.Thread(target=self._led_manager, daemon=True, args=(self,))
 
         if logger != None:
             self.logger = logger
@@ -79,18 +82,32 @@ class NicLinkManager(threading.Thread):
 
         # run a game
         while not self.game_over.is_set() and not self.kill_switch.is_set():
+            pass
 
-            exit = "n"
-            while exit == "n":
-                currentFEN = self.get_FEN()
-                self.show_FEN_on_board(currentFEN)
-                print("do you want to exit? 'n' for no \n")
-                exit = readchar.readkey()
+    def _led_manager(self) -> None:
+        """a thread to keep the led's up to date"""
 
-            self.logger.info(f"move made: {self.last_move}")
-            # set the has moved flag to signal the move
-            self.has_moved.set()
-            time.sleep(self.refresh_delay)
+        set_move = False
+        leds_changed = False
+
+        while not self.kill_switch.is_set():
+
+            if self.last_move:
+                time.sleep(refresh_delay)
+                continue
+
+            if not LEDS_in_use.is_set():
+                # if the last move has changed,or the lec's have been changed, display the move
+                if set_move != self.last_move or leds_changed:  
+                    self.turn_off_all_leds()
+                    self.set_move_LEDs(self.last_move)
+                    leds_changed = False
+                else: 
+                    leds_changed = True
+
+
+            time.sleep(refresh_delay)
+
 
     def connect(self, bluetooth=False):
         """connect to the chessboard"""
@@ -135,6 +152,7 @@ class NicLinkManager(threading.Thread):
         self.has_moved = threading.Event()
         self.kill_switch = threading.Event()
         self.start_game = threading.Event()
+        self.LEDS_in_use = threading.Event()
 
     def set_led(self, square, status):
         """set an LED at a given square to a status (square: a1, e4 etc)"""
@@ -279,7 +297,6 @@ board we are using to check for moves:\n%s",
     def set_move_LEDs(self, move) -> None:
         """highlight a move. Light up the origin and destination LED"""
         # turn out move led's
-        # self.turn_off_all_leds() testing if this show's the opponents move
         # make sure move is of type str
         if type(move) != str:
             try:
@@ -389,11 +406,14 @@ board we are using to check for moves:\n%s",
 
     def gameover_lights(self) -> None:
         """show some fireworks"""
+        self.LEDS_in_use.set()
         self.nl_interface.gameover_lights()
 
     def show_board_diff(self, board1, board2) -> None:
         """show the differance between two boards and output differance on the chessboard"""
         # go through the squares and turn on the light for ones that are in error
+        #we are using led's
+        self.LEDS_in_use.set()
         self.nl_interface.lightsOut()
         is_diff = False
         for n in range(1, 9):
@@ -410,10 +430,9 @@ board we are using to check for moves:\n%s",
         # if there is a diff beep
         if is_diff:
             self.beep()
-            self.set_move_LEDs(self.get_last_move())
-        else:
-            # set the last move leds
-            self.set_move_LEDs(self.get_last_move())
+
+        # we are no longer using the LEDs
+        self.LEDS_in_use.clear()
 
     def get_game_FEN(self) -> str:
         """get the game board FEN"""
