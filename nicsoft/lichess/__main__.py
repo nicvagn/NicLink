@@ -164,22 +164,29 @@ class Game(threading.Thread):
     def run(self) -> None:
         """run the thread until game is through, ie: while the game stream is open then kill it w self.game_done()"""
         global nl_inst, logger
-
+        state_change_thread = False
         for event in self.stream:
             # update current state
             logger.debug("event: %s", event)
             if event["type"] == "gameState":
+
                 self.cur_game_state = self.current_state["state"]
-                self.white_time = self.current_state["state"]["wtime"]
+                self.white_time = self.current_state["state"]["wtime"]                
                 self.black_time = self.current_state["state"]["btime"]
                 logger.info("\n*** time remaining(in seconds): [B] - %s [W] - %s***\n", self.white_time, self.black_time)
-                self.handle_state_change(event)
+                
+                # if there is another state change thread for some reason, join it
+                if(state_change_thread and state_change_thread.is_alive()):
+                    state_change_thread.join()
+                state_change_thread = threading.Thread(target=self.handle_state_change, args=(event,))
+                state_change_thread.start()
+
             elif event["type"] == "chatLine":
                 self.handle_chat_line(event)
             elif event["type"] == "gameFull":
                 logger.info("\n\n +++ Game Full got +++\n\n")
                 self.game_done()
-            else:
+            else: # If it is not one of these options, kill the stream
                 break
 
         # when the stream ends, the game is over

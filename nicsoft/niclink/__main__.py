@@ -102,8 +102,9 @@ class NicLinkManager(threading.Thread):
                     self.turn_off_all_leds()
                     self.set_move_LEDs(self.last_move)
                     leds_changed = False
-                else: 
-                    leds_changed = True
+            else:
+                # if led's in use, we should update the board led's once it is unset
+                leds_changed = True
 
 
             time.sleep(refresh_delay)
