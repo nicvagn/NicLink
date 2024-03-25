@@ -198,9 +198,9 @@ class Game(threading.Thread):
         print("good game")
         logger.info("Game.game_done() entered")
         # tell the user and NicLink the game is through
+        nl_inst.game_over.set()
         nl_inst.beep()
         nl_inst.gameover_lights()
-        nl_inst.game_over.set()
         time.sleep(3)
         nl_inst.turn_off_all_leds()
         # stop the thread
