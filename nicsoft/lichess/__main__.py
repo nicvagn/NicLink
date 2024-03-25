@@ -39,7 +39,7 @@ args = parser.parse_args()
 
 ### constants ###
 # refresh refresh delay for NicLink and Lichess
-REFRESH_DELAY = 1
+REFRESH_DELAY = 0.5
 # POLL_DELAY for checking for new games
 POLL_DELAY = 20
 
