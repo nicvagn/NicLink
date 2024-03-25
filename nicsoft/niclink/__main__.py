@@ -349,7 +349,8 @@ board we are using to check for moves:\n%s",
                 attempts += 1
                 self.logger.info("NoMove from chessboard. Attempt: %s", attempts)
                 # because I like to put bandaide
-                self.set_move_LEDs(self.last_move)
+                if(self.last_move is not None):
+                    self.set_move_LEDs(self.last_move)
                 time.sleep(self.refresh_delay)
 
                 continue
