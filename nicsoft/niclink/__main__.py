@@ -258,6 +258,9 @@ current board: \n%s\n board we are using to check legal moves: \n%s",
 
         if new_FEN != self.game_board.board_fen:
             # a change has occured on the chessboard
+            # check to see if the game is over
+            if self.game_over.is_set():
+                return
 
             # check if the move is valid, and set last move
             try:
@@ -297,7 +300,8 @@ board we are using to check for moves:\n%s",
 
     def set_move_LEDs(self, move) -> None:
         """highlight a move. Light up the origin and destination LED"""
-        # turn out move led's
+        # turn off the led's
+        self.turn_off_all_leds()
         # make sure move is of type str
         if type(move) != str:
             try:
@@ -324,6 +328,9 @@ board we are using to check for moves:\n%s",
             try:
                 move = False
 
+                # check if the game is over
+                if self.game_over.is_set():
+                        return
                 if self.check_for_move():
                     move = self.get_last_move()
 
@@ -333,14 +340,16 @@ board we are using to check for moves:\n%s",
                     self.make_move_game_board(move)
                     self.logger.info("move made on gameboard. move %s", move)
                 else:
-                    # if move is false continue
                     self.logger.info("no move")
+                    # if move is false continue
                     continue
 
             except NoMove:
                 # no move made, wait refresh_delay and continue
                 attempts += 1
                 self.logger.info("NoMove from chessboard. Attempt: %s", attempts)
+                # because I like to put bandaide
+                self.set_move_LEDs(self.last_move)
                 time.sleep(self.refresh_delay)
 
                 continue
