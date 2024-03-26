@@ -5,75 +5,75 @@
 #  NicLink is distributed in the hope that it will be useful, but without any warranty; without even the implied warranty of merchantability or fitness for a particular purpose. see the gnu general public license for more details.
 #
 #  you should have received a copy of the gnu general public license along with NicLink. if not, see <https://www.gnu.org/licenses/>.
+from time import sleep, perf_counter, sleep
+from datetime import datetime, timedelta, timezone
+import zmq
+import logging
 
-import pyfirmata
 import threading
-import time
-import os
-import sys
-if __name__ == '__main__':
-    # import shinanigans. If this is not __main__ this should already be done
-    script_dir = os.path.dirname(__file__)
-    parent_dir = os.path.dirname(script_dir)
-    sys.path.append(parent_dir)
 
-arduino_address = "/dev/ttyACM0"
-# the wait time for refreshing the clock
-CLOCK_REFRESH = 0.3
+log = logging.getLogger('chess_clock')
+log.setLevel(logging.DEBUG)
+
+# create console handler and set level to debug
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+
+# create formatter
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+# add formatter to ch
+ch.setFormatter(formatter)
+
+# add ch to logger
+log.addHandler(ch)
 
 class ChessClock(threading.Thread):
-    """in charge of the time in a chessgame"""
+    """set's up a server for an external rasberry pi chess clock"""
 
-    def __init__(self, game, arduino_address=None, **kwargs):
-        super.__init__(**kwargs)
-        if arduino_address is not None:
-            arduino = pyfirmata.Arduino(arduino_address)
-
-            bmoved = threading.Event()
-            wmoved = threading.Event()
-
-            # make this a daemon, a ChessClock has little use alone
-            self.setDaemon(True)
-        
-    def start(game_state: dict) -> None:
-        """start the countdown for a chess game"""
-        # {'type': 'gameState', 'moves': 'd2d3 e7e6 b1c3', 'wtime': datetime.datetime( 1970, 1, 25, 20, 31, 23, 647000, tzinfo=datetime.timezone.utc ), 'btime': datetime.datetime( 1970, 1, 25, 20, 31, 23, 647000, tzinfo=datetime.timezone.utc ), 'winc': datetime.datetime( 1970, 1, 1, 0, 0, tzinfo=datetime.timezone.utc ), 'binc': datetime.datetime( 1970, 1, 1, 0, 0, tzinfo=datetime.timezone.utc ), 'bdraw': False, 'wdraw': False}
-        breakpoint()
-
-        # stuff about current game
-        # whites total game time
-        self.white_time = game_state["wtime"]
-        self.black_time = game_state["btime"]
-
-        # the white and black increment
-        self.white_inc = game_state["winc"]
-        self.black_inc = game_state["binc"]
-
-        # start time    
-        start_time = time.time()
-
-        time.sleep(1)
-        uno.digital[13].write(1)
-
-    def run():
-        """run the chessclock"""
-        
-        while True:
-            pass
+    def __init__(self, external_clock_ip, game_id, **kwargs):
+        self.super.__init__(**kwargs)
+        self.ext_ip = external_clock_ip
 
 
+def build_time_stamp(spent_time: timedelta, game_time: timedelta) -> str:
+    """build a timestamp from a timedelta for a countdown timer in the format %H%M%S"""
+    game_secs = game_time.total_seconds()
+    game_minutes = int(game_secs / 60) % 60
+    game_secs = game_secs - (game_minutes * 60)
+    
+    spent_secs = spent_time.total_seconds()
+    spent_minutes = int(spent_secs / 60) % 60
+    spent_secs = spent_secs - (spent_minutes * 60)
 
-arduino = pyfirmata.Arduino(arduino_address)
-def test_clock() -> None:
-    """test the external Arduino chess clock"""
-    toggle = False
-    while True:
-        if toggle:
-            arduino.digital[7].write(1)
-        else:
-            arduino.digital[7].write(0)
-        time.sleep(1)
-        toggle = not toggle
+    ts = f"{str(game_minutes - spent_minutes)[:5]}:{str(game_secs - spent_secs)[:5]}"
+    log.info("calculated ts: %s", ts)
+    return ts 
 
-test_clock()
 
+context = zmq.Context()
+socket = context.socket(zmq.REP)
+socket.bind("tcp://*:5555")
+
+
+while True:
+    #  Wait for next request from client
+    message = socket.recv()
+    print(f"Received request: {message}")
+
+    #  Do some 'work'
+    sleep(1)
+
+    #  Send reply back to client
+    socket.send(b"B: 1:00 || W: 1:00")
+
+while True:
+    # calculate time spent
+    spent_time = timedelta(seconds=1202, microseconds=490000)
+    # build time stamp
+    time_stamp = build_time_stamp(spent_time, spent_time) 
+    hello = socket.recv()
+    #  Send time stamp to client
+    socket.send_string(time_stamp)
+
+    sleep(0.5)

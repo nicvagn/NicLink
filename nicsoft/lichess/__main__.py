@@ -139,6 +139,7 @@ class Game(threading.Thread):
         # cur_game_state is None, updated in run
         self.cur_game_state = None
 
+
         self.playing_white = playing_white
         if starting_fen and False:  # TODO: fix starting fen (for use w chess960)
             nl_inst.reset()
@@ -173,7 +174,7 @@ class Game(threading.Thread):
                 self.cur_game_state = self.current_state["state"]
                 self.white_time = self.current_state["state"]["wtime"]                
                 self.black_time = self.current_state["state"]["btime"]
-                logger.info("\n*** time remaining(in seconds): [B] - %s [W] - %s***\n", self.white_time, self.black_time)
+                logger.info("\n\n\n*** time remaining(in seconds): [B] - %s [W] - %s***\n", self.white_time, self.black_time)
                 
                 # if there is another state change thread for some reason, join it
                 if(state_change_thread and state_change_thread.is_alive()):
@@ -342,6 +343,8 @@ class Game(threading.Thread):
         moves = game_state["moves"].split(" ")
         # update tmp chessboard
         tmp_chessboard = self.update_tmp_chessboard(moves)
+
+
 
         # check for game over
         result = tmp_chessboard.outcome()
