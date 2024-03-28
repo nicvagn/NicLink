@@ -140,7 +140,7 @@ class Game(threading.Thread):
         self.cur_game_state = None
 
         self.playing_white = playing_white
-        if starting_fen and False:  # TODO: fix starting fen (for use w chess960)
+        if starting_fen and False: # TODO: make 960 work
             nl_inst.reset()
             self.game_board = chess.Board(starting_fen)
             nl_inst.set_game_board(self.game_board)
@@ -165,32 +165,35 @@ class Game(threading.Thread):
         """run the thread until game is through, ie: while the game stream is open then kill it w self.game_done()"""
         global nl_inst, logger
         state_change_thread = False
-        for event in self.stream:
-            # update current state
-            logger.debug("event: %s", event)
-            if event["type"] == "gameState":
 
-                self.cur_game_state = self.current_state["state"]
-                self.white_time = self.current_state["state"]["wtime"]                
-                self.black_time = self.current_state["state"]["btime"]
-                logger.info("\n*** time remaining(in seconds): [B] - %s [W] - %s***\n", self.white_time, self.black_time)
-                
-                # if there is another state change thread for some reason, join it
-                if(state_change_thread and state_change_thread.is_alive()):
-                    state_change_thread.join()
-                state_change_thread = threading.Thread(target=self.handle_state_change, args=(event,))
-                state_change_thread.start()
+        #TODO: make a better way to keep the stream alive
+        while True:
+            for event in self.stream:
+                # update current state
+                logger.debug("event: %s", event)
+                if event["type"] == "gameState":
 
-            elif event["type"] == "chatLine":
-                self.handle_chat_line(event)
-            elif event["type"] == "gameFull":
-                logger.info("\n\n +++ Game Full got +++\n\n")
-                self.game_done()
-            else: # If it is not one of these options, kill the stream
-                break
+                    self.cur_game_state = event
+                    self.white_time = event["wtime"]
+                    self.black_time = event["btime"]
+                    logger.info("white time (seconds): %s\n", self.white_time.seconds)
+                    logger.info("black time (seconds): %s\n", self.black_time.seconds)
+                    # if there is another state change thread for some reason, join it
+                    if(state_change_thread and state_change_thread.is_alive()):
+                        state_change_thread.join()
+                    state_change_thread = threading.Thread(target=self.handle_state_change, args=(event,))
+                    state_change_thread.start()
 
-        # when the stream ends, the game is over
-        self.game_done()
+                elif event["type"] == "chatLine":
+                    self.handle_chat_line(event)
+                elif event["type"] == "gameFull":
+                    logger.info("\n\n +++ Game Full got +++\n\n")
+                    self.game_done()
+                else: # If it is not one of these options, kill the stream
+                    break
+
+        # I removed a self.game_done here. It was causing issues where 
+        # the stream would end, but the game was not over
 
     def game_done(self) -> None:
         """stop the thread, game should be over, or maybe a rage quit"""
@@ -306,7 +309,7 @@ class Game(threading.Thread):
         global nl_inst, logger
         # if there is a starting FEN, use it
         if self.starting_fen is not None: 
-            tmp_chessboard = chess.Board(starting_fen)
+            tmp_chessboard = chess.Board(self.starting_fen)
         else:
             tmp_chessboard = chess.Board()
         
