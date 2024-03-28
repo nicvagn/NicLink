@@ -166,34 +166,31 @@ class Game(threading.Thread):
         global nl_inst, logger
         state_change_thread = False
 
-        #TODO: make a better way to keep the stream alive
-        while True:
-            for event in self.stream:
-                # update current state
-                logger.debug("event: %s", event)
-                if event["type"] == "gameState":
+        for event in self.stream:
+            # update current state
+            logger.debug("event: %s", event)
+            if event["type"] == "gameState":
 
-                    self.cur_game_state = event
-                    self.white_time = event["wtime"]
-                    self.black_time = event["btime"]
-                    logger.info("white time (seconds): %s\n", self.white_time.seconds)
-                    logger.info("black time (seconds): %s\n", self.black_time.seconds)
-                    # if there is another state change thread for some reason, join it
-                    if(state_change_thread and state_change_thread.is_alive()):
-                        state_change_thread.join()
-                    state_change_thread = threading.Thread(target=self.handle_state_change, args=(event,))
-                    state_change_thread.start()
+                self.cur_game_state = event
+                self.white_time = event["wtime"]
+                self.black_time = event["btime"]
+                logger.info("white time (seconds): %s\n", self.white_time.seconds)
+                logger.info("black time (seconds): %s\n", self.black_time.seconds)
+                # if there is another state change thread for some reason, join it
+                if(state_change_thread and state_change_thread.is_alive()):
+                    state_change_thread.join()
+                state_change_thread = threading.Thread(target=self.handle_state_change, args=(event,))
+                state_change_thread.start()
 
-                elif event["type"] == "chatLine":
-                    self.handle_chat_line(event)
-                elif event["type"] == "gameFull":
-                    logger.info("\n\n +++ Game Full got +++\n\n")
-                    self.game_done()
-                else: # If it is not one of these options, kill the stream
-                    break
+            elif event["type"] == "chatLine":
+                self.handle_chat_line(event)
+            elif event["type"] == "gameFull":
+                logger.info("\n\n +++ Game Full got +++\n\n")
+                self.game_done()
+            else: # If it is not one of these options, kill the stream
+                break
 
-        # I removed a self.game_done here. It was causing issues where 
-        # the stream would end, but the game was not over
+        self.game_done()
 
     def game_done(self) -> None:
         """stop the thread, game should be over, or maybe a rage quit"""
@@ -393,10 +390,12 @@ class Game(threading.Thread):
                 nl_inst.beep()
                 time.sleep(1)
             self.game_done()
-        if "winner" in game_state:   # confirmed worked once on their resign
+        elif "winner" in game_state:   # confirmed worked once on their resign
             self.game_done()
-        if nl_inst.game_over.is_set():
+        elif nl_inst.game_over.is_set():
             self.game_done()
+        else:
+            logger.info("game not found to be over.")
 
 ### helper functions ###
 def show_FEN_on_board(FEN) -> None:

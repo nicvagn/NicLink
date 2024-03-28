@@ -432,6 +432,11 @@ board we are using to check for moves:\n%s",
                 square = chr(a) + str(n)
                 py_square = chess.parse_square(square)
                 if board1.piece_at(py_square) != board2.piece_at(py_square):
+
+                    if self.game_over.is_set() or self.kill_switch.is_set():
+                        logger.info("show_board_diff quit early because of threading events")
+                        return
+
                     print(
                         f"\n\nSquare { square } is not the same. \n board1: \
 { board1.piece_at(py_square) } \n board2: { board2.piece_at(py_square) }"
