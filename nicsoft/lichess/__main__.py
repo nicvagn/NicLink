@@ -13,17 +13,15 @@ import os
 import sys
 import argparse
 import threading
-import importlib
+import importlib.util
 import traceback
 
 # chess stuff
 import chess.pgn
 import chess
 import berserk
-from berserk.exceptions import *
+from berserk.exceptions import ResponseError 
 
-# for the clock
-import datetime
 
 # NicLink shit
 from niclink import NicLinkManager
@@ -39,9 +37,9 @@ args = parser.parse_args()
 
 ### constants ###
 # refresh refresh delay for NicLink and Lichess
-REFRESH_DELAY = 0.5
+REFRESH_DELAY = 0.01
 # POLL_DELAY for checking for new games
-POLL_DELAY = 20
+POLL_DELAY = 10
 
 correspondence = False
 if args.correspondence:
@@ -73,7 +71,7 @@ if DEBUG:
     logger.setLevel(logging.DEBUG)
     consoleHandler.setLevel(logging.DEBUG)
 else:
-    logger.info("not DEBUG. DEBUG not set")
+    logger.info("DEBUG not set")
     # for dev
     logger.setLevel(logging.DEBUG)
     consoleHandler.setLevel(logging.DEBUG)
@@ -100,44 +98,38 @@ def log_except_hook(excType, excValue, traceback):
 # set exception hook
 sys.excepthook = log_except_hook
 
-def log_handled_exception(exception: Exception) -> None:
+def log_handled_exception(exception) -> None:
     """log a handled exception"""
     global logger
     logger.error("Exception handled: %s", exception)
 
 ### pre-amble fin ###
 
-
 print(
-    "\n\n==========================\nNicLink on Lichess startup\n==========================\n\n"
+        "\n\n|=====================| NicLink on Lichess startup |=====================|\n\n"
 )
 logger.info("=== NicLink Lichess startup ===\n")
 
 class Game(threading.Thread):
     """a game on lichess"""
 
-    def __init__(self, game_id, playing_white, starting_fen=False, **kwargs):
+    def __init__(self, berserk_client, game_id, playing_white, bluetooth=False, starting_fen=False, **kwargs):
         """Game, the client.board, niclink instance, the game id on lila, idk fam"""
-        global client, nl_inst, logger
+        global nl_inst, logger
         super().__init__(**kwargs)
         
-        # make sure the nl_inst is reset
-        nl_inst.reset()
-
         # for await move to signal a move has been made
         self.has_moved = threading.Event()
         # berserk board_client
-        self.berserk_board_client = client.board
+        self.berserk_board_client = berserk_client.board
         # id of the game we are playing
         self.game_id = game_id
+        ### niclink options
+        self.bluetooth = bluetooth
         # incoming board stream
         self.stream = self.berserk_board_client.stream_game_state(game_id)
-
         # current state from stream
         self.current_state = next(self.stream)
-
-        # cur_game_state is None, updated in run
-        self.cur_game_state = None
 
         self.playing_white = playing_white
         if starting_fen and False: # TODO: make 960 work
@@ -152,7 +144,7 @@ class Game(threading.Thread):
             self.starting_fen = None
 
         logger.info("game init w id: %s", game_id)
-        logger.info(client.games.get_ongoing())
+        logger.info(berserk_client.games.get_ongoing())
 
         # if white, make the first move
         if self.playing_white and self.current_state["state"]["moves"] == "":
@@ -167,15 +159,20 @@ class Game(threading.Thread):
         state_change_thread = False
 
         for event in self.stream:
-            # update current state
             logger.debug("event: %s", event)
             if event["type"] == "gameState":
+               
+                # check if game has ended can not be done in state change thread, becuse can happen at any time
+                self.check_for_game_over(event)
 
-                self.cur_game_state = event
+                # signal new game state recived
+                self.signal_game_state_change(event)   
+
                 self.white_time = event["wtime"]
                 self.black_time = event["btime"]
                 logger.info("white time (seconds): %s\n", self.white_time.seconds)
                 logger.info("black time (seconds): %s\n", self.black_time.seconds)
+
                 # if there is another state change thread for some reason, join it
                 if(state_change_thread and state_change_thread.is_alive()):
                     state_change_thread.join()
@@ -192,6 +189,7 @@ class Game(threading.Thread):
 
         self.game_done()
 
+
     def game_done(self) -> None:
         """stop the thread, game should be over, or maybe a rage quit"""
         global logger, nl_inst
@@ -205,6 +203,7 @@ class Game(threading.Thread):
         nl_inst.turn_off_all_leds()
         # stop the thread
         raise NicLinkGameOver("Game over")
+
 
     def await_move_thread(self, fetch_list: list) -> None:
         """await move in a way that does not stop the user from exiting and when move is found, 
@@ -244,7 +243,11 @@ class Game(threading.Thread):
                 if move is None:
                     raise IllegalMove("Move is None")
                 self.berserk_board_client.make_move(self.game_id, move)
-            except berserk.exceptions.ResponseError as err:
+                # signal that a move was made to the external clock, etc.
+                self.signal_move()
+                # once move has been made, return
+                return
+            except ResponseError as err:
                 log_handled_exception(err)
                 
                 # check for game over or it is not your turn, If so, return
@@ -260,8 +263,7 @@ class Game(threading.Thread):
                 log_handled_exception(err)
                 print("Illegal move")
                 break
-            else:
-                break
+
 
     def make_first_move(self) -> None:
         """make the first move in a lichess game, before stream starts"""
@@ -297,9 +299,8 @@ class Game(threading.Thread):
             if self.has_moved.is_set():
                 move = move_fetch_list[0]
                 self.has_moved.clear()
-                break
-
-        return move
+                return move
+        raise NoMove("No move in get_move_from_chessboard(...)")
 
     def update_tmp_chessboard(self, move_list: list[str]) -> chess.Board:
         """create a tmp chessboard with the given move list played on it."""
@@ -327,17 +328,18 @@ class Game(threading.Thread):
 
         return tmp_chessboard
 
+    def signal_game_state_change(self, game_state) -> None:
+        """signal a state change, this is just to signal the external clock rn"""
+        
+        logger.info("\nsignal_game_state_change(self, game_state) entered with game state: ", game_state)
+        pass
     def handle_state_change(self, game_state) -> None:
         """Handle a state change in the lichess game."""
         global nl_inst, logger
         # {'type': 'gameState', 'moves': 'd2d3 e7e6 b1c3', 'wtime': datetime.datetime( 1970, 1, 25, 20, 31, 23, 647000, tzinfo=datetime.timezone.utc ), 'btime': datetime.datetime( 1970, 1, 25, 20, 31, 23, 647000, tzinfo=datetime.timezone.utc ), 'winc': datetime.datetime( 1970, 1, 1, 0, 0, tzinfo=datetime.timezone.utc ), 'binc': datetime.datetime( 1970, 1, 1, 0, 0, tzinfo=datetime.timezone.utc ), 'bdraw': False, 'wdraw': False}
 
         logger.info("\ngame_state: %s\n", game_state)
-        
-        logger.info("cur_game_state updated")
-        self.cur_game_state = game_state
-        # check if game has ended
-        self.check_for_game_over(game_state)
+
         # update a tmp chessboard with the current state
         moves = game_state["moves"].split(" ")
         # update tmp chessboard
@@ -369,21 +371,24 @@ class Game(threading.Thread):
             # make the move
             logger.info("calling self.make_move(%s)", move) 
             self.make_move(move)
+        else:
+            if game_state["moves"] != "":
+                # update the last move
+                self.last_move = str(tmp_chessboard.pop())
+            # a move was made, signal it
+            self.signal_move()
 
-
-
-    def handle_chat_line(self, chat_line) -> None:
-        """handle when the other person types something in gamechat"""
-        global nl_inst
-        nl_inst.beep()
-        print(chat_line)
+    def signal_move(self) -> None:
+        """call when a move is made in a game to signal NicLink chessclock"""
         pass
+        # signal the timer that we made a move
+        # TODO 
+
 
     def check_for_game_over(self, game_state) -> None:
         """check a game state to see if the game is through if so raise an exception."""
         global logger, nl_inst
-
-        logger.debug("check_for_game_over(self, game_state) entered w/ gamestate: %s", game_state)
+        logger.debug("check_for_game_over(self, game_state) entered w/ gamestate: %s" % game_state)
         if game_state["status"] == "gameFull":
             logger.error("\n\ngameFull received !!!")
             while True: # be obnozios so I know
@@ -397,6 +402,12 @@ class Game(threading.Thread):
         else:
             logger.info("game not found to be over.")
 
+    def handle_chat_line(self, chat_line) -> None:
+        """handle when the other person types something in gamechat"""
+        global nl_inst
+        nl_inst.beep()
+        print(chat_line)
+
 ### helper functions ###
 def show_FEN_on_board(FEN) -> None:
     """show board FEN on an ascii chessboard"""
@@ -406,7 +417,7 @@ def show_FEN_on_board(FEN) -> None:
 
 def handle_game_start(event) -> None:
     """handle game start event"""
-    global client, logger, game
+    global berserk_client, logger, game
     game_data = event["game"]
 
     # check if game speed is correspondence, skip those if --correspondence argument is not set
@@ -430,12 +441,12 @@ def handle_game_start(event) -> None:
 
     try:
         game = Game(
-            game_data["id"], playing_white, starting_fen=game_fen
+                berserk_client, game_data["id"], playing_white, starting_fen=game_fen
         )  # ( game_data['color'] == "white" ) is used to set is_white bool
         game.daemon = True
         game.start()  # start the game thread
 
-    except berserk.exceptions.ResponseError as e:
+    except ResponseError as e:
         if "This game cannot be played with the Board API" in str(e):
             print("cannot play this game via board api")
         log_handled_exception(e)
@@ -461,9 +472,9 @@ def handle_resign(event = None) -> None:
 
 def is_correspondence(gameId) -> bool:
     """is the game a correspondence game?"""
-    global client, logger
+    global berserk_client, logger
     try:
-        for game in client.games.get_ongoing():
+        for game in berserk_client.games.get_ongoing():
             if game["gameId"] == gameId:
                 if game["speed"] == "correspondence":
                     return True
@@ -479,15 +490,11 @@ def is_correspondence(gameId) -> bool:
         return False
     return False
 
-# globals, because why not
-client = None  # the berserk client
-nl_inst = None  # the NicLinkManager object
-game = None # the active game, there can only be on, because on board
 
 # entry point
 def main():
     """handle startup, and initiation of stuff"""
-    global client, nl_inst, REFRESH_DELAY, logger
+    global berserk_client, nl_inst, REFRESH_DELAY, logger
 
     print("=== NicLink lichess main entered ===")
     simplejson_spec = importlib.util.find_spec("simplejson")
@@ -523,6 +530,7 @@ def main():
     except PermissionError:
         print(f"ERROR: permission denied on token file")
         sys.exit(-1)
+    
     try:
         session = berserk.TokenSession(token)
     except:
@@ -534,22 +542,23 @@ def main():
  
     try:
         if DEBUG:
-            client = berserk.Client(session, base_url="https://lichess.dev")
+            berserk_client = berserk.Client(session, base_url="https://lichess.dev")
         else:
-            client = berserk.Client(session)
+            berserk_client = berserk.Client(session)
     except KeyboardInterrupt as err:
         log_handled_exception(err)
         print("KeyboardInterrupt: bye")
         sys.exit(0)
     except:
         e = sys.exc_info()[0]
-        logger.info("cannot create lichess client: %s", e)
-        print(f"cannot create lichess client: {e}")
+        error_txt = f"cannot create lichess client: {e}"
+        logger.info(error_txt)
+        print(error_txt)
         sys.exit(-1)
 
     # get username
     try:
-        account_info = client.account.get()
+        account_info = berserk_client.account.get()
         username = account_info["username"]
         print(f"\nUSERNAME: { username }\n")
     except KeyboardInterrupt:
@@ -566,7 +575,7 @@ def main():
             try:
                 logger.debug("\n==== event loop ====\n")
                 print("=== Waiting for lichess event ===")
-                for event in client.board.stream_incoming_events():
+                for event in berserk_client.board.stream_incoming_events():
                     if event["type"] == "challenge":
                         logger.info("challenge received: %s", event)
                         print("\n==== Challenge received ====\n")
@@ -584,18 +593,15 @@ def main():
                     if nl_inst.kill_switch.is_set():
                         sys.exit(0)
 
-
             except KeyboardInterrupt:
                 logger.info("KeyboardInterrupt: bye")
                 try:
                     nl_inst.kill_switch.set()
                 except Exception as err:
                     log_handled_exception(err)
-                    # quit down quiett
-                    # pass
                 finally:
                     raise ExitNicLink("KeyboardInterrupt in __main__")
-            except berserk.exceptions.ResponseError as e:
+            except ResponseError as e:
                 print(f"ERROR: Invalid server response: {e}")
                 logger.info("Invalid server response: %s", e)
                 if "Too Many Requests for url" in str(e):
@@ -606,9 +612,7 @@ def main():
                 print("game over, you can play another. Waiting for lichess event...")
                 handle_resign()
 
-            else:
-                time.sleep(POLL_DELAY)
-                logger.info("main loop: sleeping POLL_DELAY")
+            time.sleep(REFRESH_DELAY)
 
     except ExitNicLink:
         print("Have a nice life")
