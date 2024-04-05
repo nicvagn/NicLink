@@ -26,6 +26,7 @@ from berserk.exceptions import ResponseError
 # NicLink shit
 from niclink import NicLinkManager
 from niclink.nl_exceptions import *
+from game_state import GameState
 
 # parsing command line arguments
 parser = argparse.ArgumentParser()
@@ -130,6 +131,15 @@ class Game(threading.Thread):
         self.stream = self.berserk_board_client.stream_game_state(game_id)
         # current state from stream
         self.current_state = next(self.stream)
+        
+
+
+
+        # the most resontly parsed game_state, in a GameState class wrapper
+        self.game_state = GameState(self.current_state["state"])
+
+
+
 
         self.playing_white = playing_white
         if starting_fen and False: # TODO: make 960 work
@@ -328,15 +338,18 @@ class Game(threading.Thread):
 
         return tmp_chessboard
 
+
     def signal_game_state_change(self, game_state) -> None:
         """signal a state change, this is just to signal the external clock rn"""
         
         logger.info("\nsignal_game_state_change(self, game_state) entered with game state: ", game_state)
-        pass
+        self.game_state = GameState(game_state)
+
+
+
     def handle_state_change(self, game_state) -> None:
         """Handle a state change in the lichess game."""
         global nl_inst, logger
-        # {'type': 'gameState', 'moves': 'd2d3 e7e6 b1c3', 'wtime': datetime.datetime( 1970, 1, 25, 20, 31, 23, 647000, tzinfo=datetime.timezone.utc ), 'btime': datetime.datetime( 1970, 1, 25, 20, 31, 23, 647000, tzinfo=datetime.timezone.utc ), 'winc': datetime.datetime( 1970, 1, 1, 0, 0, tzinfo=datetime.timezone.utc ), 'binc': datetime.datetime( 1970, 1, 1, 0, 0, tzinfo=datetime.timezone.utc ), 'bdraw': False, 'wdraw': False}
 
         logger.info("\ngame_state: %s\n", game_state)
 
@@ -378,6 +391,7 @@ class Game(threading.Thread):
             # a move was made, signal it
             self.signal_move()
 
+
     def signal_move(self) -> None:
         """call when a move is made in a game to signal NicLink chessclock"""
         pass
@@ -401,6 +415,7 @@ class Game(threading.Thread):
             self.game_done()
         else:
             logger.info("game not found to be over.")
+
 
     def handle_chat_line(self, chat_line) -> None:
         """handle when the other person types something in gamechat"""
