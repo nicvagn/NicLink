@@ -13,7 +13,7 @@ def write_read(x):
 
 def send(message: str):
     """send a message to the external chess clock"""
-    arduino.write(bytes(message, "utf-8"))
+    arduino.write(bytes(message, "ascii"))
 
 
 while True:

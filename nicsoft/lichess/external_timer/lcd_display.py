@@ -9,18 +9,73 @@
 import serial
 from time import sleep
 
+"""
+  switch (whatToDo) {
+    case '1':
+      // asking for time
+      if (gameOver) {  // if the game is over, do not update ts
+        break;
+      }
+      showTimestamp();
+          break;
+    case '2':
+      signalGameOver();
+      break;
+    case '3':
+      // show a str on LED read from Serial
+      printSerialMessage();
+      break;
+    case '4':
+      // start a new game
+      newGame();
+      break;
+    case '5':
+      // show the splay
+      niclink_splash();
+      break;
+    case '6':
+      // white one, and the game is over
+      white_won();
+      break;
+    case '7':
+      // black won the game
+      black_won();
+      break;
+    case '8':
+      // game is a draw
+      drawn_game();
+      break;
+    case '@':
+      //say hello
+      lcd.clear();
+      lcd.setCursor(1, 0);
+      lcd.print("Hi there");
+      break;
+"""
 
-TIMEOUT = 50.0
+TIMEOUT = 100.0
 BAUDRATE = 115200
 PORT = "/dev/ttyACM0"
+
 chess_clock = serial.Serial(port=PORT, baudrate=BAUDRATE, timeout=TIMEOUT)
 
 # TODO: update this to work with updated chess_clock.ino script, and document
 
 
+def game_over() -> None:
+    """signal game over, w ASCII 2"""
+    chess_clock.write("1".encode("ascii"))
+
+
 def send_string(message: str):
     """send a String to the external chess clock"""
+
+    chess_clock.write("3".encode("ascii"))
+
+    # tell the clock we want to display a msg
     chess_clock.write(message.encode())
+
+    sleep(TIMEOUT / 1000)  # TIMEOUT in miliseconds
 
 
 def send_timestamp(message: str):
@@ -36,14 +91,14 @@ def send_timestamp(message: str):
 
         white_ts = display_lines[0]
         print(f"whites time stamp: {white_ts}")
-        chess_clock.write(bytes(white_ts, "utf-8"))
+        chess_clock.write(white_ts.encode("ascii"))
         sleep(TIMEOUT / 1000)  # TIMEOUT in miliseconds
 
-        chess_clock.read(1)
+        chess_clock.readline(1)  # confirm clock is ready for black ts
 
         black_ts = display_lines[1]
         print(black_ts)
-        chess_clock.write(bytes(black_ts, "utf-8"))
+        chess_clock.write(black_ts.encode("ascii"))
         sleep(TIMEOUT / 1000)  # TIMEOUT in miliseconds
 
     else:
@@ -51,6 +106,6 @@ def send_timestamp(message: str):
 
 
 if __name__ == "__main__":
-    send_timestamp("W: 4.44.44 *|B: 3.33.33*")
+    game_over()
     while True:
         pass
