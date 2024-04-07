@@ -20,13 +20,15 @@ import traceback
 import chess.pgn
 import chess
 import berserk
-from berserk.exceptions import ResponseError 
-
+from berserk.exceptions import ResponseError
 
 # NicLink shit
 from niclink import NicLinkManager
 from niclink.nl_exceptions import *
-from game_state import GameState
+
+# other Nic modules
+from game_state import GameState, timedelta
+from external_timer import lcd_display
 
 # parsing command line arguments
 parser = argparse.ArgumentParser()
@@ -47,7 +49,7 @@ if args.correspondence:
     correspondence = True
 
 DEBUG = False
-#DEBUG = True
+# DEBUG = True
 if args.debug:
     DEBUG = True
 
@@ -90,35 +92,48 @@ fileHandler.setLevel(logging.DEBUG)
 
 logger.addHandler(fileHandler)
 
-### exception logging and except hook ###
 
+### exception logging and except hook ###
 # log unhandled exceptions to the log file
 def log_except_hook(excType, excValue, traceback):
     global logger
     logger.error("Uncaught exception", exc_info=(excType, excValue, traceback))
+
+
 # set exception hook
 sys.excepthook = log_except_hook
+
 
 def log_handled_exception(exception) -> None:
     """log a handled exception"""
     global logger
     logger.error("Exception handled: %s", exception)
 
+
 ### pre-amble fin ###
 
 print(
-        "\n\n|=====================| NicLink on Lichess startup |=====================|\n\n"
+    "\n\n|=====================| NicLink on Lichess startup |=====================|\n\n"
 )
 logger.info("=== NicLink Lichess startup ===\n")
+
 
 class Game(threading.Thread):
     """a game on lichess"""
 
-    def __init__(self, berserk_client, game_id, playing_white, bluetooth=False, starting_fen=False, **kwargs):
+    def __init__(
+        self,
+        berserk_client,
+        game_id,
+        playing_white,
+        bluetooth=False,
+        starting_fen=False,
+        **kwargs,
+    ):
         """Game, the client.board, niclink instance, the game id on lila, idk fam"""
         global nl_inst, logger
         super().__init__(**kwargs)
-        
+
         # for await move to signal a move has been made
         self.has_moved = threading.Event()
         # berserk board_client
@@ -131,24 +146,20 @@ class Game(threading.Thread):
         self.stream = self.berserk_board_client.stream_game_state(game_id)
         # current state from stream
         self.current_state = next(self.stream)
-        
 
+        self.response_error_on_last_attempt = False
 
-
-        # the most resontly parsed game_state, in a GameState class wrapper
+        # the most reasontly parsed game_state, in a GameState class wrapper
         self.game_state = GameState(self.current_state["state"])
 
-
-
-
         self.playing_white = playing_white
-        if starting_fen and False: # TODO: make 960 work
+        if starting_fen and False:  # HACK: make 960 work
             nl_inst.reset()
             self.game_board = chess.Board(starting_fen)
             nl_inst.set_game_board(self.game_board)
             self.starting_fen = starting_fen
         else:
-            nl_inst.reset() # reset niclink for a new game
+            nl_inst.reset()  # reset niclink for a new game
             self.game_board = chess.Board()
             nl_inst.set_game_board(self.game_board)
             self.starting_fen = None
@@ -171,34 +182,49 @@ class Game(threading.Thread):
         for event in self.stream:
             logger.debug("event: %s", event)
             if event["type"] == "gameState":
-               
-                # check if game has ended can not be done in state change thread, becuse can happen at any time
-                self.check_for_game_over(event)
+
+                # update the game stata in this class with a stream game_state
+                # incapsulated in a conviniance class
+                self.game_state = GameState(event)
 
                 # signal new game state recived
-                self.signal_game_state_change(event)   
+                self.signal_game_state_change(event)
 
-                self.white_time = event["wtime"]
-                self.black_time = event["btime"]
+                self.white_time: timedelta = event["wtime"]
+                self.black_time: timedelta = event["btime"]
                 logger.info("white time (seconds): %s\n", self.white_time.seconds)
                 logger.info("black time (seconds): %s\n", self.black_time.seconds)
 
-                # if there is another state change thread for some reason, join it
-                if(state_change_thread and state_change_thread.is_alive()):
-                    state_change_thread.join()
-                state_change_thread = threading.Thread(target=self.handle_state_change, args=(event,))
+                # if there is a state_change_thread
+                if state_change_thread:
+
+                    # if there is another state change thread still
+                    # running running, join it
+                    # while checking for game over
+                    while state_change_thread.is_alive():
+                        if state_change_thread.is_alive():
+                            # check that the game is not over.
+                            # Will call game_done if so.
+                            self.check_for_game_over(event)
+                            # try to join state_change_thread with a one second time_out
+                            state_change_thread.join(timeout=1)
+
+                # start new state change thread
+                state_change_thread = threading.Thread(
+                    target=self.handle_state_change, args=(event,)
+                )
                 state_change_thread.start()
 
             elif event["type"] == "chatLine":
                 self.handle_chat_line(event)
+
             elif event["type"] == "gameFull":
                 logger.info("\n\n +++ Game Full got +++\n\n")
                 self.game_done()
-            else: # If it is not one of these options, kill the stream
+            else:  # If it is not one of these options, kill the stream
                 break
 
         self.game_done()
-
 
     def game_done(self) -> None:
         """stop the thread, game should be over, or maybe a rage quit"""
@@ -214,33 +240,37 @@ class Game(threading.Thread):
         # stop the thread
         raise NicLinkGameOver("Game over")
 
-
     def await_move_thread(self, fetch_list: list) -> None:
-        """await move in a way that does not stop the user from exiting and when move is found, 
-        set it to index 0 on fetch_list in UCI. This function should be ran in in i it's own Thread."""
+        """await move in a way that does not stop the user from exiting and when move is found,
+        set it to index 0 on fetch_list in UCI. This function should be ran in in i it's own Thread.
+        """
         global logger, nl_inst
         logger.info("\nGame.await_move_thread(...) entered\n")
         try:
-            move = (
-                nl_inst.await_move()
-            )  # await move from e-board the move from niclink
-            logger.info("await_move_thread(...): move from chessboard %s. setting it to index 0 of the passed list, and setting moved event", move)
-            
+            move = nl_inst.await_move()  # await move from e-board the move from niclink
+            logger.info(
+                "await_move_thread(...): move from chessboard %s. setting it to index 0 of the passed list, and setting moved event",
+                move,
+            )
+
             fetch_list.insert(0, move)
-            self.has_moved.set() # set the Event
+            self.has_moved.set()  # set the Event
 
         except KeyboardInterrupt as err:
             log_handled_exception(err)
             print("KeyboardInterrupt: bye")
             sys.exit(0)
         except ResponseError as err:
-            logger.info("\nResponseError on make_move(). This causes us to just return\n\n")
+            logger.info(
+                "\nResponseError on make_move(). This causes us to just return\n\n"
+            )
             log_handled_exception(err)
             raise NoMove("ResponseError in Game.await_move_thread thread.")
         else:
             logger.info("Game.await_move_thread(...) Thread got move: %s", move)
-            raise SystemExit("exiting Game.await_move_thread thread, everything is good.")
-
+            raise SystemExit(
+                "exiting Game.await_move_thread thread, everything is good."
+            )
 
     def make_move(self, move) -> None:
         """make a move in a lichess game"""
@@ -248,32 +278,45 @@ class Game(threading.Thread):
         logger.info("move made: %s", move)
 
         while not nl_inst.game_over.is_set():
-            logger.info("make_move() attempt w move: %s nl_inst.game_over.is_set(): %s", move, str(nl_inst.game_over.is_set()))
+            logger.info(
+                "make_move() attempt w move: %s nl_inst.game_over.is_set(): %s",
+                move,
+                str(nl_inst.game_over.is_set()),
+            )
             try:
                 if move is None:
                     raise IllegalMove("Move is None")
                 self.berserk_board_client.make_move(self.game_id, move)
                 # signal that a move was made to the external clock, etc.
                 self.signal_move()
-                # once move has been made, return
+                # once move has been made set self.response_error_on_last_attempt to false and return
                 return
             except ResponseError as err:
                 log_handled_exception(err)
-                
+
                 # check for game over or it is not your turn, If so, return
                 if "Not your turn, or game already over" in str(err):
-                    logger.error("Not your turn, or game is already over. Exiting make_move(...)")
+                    logger.error(
+                        "Not your turn, or game is already over. Exiting make_move(...)"
+                    )
                     return
 
                 # if not, try again
-                print(f"ResponseError: { err }trying again after three seconds")
+                print(
+                    f"ResponseError: { err }trying again after three seconds.  \
+                        Will only try twice before calling game_done"
+                )
                 time.sleep(3)
+
+                if self.response_error_on_last_attempt == True:
+                    self.game_done()
+                else:
+                    self.response_error_on_last_attempt = True
                 continue
             except IllegalMove as err:
                 log_handled_exception(err)
                 print("Illegal move")
                 break
-
 
     def make_first_move(self) -> None:
         """make the first move in a lichess game, before stream starts"""
@@ -290,7 +333,7 @@ class Game(threading.Thread):
         """get a move from the chessboard, and return it in UCI"""
         global nl_inst, logger
         logger.info("get_move_from_chessboard() entered. Our turn to move.\n")
-        
+
         # set this board as NicLink game board
         nl_inst.set_game_board(tmp_chessboard)
 
@@ -301,8 +344,10 @@ class Game(threading.Thread):
         )
         # the move_fetch_list is for getting the move and await_move_thread in a thread is it does not block
         move_fetch_list = []
-        get_move_thread = threading.Thread(target = self.await_move_thread, args=(move_fetch_list,), daemon=True)
-        
+        get_move_thread = threading.Thread(
+            target=self.await_move_thread, args=(move_fetch_list,), daemon=True
+        )
+
         get_move_thread.start()
         # wait for a move on chessboard
         while not nl_inst.game_over.is_set():
@@ -316,11 +361,11 @@ class Game(threading.Thread):
         """create a tmp chessboard with the given move list played on it."""
         global nl_inst, logger
         # if there is a starting FEN, use it
-        if self.starting_fen is not None: 
+        if self.starting_fen is not None:
             tmp_chessboard = chess.Board(self.starting_fen)
         else:
             tmp_chessboard = chess.Board()
-        
+
         if move_list != [""]:
             last_move = None
             for move in move_list:
@@ -329,23 +374,27 @@ class Game(threading.Thread):
                 last_move = move
 
             # highlight last made move
-            nl_inst.set_move_LEDs( last_move )
+            if last_move is not None:
+                nl_inst.set_move_LEDs(last_move)
+
             logger.info("The last move was found to be: %s", last_move)
 
             # set the nl_inst.last move
             nl_inst.last_move = last_move
 
-
         return tmp_chessboard
-
 
     def signal_game_state_change(self, game_state) -> None:
         """signal a state change, this is just to signal the external clock rn"""
-        
-        logger.info("\nsignal_game_state_change(self, game_state) entered with game state: ", game_state)
+
+        logger.info(
+            "\nsignal_game_state_change(self, game_state) entered with game state: ",
+            game_state,
+        )
         self.game_state = GameState(game_state)
 
-
+        # send new timestamp to clock
+        self.update_timer()  # update the timer
 
     def handle_state_change(self, game_state) -> None:
         """Handle a state change in the lichess game."""
@@ -382,7 +431,7 @@ class Game(threading.Thread):
             move = self.get_move_from_chessboard(tmp_chessboard)
 
             # make the move
-            logger.info("calling self.make_move(%s)", move) 
+            logger.info("calling self.make_move(%s)", move)
             self.make_move(move)
         else:
             if game_state["moves"] != "":
@@ -391,31 +440,43 @@ class Game(threading.Thread):
             # a move was made, signal it
             self.signal_move()
 
-
     def signal_move(self) -> None:
-        """call when a move is made in a game to signal NicLink chessclock"""
-        pass
-        # signal the timer that we made a move
-        # TODO 
+        """call when a move is made in a game to signal NicLink
+        chessclock and do post move cleanup"""
+        self.response_error_on_last_attempt = False
 
+        # signal the timer that we made a move
+        self.update_timer()  # update the timer
+        # TODO:
+
+    def update_timer(self) -> None:
+        """keep the external timer displaying correct time.
+        The time stamp shuld be formated with both w and b timestamp ended by a *,
+        and a | splitting the timestamps"""
+        timestamp = f" W:{ str(self.game_state.get_wtime()) }*| B:{ str(self.game_state.get_btime())}*"
+        breakpoint()
+        print(f"TIMESTAMP: {timestamp}")
+        lcd_display.send_timestamp(timestamp)
 
     def check_for_game_over(self, game_state) -> None:
         """check a game state to see if the game is through if so raise an exception."""
         global logger, nl_inst
-        logger.debug("check_for_game_over(self, game_state) entered w/ gamestate: %s" % game_state)
+        logger.debug(
+            "check_for_game_over(self, game_state) entered w/ gamestate: %s"
+            % game_state
+        )
         if game_state["status"] == "gameFull":
             logger.error("\n\ngameFull received !!!")
-            while True: # be obnozios so I know
+            while True:  # be obnozios so I know
                 nl_inst.beep()
                 time.sleep(1)
             self.game_done()
-        elif "winner" in game_state:   # confirmed worked once on their resign
+        elif "winner" in game_state:  # confirmed worked once on their resign
             self.game_done()
         elif nl_inst.game_over.is_set():
             self.game_done()
         else:
             logger.info("game not found to be over.")
-
 
     def handle_chat_line(self, chat_line) -> None:
         """handle when the other person types something in gamechat"""
@@ -423,12 +484,14 @@ class Game(threading.Thread):
         nl_inst.beep()
         print(chat_line)
 
+
 ### helper functions ###
 def show_FEN_on_board(FEN) -> None:
     """show board FEN on an ascii chessboard"""
     tmp_chessboard = chess.Board()
     tmp_chessboard.set_fen(FEN)
     print(tmp_chessboard)
+
 
 def handle_game_start(event) -> None:
     """handle game start event"""
@@ -456,7 +519,7 @@ def handle_game_start(event) -> None:
 
     try:
         game = Game(
-                berserk_client, game_data["id"], playing_white, starting_fen=game_fen
+            berserk_client, game_data["id"], playing_white, starting_fen=game_fen
         )  # ( game_data['color'] == "white" ) is used to set is_white bool
         game.daemon = True
         game.start()  # start the game thread
@@ -465,6 +528,7 @@ def handle_game_start(event) -> None:
         if "This game cannot be played with the Board API" in str(e):
             print("cannot play this game via board api")
         log_handled_exception(e)
+
 
 def handle_ongoing_game(game_data):
     """handle joining a game that is alredy underway"""
@@ -477,13 +541,15 @@ def handle_ongoing_game(game_data):
     else:
         print("it is your opponents turn.")
 
-def handle_resign(event = None) -> None:
+
+def handle_resign(event=None) -> None:
     """handle ending the game in the case where you resign"""
     global nl_inst, logger, game
     if event is not None:
         logger.info("handle_resign entered: event: %", event)
     # end the game
     game.game_done()
+
 
 def is_correspondence(gameId) -> bool:
     """is the game a correspondence game?"""
@@ -545,7 +611,7 @@ def main():
     except PermissionError:
         print(f"ERROR: permission denied on token file")
         sys.exit(-1)
-    
+
     try:
         session = berserk.TokenSession(token)
     except:
@@ -554,7 +620,7 @@ def main():
         print(f"cannot create session: {e}")
         logger.info("cannot create session", e)
         sys.exit(-1)
- 
+
     try:
         if DEBUG:
             berserk_client = berserk.Client(session, base_url="https://lichess.dev")
@@ -621,7 +687,7 @@ def main():
                 logger.info("Invalid server response: %s", e)
                 if "Too Many Requests for url" in str(e):
                     time.sleep(10)
-                
+
             except NicLinkGameOver:
                 logger.info("NicLinkGameOver excepted, good game?")
                 print("game over, you can play another. Waiting for lichess event...")
@@ -632,6 +698,7 @@ def main():
     except ExitNicLink:
         print("Have a nice life")
         sys.exit(0)
+
 
 if __name__ == "__main__":
     main()

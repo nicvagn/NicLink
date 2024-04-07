@@ -7,15 +7,17 @@
 from datetime import timedelta
 
 
-class GameState():
+class GameState:
     """A class used to contain all the information in a berserk board api game state."""
-    
+
     def __init__(self, game_state: dict) -> None:
         if game_state["type"] != "gameState":
-            raise ValueError("""'GameState instantiated with 
-                             a game_state["type"] != "gameState""")
+            raise ValueError(
+                """'GameState instantiated with 
+                             a game_state["type"] != "gameState"""
+            )
 
-        self.moves: str = game_state["moves"] 
+        self.moves: str = game_state["moves"]
         self.wtime: timedelta = game_state["wtime"]
         self.btime: timedelta = game_state["btime"]
         self.winc: timedelta = game_state["winc"]
@@ -41,4 +43,3 @@ class GameState():
     def get_status(self) -> str:
         """get the status from this GameState"""
         return self.status
-    

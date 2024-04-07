@@ -6,26 +6,20 @@
 
 [build-system]
 requires = ["setuptools"]
-dynamic = ["version"]
+
+[tool.setuptools.packages]
+find = {} # defaults
 
 [project]
-VERSION = '0.7.0',
-DESCRIPTION = 'A package containing NicLink and associated software. NicLink is a "driver" for chessnut air boards.',
+version = '0.7.0'
 
-name="nic_soft",
-version=VERSION,
-author="Nicolas Vaagen",
-author_email="nicolasvaagen@gmail.com",
-description=DESCRIPTION,
-long_description="""Hey, you. You're finally awake. You were trying to cross the border, right? Walked right into that Imperial ambush, same as us, and that thief over there. Damn you Stormcloaks. Skyrim was fine until you came along. Empire was nice and lazy. If they hadn't been looking for you, I could've stolen that horse and be halfway to Hammerfell. You there. You and me - we shouldn't be here. It's these Stormcloaks the Empire wants. We're all brothers and sisters in binds now, thief. Shut up back there! And what's wrong with him, huh? Watch your tongue. You're speaking to Ulfric Stormcloak, the true High King. Ulfric? The Jarl of Windhelm? You're the leader of the rebellion. But if they've captured you... Oh gods, where are they taking us? I don't know where we're going, but Sovngarde awaits. No, this can't be happening. This isn't happening. Hey, what village are you from, horse thief? Why do you care? A Nord's last thoughts should be of home. Rorikstead. I'm... I'm from Rorikstead. 
-
-...looks like the Thalmor are with him.
-
-General Tullius, sir. The headsman is waiting. Good. Let's get this over with! Shor, Mara, Dibella, Kynareth, Akatosh. Divines, please help me. Look at him. General Tullius the Military Governor. And it looks like the Thalmor are with him. Damn elves. I bet they had something to do with this.
-
-Why are we stopping? Why do you think? End of the line. Let's go. Shouldn't keep the gods waiting for us.""",
-packages=find_packages(),
-install_requires=['chess', 'pybind11'],
+name = "nic_soft"
+authors = [
+    {name = "Nicolas Vaagen", emal="nicolasvaagen@gmail.com"},
+]
+description = 'A package containing NicLink and associated software. NicLink is a "driver" for chessnut air boards.'
+# packages = 
+install_requires=['chess', 'pybind11']
 dependencies=[
     "pyfirmata",
     "berserk==0.13.2",
@@ -39,10 +33,11 @@ dependencies=[
     "dbus-fast==1.83.1",
     "pybind11",
     "pyfirmata",
-],
-keywords=["Chessnut", "Chessnut air", "e-board", "EasyLinkSDK", "chess", "lichess", "boardAPI"],
+    "pyserial",
+]
+keywords=["Chessnut", "Chessnut air", "e-board", "EasyLinkSDK", "chess", "lichess", "boardAPI"]
 classifiers= [
-    f"Development Status :: { VERSION }",
+    "Development Status :: in progress",
     "Intended Audience :: Chessnut air owners",
     "Programming language :: Python :: 3.12+",
     "Programming language :: C++",
@@ -52,16 +47,10 @@ classifiers= [
     "Operating System :: MacOS :: MacOS X", # untested
     "Topic :: chess"
 ]
-readme = README.md
+readme = "README.md"
 license = {file = "LICENSE"}
 
 [project.urls]
-"GitHub": 'https://github.com/nicvagn/NicLink',
-'Bug Reports': 'https://github.com/nicvagn/NicLink/issues'
+Repository = 'https://github.com/nicvagn/NicLink'
+'Bug Reports' = 'https://github.com/nicvagn/NicLink/issues'
 
-
-[tool.setuptools.packages]
-find = {} # defaults
-
-[build-system]
-requires = ["setuptools"]
