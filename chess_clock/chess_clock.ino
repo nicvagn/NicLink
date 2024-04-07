@@ -1,13 +1,26 @@
 #include <LiquidCrystal.h>
 
+
+/*
+lcd.setCursor(0, 0); // top left
+
+lcd.setCursor(15, 0); // top right
+
+lcd.setCursor(0, 1); // bottom left
+
+lcd.setCursor(15, 1); // bottom right
+*/
+
 // initialize the library by associating any needed LCD interface pin
 // with the arduino pin number it is connected to
 const int rs = 12, en = 11, d4 = 5, d5 = 4, d6 = 3, d7 = 2;
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
-const float TIMEOUT = 50.0;
+
+
+const float TIMEOUT = 100.0;
 const float MSGTIMEOUT = 500000.0;
-const int BAUDRATE = 115200;
+const unsigned long BAUDRATE = 115200;
 bool gameOver = false;
 
 void setup() {
@@ -17,14 +30,18 @@ void setup() {
   // This must be the same baud rate as specified in the python serial object constructor
   Serial.begin(BAUDRATE);
 
+  // show splash screen on startup
+  niclink_splash();
+
 }
 // show the nl chessclock splash screan
 void niclink_splash() {
-  lcd.setCursor(0,1);
+  lcd.setCursor(0,0);
   lcd.print("=== Nic-Link ===");
   lcd.setCursor(0,1);
-  lcd.print("|External Clock|");
-  delay(MSGTIMEOUT); // PAUSE FOR TIME TO READ MSG
+  lcd.write(byte(0));  //does the column, idk look's good
+  lcd.print("External Clock");
+  lcd.write(byte(0));
 }
 
 void showTimestamp() {
@@ -58,15 +75,18 @@ void newGame() {
 }
 
 // print a String to the LCD
-void printStr() {
+void printSerialMessage() {
 
   lcd.clear();
-
+  delay(TIMEOUT);
   if(Serial.available()) {
     String message = Serial.readStringUntil('*');
     lcd.setCursor(1,0);
     lcd.print(message);
   }
+
+  delay(MSGTIMEOUT); // PAUSE FOR TIME TO READ MSG
+
 }
 
 void loop() {
@@ -89,8 +109,8 @@ void loop() {
       signalGameOver();
       break;
     case '3':
-      // show a str on LED
-      printStr();
+      // show a str on LED read from Serial
+      printSerialMessage();
       break;
     case '4':
       // start a new game
