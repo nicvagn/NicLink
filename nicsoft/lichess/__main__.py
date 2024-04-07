@@ -1,6 +1,8 @@
-#  NicLink-lichess is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or ( at your option ) any later version.
+# NicLink-lichess is a part of NicLink
 #
-#  NicLink-lichess is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#  NicLink is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or ( at your option ) any later version.
+#
+#  NicLink is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License along with NicLink. If not, see <https://www.gnu.org/licenses/>.
 
@@ -34,6 +36,7 @@ from external_timer import lcd_display
 parser = argparse.ArgumentParser()
 parser.add_argument("--tokenfile")
 parser.add_argument("--correspondence", action="store_true")
+parser.add_argument("--clock", action="store_true")  # TODO: MAKE WORK
 parser.add_argument("--quiet", action="store_true")
 parser.add_argument("--debug", action="store_true")
 args = parser.parse_args()
@@ -192,8 +195,8 @@ class Game(threading.Thread):
 
                 self.white_time: timedelta = event["wtime"]
                 self.black_time: timedelta = event["btime"]
-                logger.info("white time (seconds): %s\n", self.white_time.seconds)
-                logger.info("black time (seconds): %s\n", self.black_time.seconds)
+                # logger.info("white time (seconds): %s\n", self.white_time.seconds)
+                # logger.info("black time (seconds): %s\n", self.black_time.seconds)
 
                 # if there is a state_change_thread
                 if state_change_thread:
@@ -299,7 +302,7 @@ class Game(threading.Thread):
                     logger.error(
                         "Not your turn, or game is already over. Exiting make_move(...)"
                     )
-                    return
+                    break
 
                 # if not, try again
                 print(
@@ -309,6 +312,7 @@ class Game(threading.Thread):
                 time.sleep(3)
 
                 if self.response_error_on_last_attempt == True:
+                    self.response_error_on_last_attempt = False
                     self.game_done()
                 else:
                     self.response_error_on_last_attempt = True
@@ -350,11 +354,15 @@ class Game(threading.Thread):
 
         get_move_thread.start()
         # wait for a move on chessboard
-        while not nl_inst.game_over.is_set():
+        while not nl_inst.game_over.is_set() or self.check_for_game_over(
+            self.current_state["state"]
+        ):
+
             if self.has_moved.is_set():
                 move = move_fetch_list[0]
                 self.has_moved.clear()
                 return move
+
         raise NoMove("No move in get_move_from_chessboard(...)")
 
     def update_tmp_chessboard(self, move_list: list[str]) -> chess.Board:
@@ -454,8 +462,7 @@ class Game(threading.Thread):
         The time stamp shuld be formated with both w and b timestamp ended by a *,
         and a | splitting the timestamps"""
         timestamp = f" W:{ str(self.game_state.get_wtime()) }*| B:{ str(self.game_state.get_btime())}*"
-        breakpoint()
-        print(f"TIMESTAMP: {timestamp}")
+        logger.info("\nTIMESTAMP: %s \n", timestamp)
         lcd_display.send_timestamp(timestamp)
 
     def check_for_game_over(self, game_state) -> None:
