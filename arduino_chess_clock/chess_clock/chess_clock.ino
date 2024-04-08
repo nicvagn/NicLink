@@ -1,4 +1,5 @@
 #include <LiquidCrystal.h>
+#include <Arduino.h>
 
 
 /*
@@ -17,45 +18,39 @@ const int rs = 12, en = 11, d4 = 5, d5 = 4, d6 = 3, d7 = 2;
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
 const float TIMEOUT = 80.0;  // slightly shorter than python timeout
-const float MSGTIMEOUT = 50000000.0;
+//const float MSGTIMEOUT = 50000000.0;
 const unsigned long BAUDRATE = 115200;
 bool gameOver = false;
 
-void setup() {
-  lcd.begin(16, 2);
-  Serial.setTimeout(TIMEOUT);  // in milli seconds
+const char* SEPERATOR = '*';
+const char* READYMESSAGE = "READY";
+const char* ACKMESSAGE = "ACK";
+const unsigned long TRANSMITINTERVAL = 1e6;
 
-  // This must be the same baud rate as specified in the python serial object constructor
-  Serial.begin(BAUDRATE);
+// what to do
+char what_to_do[1] = "n"; // default to not doing anything
 
-  // show splash screen on startup
-  //niclink_splash();
-
-  niclink_splash();
-}
-
+// FOR CUSTOM MESSAGES
+// for the ascii to be displayed on the first ln
+char lcd_ln_1_buff[16];
+// and the second
+char lcd_ln_2_buff[16];
 
 // case '1'
 void showTimestamp() {
-  // Check if there is something to receive
-  if (Serial.available()) {
-    lcd.clear();
-    // NicLink will first send whites time, then in a seperate transmission send black's time
-    String line_1 = Serial.readStringUntil('*');
-    lcd.setCursor(1, 0);
-    lcd.print(line_1);
-  }
+  lcd.clear();
 
+  // NicLink will first send whites time, then in a seperate transmission send black's time 
+  // terminated by (*, dec: 42, hex: 2A, oct: 52, bin: 101010) for each of the times
+  int ln_1_len = Serial.readBytesUntil(SEPERATOR, lcd_ln_1_buff, 16);
+  lcd.setCursor(1, 0);
+  lcd.print(lcd_ln_1_buff);
   //signal that we are ready for black's time
-  Serial.write(1);
+  Serial.println(lcd_ln_1_buff);
 
-  if (Serial.available()) {
-    String line_2 = Serial.readStringUntil('*');
-    lcd.setCursor(1, 1);
-    lcd.print(line_2);
-  }
-
-  return;
+  int ln_2_len = Serial.readBytesUntil(SEPERATOR, lcd_ln_2_buff, 16);
+  lcd.setCursor(1, 1);
+  lcd.print(lcd_ln_2_buff);
 }
 
 // case '2'
@@ -64,8 +59,6 @@ void signalGameOver() {
   gameOver = true;
   lcd.setCursor(0, 0);
   lcd.print("%%% GAME OVER %%%");
-
-  return;
 }
 
 // case '3' print a String to the LCD
@@ -73,17 +66,36 @@ void printSerialMessage() {
 
   lcd.clear();
   String message = Serial.readString();
-  lcd.setCursor(1, 0);
-  lcd.print(message);
-  delay(MSGTIMEOUT);  // PAUSE FOR TIME TO READ MSG
-  return;
+  int mes_len = message.length();
+  if( mes_len > 16 ) {
+    //get the first line
+    for(int i=0; i < 16; i++) {
+      lcd_ln_1_buff[i] = message[i];
+    }
+    for(int i=0; i< 16; i++) {
+      if(i <= (mes_len - 16)) {
+        lcd_ln_2_buff[i] = message[(16 + i)]; // only chars >= 16
+      } else {
+        lcd_ln_2_buff[i];
+      }
+    }
+    // ln 1
+    lcd.setCursor(0,0);
+    lcd.print(lcd_ln_1_buff);
+    // ln 2
+    lcd.setCursor(0,1);
+    lcd.print(lcd_ln_2_buff);
+  } else {
+    // just print on one ln
+    lcd.setCursor(0, 0);
+    lcd.print(message);
+  }
 }
 // case '4' start a new game
 void newGame() {
   lcd.clear();
   niclink_splash();
   gameOver = false;
-  return;
 }
 
 // case '5'show the nl chessclock splash screan
@@ -92,7 +104,6 @@ void niclink_splash() {
   lcd.print("=== Nic-Link ===");
   lcd.setCursor(0, 1);
   lcd.print("]External Clock[");
-  return;
 }
 
 //case '6'
@@ -102,7 +113,6 @@ void white_won() {
   lcd.print("%%%% WINNER %%%%");
   lcd.setCursor(0, 1);
   lcd.print("= white victor =");
-  return;
 }
 
 //case '7'
@@ -112,7 +122,6 @@ void black_won() {
   lcd.print("%%%% WINNER %%%%");
   lcd.setCursor(0, 1);
   lcd.print("= black victor =");
-  return;
 }
 
 // case '8'
@@ -122,56 +131,80 @@ void drawn_game() {
   lcd.print("%%% GAMEOVER %%%");
   lcd.setCursor(0, 1);
   lcd.print("<<<<< DRAW >>>>>");
-  return;
 }
 
-void loop() {
+// initialize lcd and show splash
+void lcd_init()
+{
+  lcd.begin(16, 2);
+  Serial.setTimeout(TIMEOUT);  // in milli seconds
 
-  char whatToDo = 'x';
+  // This must be the same baud rate as specified in the python serial object constructor
+  Serial.begin(BAUDRATE);
 
-  whatToDo = Serial.read();
+  // show splash screen on startup
+  niclink_splash();
+}
 
+int main() {
+  // setup ardino and some house keeping idk
+  init();
 
-  switch (whatToDo) {
-    case '1':
-      // asking for time
-      if (gameOver) {  // if the game is over, do not update ts
+  // and lcd, and ardino Serial connect
+  lcd_init();
+
+  while(true) //(gameOver == false)
+  {
+    while(Serial.available() == false){
+      // do nothing
+    }
+
+    Serial.readBytesUntil(SEPERATOR, what_to_do, 1);
+
+    
+
+    switch (what_to_do[0]) {
+      case '1':
+        // asking for time
+        if (gameOver) {  // if the game is over, do not update ts
+          Serial.write("game is over");
+          break;
+        }
+        showTimestamp();
         break;
-      }
-      showTimestamp();
-      break;
-    case '2':
-      signalGameOver();
-      break;
-    case '3':
-      // show a str on LED read from Serial
-      printSerialMessage();
-      break;
-    case '4':
-      // start a new game
-      newGame();
-      break;
-    case '5':
-      // show the splay
-      niclink_splash();
-      break;
-    case '6':
-      // white one, and the game is over
-      white_won();
-      break;
-    case '7':
-      // black won the game
-      black_won();
-      break;
-    case '8':
-      // game is a draw
-      drawn_game();
-      break;
-    case '@':
-      //say hello
-      lcd.clear();
-      lcd.setCursor(1, 0);
-      lcd.print("Hi there");
-      break;
+      case '2':
+        signalGameOver();
+        break;
+      case '3':
+        // show a str on LED read from Serial
+        printSerialMessage();
+        break;
+      case '4':
+        // start a new game
+        newGame();
+        break;
+      case '5':
+        // show the splay
+        niclink_splash();
+        break;
+      case '6':
+        // white one, and the game is over
+        white_won();
+        break;
+      case '7':
+        // black won the game
+        black_won();
+        break;
+      case '8':
+        // game is a draw
+        drawn_game();
+        break;
+      case '@':
+        //say hello
+        lcd.clear();
+        lcd.setCursor(1, 0);
+        lcd.print("Hi there");
+        break;
+    }
   }
 }
