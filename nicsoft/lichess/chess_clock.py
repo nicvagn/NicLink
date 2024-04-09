@@ -12,8 +12,6 @@ from time import time, sleep
 from datetime import timedelta
 import logging
 
-import readchar
-
 
 """ snippet from Ardino sketch
   switch (whatToDo) {
@@ -76,6 +74,7 @@ class ChessClock:
         )
         self.game_start = None
         self.new_game()
+        self.lcd_length = 16
 
     def update_chess_clock(self, wtime: timedelta, btime: timedelta) -> None:
         """keep the external timer displaying correct time.
@@ -83,14 +82,23 @@ class ChessClock:
         correctly on a 16 x 2 LCD"""
 
         timestamp = self.create_timestamp(wtime, btime)
-        self.logger.info("\n\nTIMESTAMP: %s \n/n", timestamp)
+        self.logger.info("\n\nTIMESTAMP: %s /n", timestamp)
         self.send_string(timestamp)
 
     def create_timestamp(self, wtime: timedelta, btime: timedelta) -> str:
+        """create timestamp with white and black time for display on lcd"""
+        # ensure ts uses all the space, needed for lcd side
+        white_time = f"W:  { str(wtime) }"
+        while len(white_time) < self.lcd_length:
+            white_time += " "
 
-        timestamp = f"W: { str(wtime) } \
-                B:{ str(btime) }"
+        black_time = f"B:  { str(btime) }"
+        while len(black_time) < self.lcd_length:
+            black_time += " "
+
+        timestamp = f"{white_time}{black_time}"
         self.logger.info("ChessClock.chess_clock() created: %s" % (timestamp))
+        print(timestamp)
         return timestamp
 
     def game_over(self) -> None:
@@ -130,8 +138,15 @@ class ChessClock:
 if __name__ == "__main__":
     print("this is not designed to be run as __main__")
     chess_clock = ChessClock("/dev/ttyACM1", 115200, 100.0)
-
-    chess_clock.white_won()
-
+    sleep(3)
+    chess_clock.update_chess_clock(timedelta(minutes=1), timedelta(minutes=1))
     sleep(3)
     chess_clock.game_over()
+    sleep(3)
+    chess_clock.update_chess_clock(
+        timedelta(hours=4, minutes=1), timedelta(hours=3, minutes=33)
+    )
+    sleep(3)
+    chess_clock.game_over()
+    sleep(3)
+    chess_clock.update_chess_clock(timedelta(minutes=4), timedelta(minutes=8))

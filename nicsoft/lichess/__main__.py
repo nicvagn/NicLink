@@ -263,7 +263,8 @@ class Game(threading.Thread):
         try:
             move = nl_inst.await_move()  # await move from e-board the move from niclink
             logger.info(
-                "await_move_thread(...): move from chessboard %s. setting it to index 0 of the passed list, and setting moved event",
+                "await_move_thread(...): move from chessboard %s. setting it to index 0 of the passed list, \
+                and setting moved event",
                 move,
             )
 
@@ -411,6 +412,11 @@ class Game(threading.Thread):
             game_state,
         )
         self.game_state = GameState(game_state)
+
+        if self.chess_clock:
+            self.chess_clock.update_chess_clock(
+                self.game_state.get_btime(), self.game_state.get_btime()
+            )
 
         # if chess_clock send new timestamp to clock
 

@@ -55,11 +55,9 @@ void printSerialMessage() {
     for(int i=0; i < 16; i++) {
       lcd_ln_1_buff[i] = message[i];
     }
-    for(int i=0; i< 16; i++) {
+    for(int i=0; i < 16; i++) {
       if(i <= (mes_len - 16)) {
         lcd_ln_2_buff[i] = message[(16 + i)]; // only chars >= 16
-      } else {
-        lcd_ln_2_buff[i];
       }
     }
     // ln 1
