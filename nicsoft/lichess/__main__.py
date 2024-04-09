@@ -28,9 +28,11 @@ from berserk.exceptions import ResponseError
 from niclink import NicLinkManager
 from niclink.nl_exceptions import *
 
+# external chess clock functionality
+from chess_clock import ChessClock
+
 # other Nic modules
 from game_state import GameState, timedelta
-from external_timer import lcd_display
 
 # parsing command line arguments
 parser = argparse.ArgumentParser()
@@ -131,6 +133,7 @@ class Game(threading.Thread):
         playing_white,
         bluetooth=False,
         starting_fen=False,
+        chess_clock=False,
         **kwargs,
     ):
         """Game, the client.board, niclink instance, the game id on lila, idk fam"""
@@ -145,6 +148,10 @@ class Game(threading.Thread):
         self.game_id = game_id
         ### niclink options
         self.bluetooth = bluetooth
+        # if there is an external_clock
+        # TODO: update ChessClock params to be easily changable
+        if chess_clock:
+            self.chess_clock = ChessClock("/dev/ttyACM1", 115200, 100.0)
         # incoming board stream
         self.stream = self.berserk_board_client.stream_game_state(game_id)
         # current state from stream
@@ -228,6 +235,10 @@ class Game(threading.Thread):
                 break
 
         self.game_done()
+
+    def get_game_state(self) -> GameState:
+        """get the current game_state"""
+        return self.game_state
 
     def game_done(self) -> None:
         """stop the thread, game should be over, or maybe a rage quit"""
@@ -401,8 +412,7 @@ class Game(threading.Thread):
         )
         self.game_state = GameState(game_state)
 
-        # send new timestamp to clock
-        self.update_timer()  # update the timer
+        # if chess_clock send new timestamp to clock
 
     def handle_state_change(self, game_state) -> None:
         """Handle a state change in the lichess game."""
@@ -454,16 +464,7 @@ class Game(threading.Thread):
         self.response_error_on_last_attempt = False
 
         # signal the timer that we made a move
-        self.update_timer()  # update the timer
         # TODO:
-
-    def update_timer(self) -> None:
-        """keep the external timer displaying correct time.
-        The time stamp shuld be formated with both w and b timestamp ended by a *,
-        and a | splitting the timestamps"""
-        timestamp = f" W:{ str(self.game_state.get_wtime()) }*| B:{ str(self.game_state.get_btime())}*"
-        logger.info("\nTIMESTAMP: %s \n", timestamp)
-        lcd_display.send_timestamp(timestamp)
 
     def check_for_game_over(self, game_state) -> None:
         """check a game state to see if the game is through if so raise an exception."""
@@ -526,7 +527,11 @@ def handle_game_start(event) -> None:
 
     try:
         game = Game(
-            berserk_client, game_data["id"], playing_white, starting_fen=game_fen
+            berserk_client,
+            game_data["id"],
+            playing_white,
+            starting_fen=game_fen,
+            chess_clock=True,
         )  # ( game_data['color'] == "white" ) is used to set is_white bool
         game.daemon = True
         game.start()  # start the game thread

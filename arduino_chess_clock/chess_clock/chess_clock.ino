@@ -36,29 +36,12 @@ char lcd_ln_1_buff[16];
 // and the second
 char lcd_ln_2_buff[16];
 
-// case '1'
-void showTimestamp() {
-  lcd.clear();
-
-  // NicLink will first send whites time, then in a seperate transmission send black's time 
-  // terminated by (*, dec: 42, hex: 2A, oct: 52, bin: 101010) for each of the times
-  int ln_1_len = Serial.readBytesUntil(SEPERATOR, lcd_ln_1_buff, 16);
-  lcd.setCursor(1, 0);
-  lcd.print(lcd_ln_1_buff);
-  //signal that we are ready for black's time
-  Serial.println(lcd_ln_1_buff);
-
-  int ln_2_len = Serial.readBytesUntil(SEPERATOR, lcd_ln_2_buff, 16);
-  lcd.setCursor(1, 1);
-  lcd.print(lcd_ln_2_buff);
-}
-
 // case '2'
 void signalGameOver() {
   lcd.clear();
   gameOver = true;
   lcd.setCursor(0, 0);
-  lcd.print("%%% GAME OVER %%%");
+  lcd.print("%%% GAMEOVER %%%");
 }
 
 // case '3' print a String to the LCD
@@ -94,8 +77,11 @@ void printSerialMessage() {
 // case '4' start a new game
 void newGame() {
   lcd.clear();
-  niclink_splash();
   gameOver = false;
+  lcd.setCursor(0, 0);
+  lcd.print("=== Nic-Link ===");
+  lcd.setCursor(0, 1);
+  lcd.print("$$$ New Game $$$");
 }
 
 // case '5'show the nl chessclock splash screan
@@ -161,17 +147,7 @@ int main() {
 
     Serial.readBytesUntil(SEPERATOR, what_to_do, 1);
 
-    
-
     switch (what_to_do[0]) {
-      case '1':
-        // asking for time
-        if (gameOver) {  // if the game is over, do not update ts
-          Serial.write("game is over");
-          break;
-        }
-        showTimestamp();
-        break;
       case '2':
         signalGameOver();
         break;
