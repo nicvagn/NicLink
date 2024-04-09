@@ -88,13 +88,19 @@ class ChessClock:
     def create_timestamp(self, wtime: timedelta, btime: timedelta) -> str:
         """create timestamp with white and black time for display on lcd"""
         # ensure ts uses all the space, needed for lcd side
-        white_time = f"W:  { str(wtime) }"
-        while len(white_time) < self.lcd_length:
-            white_time += " "
+        white_time = f"W: { str(wtime) }"
+        if len(white_time) > self.lcd_length:
+            white_time = white_time[: self.lcd_length]
+        else:
+            while len(white_time) < self.lcd_length:
+                white_time += " "
 
-        black_time = f"B:  { str(btime) }"
-        while len(black_time) < self.lcd_length:
-            black_time += " "
+        black_time = f"B: { str(btime) }"
+        if len(black_time) > self.lcd_length:
+            black_time = black_time[: self.lcd_length]
+        else:
+            while len(black_time) < self.lcd_length:
+                black_time += " "
 
         timestamp = f"{white_time}{black_time}"
         self.logger.info("ChessClock.chess_clock() created: %s" % (timestamp))

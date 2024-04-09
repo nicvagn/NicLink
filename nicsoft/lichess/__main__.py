@@ -415,7 +415,7 @@ class Game(threading.Thread):
 
         if self.chess_clock:
             self.chess_clock.update_chess_clock(
-                self.game_state.get_btime(), self.game_state.get_btime()
+                self.game_state.get_wtime(), self.game_state.get_btime()
             )
 
         # if chess_clock send new timestamp to clock
