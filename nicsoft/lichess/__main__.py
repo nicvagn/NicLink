@@ -250,9 +250,17 @@ class Game(threading.Thread):
         """get the current game_state"""
         return self.game_state
 
-    def game_done(self) -> None:
+    def game_done(self, winner=None) -> None:
         """stop the thread, game should be over, or maybe a rage quit"""
         global logger, nl_inst
+        # if there is an external clock, display gameover
+        if self.chess_clock:
+            if winner is None:
+                self.chess_clock.game_over()
+            elif winner == "white":
+                self.chess_clock.white_won()
+            else:  # must be black
+                self.chess_clock.black_won()
         print("good game")
         logger.info("Game.game_done() entered")
         # tell the user and NicLink the game is through
@@ -457,7 +465,7 @@ class Game(threading.Thread):
             )
             logger.info("game done detected, calling game_done(). winner: %s\n", winner)
             # stop the tread (this does some cleanup and throws an exception)
-            self.game_done()
+            self.game_done(winner=winner)
 
         # tmp_chessboard.turn == True when white, false when black playing_white is same
         if tmp_chessboard.turn == self.playing_white:
@@ -496,9 +504,9 @@ class Game(threading.Thread):
                 time.sleep(1)
             self.game_done()
         elif "winner" in game_state:  # confirmed worked once on their resign
-            self.game_done()
+            self.game_done(winner=game_state["winner"])
         elif nl_inst.game_over.is_set():
-            self.game_done()
+            self.game_done(winner=game_state["winner"])
         else:
             logger.info("game not found to be over.")
 
