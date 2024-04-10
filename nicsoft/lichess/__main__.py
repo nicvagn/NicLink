@@ -18,6 +18,9 @@ import threading
 import importlib.util
 import traceback
 
+# exceptions
+from serial import SerialException
+
 # chess stuff
 import chess.pgn
 import chess
@@ -150,8 +153,15 @@ class Game(threading.Thread):
         self.bluetooth = bluetooth
         # if there is an external_clock
         # TODO: update ChessClock params to be easily changable
+        # try to connect to the clock, but do not fail if you dont
         if chess_clock:
-            self.chess_clock = ChessClock("/dev/ttyACM1", 115200, 100.0)
+            try:
+                self.chess_clock = ChessClock("/dev/ttyACM1", 115200, 100.0)
+            except SerialException as ex:
+                logger.error("Chess clock could not be connected %s" % ex)
+                self.chess_clock = False
+                pass
+
         # incoming board stream
         self.stream = self.berserk_board_client.stream_game_state(game_id)
         # current state from stream
@@ -711,7 +721,7 @@ def main():
                 print("game over, you can play another. Waiting for lichess event...")
                 handle_resign()
 
-            time.sleep(REFRESH_DELAY)
+            time.sleep(POLL_DELAY)
 
     except ExitNicLink:
         print("Have a nice life")
