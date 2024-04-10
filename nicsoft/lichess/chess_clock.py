@@ -76,17 +76,48 @@ class ChessClock:
         self.new_game()
         self.lcd_length = 16
 
+        self.move_time = None
+        self.white_to_move = True
+
+        # last recived w and b time
+        self.last_wtime = None
+        self.last_btime = None
+
+    # TODO: integrate
+    def time_keeper(self) -> None:
+        """keep the time on the lcd correct. using the last time a move was made"""
+        if self.move_time is None:
+            raise ValueError(
+                "move_time is none, it should be the time of the last move"
+            )
+        if self.last_btime is None:
+            raise ValueError("self.last_wtime is none, it should be whites time")
+        if self.last_wtime is None:
+            raise ValueError("self.last_btime is none, it should be blacks time")
+        # if it is white to move
+        if self.white_to_move:
+            updated_wtime = self.last_wtime - (self.move_time - time())
+            # update the clock
+            self.update_chess_clock(updated_wtime, self.last_btime)
+        # else black to move
+        else:
+            updated_btime = self.last_btime - (self.move_time - time())
+            # update the clock
+            self.update_chess_clock(self.last_wtime, updated_btime)
+
     def update_chess_clock(self, wtime: timedelta, btime: timedelta) -> None:
         """keep the external timer displaying correct time.
         The time stamp shuld be formated with both w and b timestamp set up to display
         correctly on a 16 x 2 LCD"""
-
         timestamp = self.create_timestamp(wtime, btime)
         self.logger.info("\n\nTIMESTAMP: %s /n", timestamp)
         self.send_string(timestamp)
 
     def create_timestamp(self, wtime: timedelta, btime: timedelta) -> str:
         """create timestamp with white and black time for display on lcd"""
+        # update the last received btime and wtime
+        self.last_wtime = wtime
+        self.last_btime = btime
         # ensure ts uses all the space, needed for lcd side
         white_time = f"W: { str(wtime) }"
         if len(white_time) > self.lcd_length:
