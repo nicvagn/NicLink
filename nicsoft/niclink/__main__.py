@@ -5,7 +5,6 @@
 #  you should have received a copy of the gnu general public license along with NicLink. if not, see <https://www.gnu.org/licenses/>.
 
 # system
-import os
 import sys
 import time
 import chess
@@ -41,7 +40,7 @@ class NicLinkManager(threading.Thread):
 
         if bluetooth:
             # connect the board w bluetooth
-            self.nl_interface = nl_bluetooth
+            self.nl_interface = niclink.nl_bluetooth
         else:
             # connect with the external board usb
             self.nl_interface = _niclink
@@ -88,17 +87,17 @@ class NicLinkManager(threading.Thread):
 
     def _led_manager(self) -> None:
         """a thread to keep the led's up to date"""
-
+        global refresh_delay
         set_move = False
         leds_changed = False
 
         while not self.kill_switch.is_set():
 
             if self.last_move:
-                time.sleep(refresh_delay)
+                time.sleep(self.refresh_delay)
                 continue
 
-            if not LEDS_in_use.is_set():
+            if not self.LEDS_in_use.is_set():
                 # if the last move has changed,or the lec's have been changed, display the move
                 if set_move != self.last_move or leds_changed:
                     self.turn_off_all_leds()
@@ -108,7 +107,7 @@ class NicLinkManager(threading.Thread):
                 # if led's in use, we should update the board led's once it is unset
                 leds_changed = True
 
-            time.sleep(refresh_delay)
+            time.sleep(self.refresh_delay)
 
     def connect(self, bluetooth=False):
         """connect to the chessboard"""
@@ -175,12 +174,13 @@ class NicLinkManager(threading.Thread):
 
         if not found:
             raise ValueError(f"{ square[1] } is not a valid file")
-
+        """
         # modify the led map to reflect this change
         if status:
             led = 1
         else:
             led = 0
+        """
 
         # this is supper fucked, but the chessboard interaly starts counting at h8
         self.nl_interface.setLED(7 - num, 7 - file_num, status)
@@ -235,7 +235,7 @@ current board: \n%s\n board we are using to check legal moves: \n%s",
             ):  # Check if the board's FEN matches the new FEN
                 self.logger.info(move)
 
-                return move  # Return the last move
+                return move.uci()  # Return the last move
 
             tmp_board.pop()  # Undo the move and try another
 
@@ -245,7 +245,7 @@ current board: \n%s\n board we are using to check legal moves: \n%s",
         message = f"Board we see:\n{ error_board }\nis not a possible result from a legal move on:\n{ self.game_board }"
         raise IllegalMove(message)
 
-    def check_for_move(self) -> bool:
+    def check_for_move(self) -> bool | str:
         """check if there has been a move on the chessboard, and see if it is valid. If so update self.last_move"""
 
         # ensure the move was valid
@@ -260,7 +260,7 @@ current board: \n%s\n board we are using to check legal moves: \n%s",
             # a change has occured on the chessboard
             # check to see if the game is over
             if self.game_over.is_set():
-                return
+                return False
 
             # check if the move is valid, and set last move
             try:
@@ -318,7 +318,7 @@ board we are using to check for moves:\n%s",
         self.logger.info("led on(dest): %s", move[2:4])
         self.set_led(move[2:4], True)  # dest
 
-    def await_move(self) -> str:
+    def await_move(self) -> str | None:
         """wait for legal move, and return it in coordinate notation after making it on internal board"""
         # loop until we get a valid move
         attempts = 0
@@ -380,9 +380,9 @@ board we are using to check for moves:\n%s",
 
             return self.last_move
 
-    def make_move_game_board(self, move) -> None:
+    def make_move_game_board(self, move: str) -> None:
         """make a move on the internal rep. of the game_board. update the last move made"""
-        self.game_board.push(move)
+        self.game_board.push_uci(move)
         # update the last move
         self.last_move = move
         self.logger.info(
@@ -409,7 +409,7 @@ board we are using to check for moves:\n%s",
         curFEN = self.get_FEN()
         self.show_FEN_on_board(curFEN)
 
-    def show_game_board(self) -> chess.Board:
+    def show_game_board(self) -> None:
         """print the internal game_board. Return it for logging purposes"""
         print(self.game_board)
 
@@ -461,7 +461,7 @@ board we are using to check for moves:\n%s",
 
     def is_game_over(
         self,
-    ) -> {"over": bool, "winner": str or False, "reason": str} or False:
+    ) -> dict | bool:
         """is the internal game over?"""
         if self.game_board.is_checkmate():
             return {"over": True, "winner": self.game_board.turn, "reason": "checkmate"}
