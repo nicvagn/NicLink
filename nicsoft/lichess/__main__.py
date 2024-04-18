@@ -227,7 +227,7 @@ class Game(threading.Thread):
                             # Will call game_done if so.
                             self.check_for_game_over(event)
                             # try to join state_change_thread with a one second time_out
-                            state_change_thread.join(timeout=1)
+                            state_change_thread.join(timeout=REFRESH_DELAY)
 
                 # start new state change thread
                 state_change_thread = threading.Thread(
@@ -254,7 +254,7 @@ class Game(threading.Thread):
         """stop the thread, game should be over, or maybe a rage quit"""
         global logger, nl_inst
         # if there is an external clock, display gameover
-        if self.chess_clock:
+        if not isinstance(self.chess_clock, bool):
             if winner is None:
                 self.chess_clock.game_over()
             elif winner == "white":
@@ -432,7 +432,7 @@ class Game(threading.Thread):
         self.game_state = GameState(game_state)
 
         if self.chess_clock:
-            self.chess_clock.update_chess_clock(
+            self.chess_clock.updateLCD(
                 self.game_state.get_wtime(), self.game_state.get_btime()
             )
 

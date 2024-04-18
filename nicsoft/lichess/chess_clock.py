@@ -14,49 +14,44 @@ import logging
 
 from niclink.nl_exceptions import NicLinkGameOver
 
-
-""" snippet from Ardino sketch
-  switch (whatToDo) {
-    case '1':
-      // asking for time
-      if (gameOver) {  // if the game is over, do not update ts
-        break;
-      }
-      showTimestamp();
-          break;
-    case '2':
-      signalGameOver();
-      break;
-    case '3':
-      // show a str on LED read from Serial
-      printSerialMessage();
-      break;
-    case '4':
-      // start a new game
-      newGame();
-      break;
-    case '5':
-      // show the splay
-      niclink_splash();
-      break;
-    case '6':
-      // white one, and the game is over
-      white_won();
-      break;
-    case '7':
-      // black won the game
-      black_won();
-      break;
-    case '8':
-      // game is a draw
-      drawn_game();
-      break;
-    case '@':
-      //say hello
-      lcd.clear();
-      lcd.setCursor(1, 0);
-      lcd.print("Hi there");
-      break;
+"""
+snip from chess_clock.ino
+ 
+switch (what_to_do[0]) {
+  case '2':
+    signalGameOver();
+    break;
+  case '3':
+    // show a str on LED read from Serial
+    printSerialMessage();
+    break;
+  case '4':
+    // start a new game
+    newGame();
+    break;
+  case '5':
+    // show the splay
+    niclink_splash();
+    break;
+  case '6':
+    // white one, and the game is over
+    white_won();
+    break;
+  case '7':
+    // black won the game
+    black_won();
+    break;
+  case '8':
+    // game is a draw
+    drawn_game();
+    break;
+  case '@':
+    //say hello
+    lcd.clear();
+    lcd.setCursor(1, 0);
+    lcd.print("Hi there");
+    break;
+}
 """
 
 
@@ -100,7 +95,7 @@ class ChessClock:
 
         self.new_game()
 
-    # TODO: integrate
+    # TODO: make update
     def time_keeper(self) -> None:
         """keep the time on the lcd correct. using the last time a move was made"""
         if self.move_time is None:
@@ -201,7 +196,7 @@ class ChessClock:
             self.logger.warn(
                 "ChessClock.game_over(): self.displayed_btime or self.displayed_wtime is None"
             )
-        raise NicLinkGameOver("ChessClock signaled game over")
+        self.logger.info("ChessClock.game_over(...) called")
 
     def send_string(self, message: str) -> None:
         """Case 3: send a String to the external chess clock"""
@@ -245,7 +240,7 @@ class ChessClock:
 
     @staticmethod
     def did_flag(player_time: timedelta) -> bool:
-        """check if a timedelta is 0 total_seconds or less"""
+        """check if a timedelta is 0 total_seconds or less. ie: they flaged"""
         if player_time.total_seconds() <= 0:
             return True
 

@@ -27,7 +27,7 @@ ROW_SQUARE_VALUES = [128, 64, 32, 16, 8, 4, 2, 1]
 led = bytearray([0x0A, 0x08, 0x1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
 
 
-def connect() -> bool:
+def connect() -> None:  # -> bool:
     """try to connect to the board over bluetooth"""
     connect = GetChessnutAirDevices()
     # get device
@@ -46,7 +46,7 @@ def beep():
     print("BEEP")
 
 
-def getFEN() -> str:
+def getFEN() -> str | None:
     """get the FEN from the chessboard over bluetooth"""
     print("BLUETOOTH get fen")
     return currentFEN
@@ -219,6 +219,11 @@ async def run(connect, debug=False):
         )  # send initialisation string
         await asyncio.sleep(100.0)  ## wait 100 seconds
         await client.stop_notify(READDATA)  # stop the notification handler
+
+
+def gameover_lights() -> None:
+    """just to remind me"""
+    raise NotImplemented()
 
 
 if __name__ == "__main__":

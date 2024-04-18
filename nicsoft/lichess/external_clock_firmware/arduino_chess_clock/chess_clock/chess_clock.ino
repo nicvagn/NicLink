@@ -1,3 +1,7 @@
+#define RESIGN_BUTTON 2
+#define SEEK_BUTTON 3
+#define NEWGAME_BUTTON 4
+#define RESIGN_SIG "^^^"
 #include <LiquidCrystal.h>
 #include <Arduino.h>
 
@@ -14,7 +18,7 @@ lcd.setCursor(15, 1); // bottom right
 
 // initialize the library by associating any needed LCD interface pin
 // with the arduino pin number it is connected to
-const int rs = 12, en = 11, d4 = 5, d5 = 4, d6 = 3, d7 = 2;
+const int rs = 12, en = 11, d4 = 10, d5 = 9, d6 = 8, d7 = 7;
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
 const float TIMEOUT = 80.0;  // slightly shorter than python timeout
@@ -117,6 +121,17 @@ void drawn_game() {
   lcd.print("<<<<< DRAW >>>>>");
 }
 
+//button interupt
+void resignGame() {
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("%%% GAMEOVER %%%");
+  lcd.setCursor(0, 1);
+  lcd.print("<<< RESIGNED >>>");
+  Serial.print(RESIGN_SIG);
+}
+
+
 // initialize lcd and show splash
 void lcd_init()
 {
@@ -134,6 +149,10 @@ int main() {
   // setup ardino and some house keeping idk
   init();
 
+  //set up interupt pins TODO python side etc
+  pinMode(RESIGN_BUTTON, INPUT_PULLUP);
+  // trigger when button pressed, but not when released
+  attachInterrupt(digitalPinToInterrupt(RESIGN_BUTTON), resignGame, FALLING);
   // and lcd, and ardino Serial connect
   lcd_init();
 

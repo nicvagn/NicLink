@@ -191,7 +191,11 @@ class NicLinkManager(threading.Thread):
 
     def get_FEN(self) -> str:
         """get the board FEN from chessboard"""
-        return self.nl_interface.getFEN()
+        fen = self.nl_interface.getFEN()
+        if fen is not None:
+            return fen
+        else:
+            raise NoNicLinkFEN("No fen got from board")
 
     def put_board_FEN_on_board(self, boardFEN) -> chess.Board:
         """show just the board part of FEN on asci chessboard, then return it for logging purposes"""
@@ -246,8 +250,9 @@ current board: \n%s\n board we are using to check legal moves: \n%s",
         raise IllegalMove(message)
 
     def check_for_move(self) -> bool | str:
-        """check if there has been a move on the chessboard, and see if it is valid. If so update self.last_move"""
-
+        """check if there has been a move on the chessboard, and see if it is valid.
+        If so update self.last_move
+        """
         # ensure the move was valid
 
         # get current FEN on the external board
@@ -319,7 +324,9 @@ board we are using to check for moves:\n%s",
         self.set_led(move[2:4], True)  # dest
 
     def await_move(self) -> str | None:
-        """wait for legal move, and return it in coordinate notation after making it on internal board"""
+        """wait for legal move, and return it in coordinate notation after
+        making it on internal board
+        """
         # loop until we get a valid move
         attempts = 0
         while not self.game_over.is_set() and not self.kill_switch.is_set():
@@ -519,11 +526,11 @@ def log_except_hook(excType, excValue, traceback):
     logger.error("Uncaught exception", exc_info=(excType, excValue, traceback))
 
 
-# setup except hook
-sys.excepthook = log_except_hook
-
-
 def log_handled_exeption(exception: Exception) -> None:
     """log a handled exception"""
     global logger
     logger.error("Exception handled: %s", exception)
+
+
+# setup except hook
+sys.excepthook = log_except_hook

@@ -26,6 +26,13 @@ class ExitNicLink(Exception):
         self.message = message
 
 
+class NoNicLinkFEN(Exception):
+    """raised when fen is None"""
+
+    def __init__(self, message):
+        self.message = message
+
+
 class NicLinkGameOver(Exception):
     """the game on NicLink is over"""
 
