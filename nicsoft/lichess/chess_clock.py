@@ -11,6 +11,7 @@ import serial
 from time import sleep
 from datetime import timedelta, datetime
 import logging
+import readchar
 
 # from niclink.nl_exceptions import NicLinkGameOver
 
@@ -93,7 +94,7 @@ class ChessClock:
         self.displayed_btime = None
         self.displayed_wtime = None
 
-        self.new_game()
+        self.start_new_game()
 
     # TODO: make update
     def time_keeper(self) -> None:
@@ -205,12 +206,11 @@ class ChessClock:
         # tell the clock we want to display a msg
         self.chess_clock.write(message.encode("ascii"))
 
-    def new_game(self) -> None:
+    def start_new_game(self) -> None:
         """Case 4: signal clock to start a new game
         reset all the game time data
         """
         self.chess_clock.write("4".encode("ascii"))
-        self.game_start = datetime.now()
 
         self.move_time: datetime | None = None
         self.white_to_move: bool = True
@@ -218,6 +218,10 @@ class ChessClock:
         # last recived w and b time
         self.displayed_wtime = None
         self.displayed_btime = None
+
+        self.game_start = datetime.now()
+        # HACK: tell the clock that that the game started
+        self.move_made()
 
     def show_splash(self) -> None:
         """Case 5: show the nl splash"""
@@ -253,12 +257,13 @@ if __name__ == "__main__":
 
     chess_clock.displayed_wtime = timedelta(seconds=9)
     chess_clock.displayed_btime = timedelta(seconds=9)
-
+    # init game
     chess_clock.move_made()
     while True:
         chess_clock.time_keeper()
         chess_clock.move_made()
-        sleep(3)
+
+        readchar.readkey()
 
     print("this is not designed to be run as __main__")
     chess_clock = ChessClock("/dev/ttyACM0", 115200, 100.0)

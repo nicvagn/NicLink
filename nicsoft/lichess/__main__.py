@@ -160,7 +160,6 @@ class Game(threading.Thread):
             except SerialException as ex:
                 logger.error("Chess clock could not be connected %s" % ex)
                 self.chess_clock = False
-                pass
 
         # incoming board stream
         self.stream = self.berserk_board_client.stream_game_state(game_id)
@@ -197,7 +196,7 @@ class Game(threading.Thread):
     def run(self) -> None:
         """run the thread until game is through, ie: while the game stream is open then kill it w self.game_done()"""
         global nl_inst, logger
-        state_change_thread = False
+        state_change_thread = None
 
         for event in self.stream:
             logger.debug("event: %s", event)
@@ -208,15 +207,16 @@ class Game(threading.Thread):
                 self.game_state = GameState(event)
 
                 # signal new game state recived
-                self.signal_game_state_change(event)
+                self.signal_game_state_change(self.game_state)
 
                 self.white_time: timedelta = event["wtime"]
                 self.black_time: timedelta = event["btime"]
                 # logger.info("white time (seconds): %s\n", self.white_time.seconds)
                 # logger.info("black time (seconds): %s\n", self.black_time.seconds)
 
+                self.logger.info("state_change_thread is: %s", state_change_thread)
                 # if there is a state_change_thread
-                if state_change_thread:
+                if state_change_thread is not None:
 
                     # if there is another state change thread still
                     # running running, join it
@@ -429,14 +429,12 @@ Will only try twice before calling game_done"
             "\nsignal_game_state_change(self, game_state) entered with game state: ",
             game_state,
         )
-        self.game_state = GameState(game_state)
 
+        # if chess_clock send new timestamp to clock
         if self.chess_clock:
             self.chess_clock.updateLCD(
                 self.game_state.get_wtime(), self.game_state.get_btime()
             )
-
-        # if chess_clock send new timestamp to clock
 
     def handle_state_change(self, game_state) -> None:
         """Handle a state change in the lichess game."""
@@ -483,10 +481,12 @@ Will only try twice before calling game_done"
             self.signal_move()
 
     def signal_move(self) -> None:
-        """call when a move is made in a game to signal NicLink
+        """call when a move is made in a game to signal NicLink,
         chessclock and do post move cleanup"""
         self.response_error_on_last_attempt = False
-
+        global nl_inst
+        # tell NicLink that a move was made
+        nl_inst.opponent_moved(self.last_move)
         # signal the timer that we made a move
         # TODO:
 
