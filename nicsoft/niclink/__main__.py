@@ -198,7 +198,7 @@ class NicLinkManager(threading.Thread):
         old_FEN = self.game_board.board_fen()
         if new_FEN == old_FEN:
             print("no fen differance")
-            self.turn_off_all_leds()
+            # HACK: self.turn_off_all_leds()
             raise NoMove("No FEN differance")
 
         self.logger.debug("new_FEN" + new_FEN)
@@ -231,7 +231,8 @@ current board: \n%s\n board we are using to check legal moves: \n%s",
         error_board = chess.Board()
         error_board.set_board_fen(new_FEN)
         self.show_board_diff(error_board, self.game_board)
-        message = f"Board we see:\n{ error_board }\nis not a possible result from a legal move on:\n{ self.game_board }"
+        message = f"Board we see:\n{ error_board }\nis not a possible result from \
+                a legal move on:\n{ self.game_board }"
         raise IllegalMove(message)
 
     def check_for_move(self) -> bool | str:
@@ -263,8 +264,8 @@ current board: \n%s\n board we are using to check legal moves: \n%s",
             except RuntimeError as err:
                 log_handled_exeption(err)
                 self.logger.warning(
-                    "\n===== move not valid, undue it and try again. it is white's turn? %s =====\n\
-board we are using to check for moves:\n%s",
+                    "\n===== move not valid, undue it and try again. it is white's \
+turn? %s =====\n board we are using to check for moves:\n%s",
                     self.game_board.turn,
                     self.game_board,
                 )
@@ -279,7 +280,8 @@ board we are using to check for moves:\n%s",
 
             except ValueError:
                 self.logger.warn(
-                    "self.find_move_from_FEN_change(new_FEN) returned None. No move was found."
+                    "self.find_move_from_FEN_change(new_FEN) returned None. \
+                            No move was found."
                 )
                 return False
             with self.lock:
@@ -303,12 +305,14 @@ board we are using to check for moves:\n%s",
             except Exception as err:
                 message = f"{err} was raised exception on trying to convert move { move } to uci."
                 self.logger.error(message)
+        if move is not None:
+            self.logger.info("led on(origin): %s", move[:2])
+            self.set_led(move[:2], True)  # source
 
-        self.logger.info("led on(origin): %s", move[:2])
-        self.set_led(move[:2], True)  # source
-
-        self.logger.info("led on(dest): %s", move[2:4])
-        self.set_led(move[2:4], True)  # dest
+            self.logger.info("led on(dest): %s", move[2:4])
+            self.set_led(move[2:4], True)  # dest
+        else:
+            raise NoMove("NicLinkManager.set_move_LEDs(): Move is None")
         self.LEDS_in_use.clear()
 
     def await_move(self) -> str | None:
@@ -423,10 +427,6 @@ board we are using to check for moves:\n%s",
     def show_board_diff(self, board1, board2) -> None:
         """show the differance between two boards and output differance on the chessboard"""
         # go through the squares and turn on the light for ones that are in error
-        # we are using led's
-        self.LEDS_in_use.set()
-        self.LEDS_changed.set()
-        self.nl_interface.lightsOut()
         is_diff = False
         for n in range(1, 9):
             for a in range(ord("a"), ord("h") + 1):
@@ -444,14 +444,21 @@ board we are using to check for moves:\n%s",
                         f"\n\nSquare { square } is not the same. \n board1: \
 { board1.piece_at(py_square) } \n board2: { board2.piece_at(py_square) }"
                     )
+                    # say we are using the led's
+                    self.LEDS_in_use.set()
+                    self.nl_interface.lightsOut()
+                    # say that we changed the led's
+                    self.LEDS_changed.set()
                     self.set_led(square, True)
+
+                    # we are no longer using the LEDs
+                    self.LEDS_in_use.clear()
+
                     is_diff = True
+
         # if there is a diff beep
         if is_diff:
             self.beep()
-
-        # we are no longer using the LEDs
-        self.LEDS_in_use.clear()
 
     def get_game_FEN(self) -> str:
         """get the game board FEN"""
@@ -474,7 +481,8 @@ board we are using to check for moves:\n%s",
                 "over": True,
                 "winner": False,
                 "reason": "A game is automatically \
-    drawn if the half-move clock since a capture or pawn move is equal to or greater than 150. Other means to end a game take precedence.",
+    drawn if the half-move clock since a capture or pawn move is equal to or greater \
+    than 150. Other means to end a game take precedence.",
             }
 
         return False
@@ -482,19 +490,16 @@ board we are using to check for moves:\n%s",
 
 def _led_manager(nl_man: NicLinkManager, refresh_delay: float) -> None:
     """a thread to keep the led's displaying the previous move"""
-    set_move = None
-    leds_changed = False
-    print(nl_man)
 
     while not nl_man.kill_switch.is_set():
-        if not nl_man.LEDS_in_use.is_set() or leds_changed:
+        if not nl_man.LEDS_in_use.is_set():
             # if the last move has changed,
             # or the lcd's have been changed, display the move
-            if nl_man.LEDS_changed.is_set():
+            if nl_man.LEDS_changed.is_set() and nl_man.last_move is not None:
                 nl_man.turn_off_all_leds()
                 nl_man.set_move_LEDs(nl_man.last_move)
                 nl_man.LEDS_changed.clear()
-
+        # let other thread's run
         time.sleep(refresh_delay)
 
 
@@ -516,13 +521,9 @@ def test_usb():
     print("===============")
     readchar.readkey()
 
-    leave = "n"
-    while leave == "n":
-        nl_instance.gameover_lights()
+    while True:
         move = nl_instance.await_move()
         print(move)
-
-        leave = readchar.readkey()
 
 
 # logger setup
