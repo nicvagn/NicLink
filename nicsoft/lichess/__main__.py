@@ -282,7 +282,7 @@ class Game(threading.Thread):
             move = nl_inst.await_move()  # await move from e-board the move from niclink
             logger.info(
                 "await_move_thread(...): move from chessboard %s. setting it to index 0 of the passed list, \
-                and setting moved event",
+and setting moved event",
                 move,
             )
 
@@ -337,7 +337,7 @@ class Game(threading.Thread):
                 # if not, try again
                 print(
                     f"ResponseError: { err }trying again after three seconds.  \
-                        Will only try twice before calling game_done"
+Will only try twice before calling game_done"
                 )
                 time.sleep(3)
 

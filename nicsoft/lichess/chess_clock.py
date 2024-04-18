@@ -12,7 +12,7 @@ from time import sleep
 from datetime import timedelta, datetime
 import logging
 
-from niclink.nl_exceptions import NicLinkGameOver
+# from niclink.nl_exceptions import NicLinkGameOver
 
 """
 snip from chess_clock.ino
@@ -137,8 +137,8 @@ class ChessClock:
             self.updateLCD(self.displayed_wtime, self.displayed_btime)
 
     def move_made(self) -> None:
-        """a move was made in the game this chess clock is for. Must be called on
-        first move before time_keeper is called
+        """a move was made in the game this chess clock is for. HACK: Must be called
+        before first move on game start before time_keeper is called
         """
         # switch who's turn it is
         self.white_to_move = not self.white_to_move
