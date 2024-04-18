@@ -27,11 +27,6 @@ class NicLinkManager(threading.Thread):
         # initialize the thread, as a daemon
         threading.Thread.__init__(self, daemon=True)
 
-        # initialize the led helper thread
-        move_LED_man = threading.Thread(
-            target=self._led_manager, daemon=True, args=(self,)
-        )
-
         if logger != None:
             self.logger = logger
         else:
@@ -58,11 +53,23 @@ class NicLinkManager(threading.Thread):
         self.has_moved = threading.Event()
         self.kill_switch = threading.Event()
         self.start_game = threading.Event()
+        self.LEDS_in_use = threading.Event()
+        self.LEDS_changed = threading.Event()
         """
 
         ### threading lock ###
-        # used for access to critical vars to provent race conditions and such
+        # used for access to critical vars to provent race conditions
+        # and such
         self.lock = threading.Lock()
+
+        # initialize the led helper thread
+        """ the led helper thread is charged with always keeping
+        the last move indicated with the LEDs
+        """
+        move_LED_man = threading.Thread(
+            target=_led_manager, daemon=True, args=(self, refresh_delay)
+        )
+        move_LED_man.start()
 
     def run(self):
         """run and wait for a game to begin"""
@@ -85,30 +92,6 @@ class NicLinkManager(threading.Thread):
         while not self.game_over.is_set() and not self.kill_switch.is_set():
             pass
 
-    def _led_manager(self) -> None:
-        """a thread to keep the led's up to date"""
-        global refresh_delay
-        set_move = False
-        leds_changed = False
-
-        while not self.kill_switch.is_set():
-
-            if self.last_move:
-                time.sleep(self.refresh_delay)
-                continue
-
-            if not self.LEDS_in_use.is_set():
-                # if the last move has changed,or the lec's have been changed, display the move
-                if set_move != self.last_move or leds_changed:
-                    self.turn_off_all_leds()
-                    self.set_move_LEDs(self.last_move)
-                    leds_changed = False
-            else:
-                # if led's in use, we should update the board led's once it is unset
-                leds_changed = True
-
-            time.sleep(self.refresh_delay)
-
     def connect(self, bluetooth=False):
         """connect to the chessboard"""
 
@@ -122,7 +105,8 @@ class NicLinkManager(threading.Thread):
         testFEN = self.nl_interface.getFEN()
 
         if testFEN == "" or None:
-            exceptionMessage = "Board initialization error. '' or None for FEN. Is the board connected and turned on?"
+            exceptionMessage = "Board initialization error. '' or None for FEN.  \
+                    Is the board connected and turned on?"
             raise RuntimeError(exceptionMessage)
 
         self.logger.info(f"initial fen: { testFEN }")
@@ -153,6 +137,7 @@ class NicLinkManager(threading.Thread):
         self.kill_switch = threading.Event()
         self.start_game = threading.Event()
         self.LEDS_in_use = threading.Event()
+        self.LEDS_changed = threading.Event()
 
     def set_led(self, square, status):
         """set an LED at a given square to a status (square: a1, e4 etc)"""
@@ -307,6 +292,8 @@ board we are using to check for moves:\n%s",
 
     def set_move_LEDs(self, move) -> None:
         """highlight a move. Light up the origin and destination LED"""
+        self.LEDS_in_use.set()
+        self.LEDS_changed.set()
         # turn off the led's
         self.turn_off_all_leds()
         # make sure move is of type str
@@ -322,6 +309,7 @@ board we are using to check for moves:\n%s",
 
         self.logger.info("led on(dest): %s", move[2:4])
         self.set_led(move[2:4], True)  # dest
+        self.LEDS_in_use.clear()
 
     def await_move(self) -> str | None:
         """wait for legal move, and return it in coordinate notation after
@@ -428,13 +416,16 @@ board we are using to check for moves:\n%s",
     def gameover_lights(self) -> None:
         """show some fireworks"""
         self.LEDS_in_use.set()
+        self.LEDS_changed.set()
         self.nl_interface.gameover_lights()
+        self.LEDS_in_use.clear()
 
     def show_board_diff(self, board1, board2) -> None:
         """show the differance between two boards and output differance on the chessboard"""
         # go through the squares and turn on the light for ones that are in error
         # we are using led's
         self.LEDS_in_use.set()
+        self.LEDS_changed.set()
         self.nl_interface.lightsOut()
         is_diff = False
         for n in range(1, 9):
@@ -489,6 +480,25 @@ board we are using to check for moves:\n%s",
         return False
 
 
+def _led_manager(nl_man: NicLinkManager, refresh_delay: float) -> None:
+    """a thread to keep the led's displaying the previous move"""
+    set_move = None
+    leds_changed = False
+    print(nl_man)
+
+    while not nl_man.kill_switch.is_set():
+        if not nl_man.LEDS_in_use.is_set() or leds_changed:
+            # if the last move has changed,
+            # or the lcd's have been changed, display the move
+            if nl_man.LEDS_changed.is_set():
+                nl_man.turn_off_all_leds()
+                nl_man.set_move_LEDs(nl_man.last_move)
+                nl_man.LEDS_changed.clear()
+
+        time.sleep(refresh_delay)
+
+
+# TODO:
 def test_bt():
     """test nl_bluetooth"""
     global logger
@@ -498,6 +508,7 @@ def test_bt():
 def test_usb():
     """test usb connection"""
     global logger
+    breakpoint()
 
     nl_instance = NicLinkManager(2, logger=logger)
     print("(test usb connection) set up the board and press enter.")
@@ -511,12 +522,12 @@ def test_usb():
         move = nl_instance.await_move()
         print(move)
 
+        leave = readchar.readkey()
 
+
+# logger setup
 logger = logging.getLogger("niclink")
 logger.setLevel(logging.DEBUG)
-if "__name__" == "__main__":
-    # test_bt()
-    test_usb()
 
 
 #  === exception logging ===
@@ -534,3 +545,7 @@ def log_handled_exeption(exception: Exception) -> None:
 
 # setup except hook
 sys.excepthook = log_except_hook
+
+if __name__ == "__main__":
+    # test_bt()
+    test_usb()
