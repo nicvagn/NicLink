@@ -112,6 +112,7 @@ def log_except_hook(excType, excValue, traceback):
 sys.excepthook = log_except_hook
 
 
+# for good mesure, also log handled exceptions
 def log_handled_exception(exception) -> None:
     """log a handled exception"""
     global logger
@@ -214,7 +215,7 @@ class Game(threading.Thread):
                 # logger.info("white time (seconds): %s\n", self.white_time.seconds)
                 # logger.info("black time (seconds): %s\n", self.black_time.seconds)
 
-                self.logger.info("state_change_thread is: %s", state_change_thread)
+                logger.info("state_change_thread is: %s", state_change_thread)
                 # if there is a state_change_thread
                 if state_change_thread is not None:
 
@@ -254,7 +255,7 @@ class Game(threading.Thread):
         """stop the thread, game should be over, or maybe a rage quit"""
         global logger, nl_inst
         # if there is an external clock, display gameover
-        if not isinstance(self.chess_clock, bool):
+        if isinstance(self.chess_clock, ChessClock):
             if winner is None:
                 self.chess_clock.game_over()
             elif winner == "white":
@@ -320,10 +321,8 @@ and setting moved event",
                 if move is None:
                     raise IllegalMove("Move is None")
                 self.berserk_board_client.make_move(self.game_id, move)
-                # signal that a move was made to the external clock, etc.
-                self.signal_move()
                 # once move has been made set self.response_error_on_last_attempt to false and return
-                return
+                self.response_error_on_last_attempt = False
             except ResponseError as err:
                 log_handled_exception(err)
 
@@ -431,7 +430,7 @@ Will only try twice before calling game_done"
         )
 
         # if chess_clock send new timestamp to clock
-        if self.chess_clock:
+        if isinstance(self.chess_clock, ChessClock):
             self.chess_clock.updateLCD(
                 self.game_state.get_wtime(), self.game_state.get_btime()
             )
@@ -477,18 +476,8 @@ Will only try twice before calling game_done"
             if game_state["moves"] != "":
                 # update the last move
                 self.last_move = str(tmp_chessboard.pop())
-            # a move was made, signal it
-            self.signal_move()
-
-    def signal_move(self) -> None:
-        """call when a move is made in a game to signal NicLink,
-        chessclock and do post move cleanup"""
-        self.response_error_on_last_attempt = False
-        global nl_inst
-        # tell NicLink that a move was made
-        nl_inst.opponent_moved(self.last_move)
-        # signal the timer that we made a move
-        # TODO:
+                # a move was made, signal it
+                self.signal_game_state_change(game_state)
 
     def check_for_game_over(self, game_state) -> None:
         """check a game state to see if the game is through if so raise an exception."""

@@ -152,7 +152,7 @@ class ChessClock:
         correctly on a 16 x 2 LCD
         """
         timestamp = self.create_timestamp(wtime, btime)
-        self.logger.info("\n\nTIMESTAMP: %s /n", timestamp)
+        self.logger.info("\n\nTIMESTAMP: %s \n", timestamp)
         self.send_string(timestamp)
 
     def create_timestamp(self, wtime: timedelta, btime: timedelta) -> str:

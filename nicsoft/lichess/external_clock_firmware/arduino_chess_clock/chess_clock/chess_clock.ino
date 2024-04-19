@@ -1,7 +1,8 @@
 #define RESIGN_BUTTON 2
 #define SEEK_BUTTON 3
-#define NEWGAME_BUTTON 4
+#define LCD_CLEAR_BUTTON  4
 #define RESIGN_SIG "^^^"
+#define SEEK_SIG "(})"
 #include <LiquidCrystal.h>
 #include <Arduino.h>
 
@@ -40,6 +41,11 @@ char lcd_ln_1_buff[16];
 // and the second
 char lcd_ln_2_buff[16];
 
+//case '1' clearLCD
+void clearLCD() {
+    lcd.clear();
+    Serial.println("lcd cleared");
+}
 // case '2'
 void signalGameOver() {
   lcd.clear();
@@ -75,7 +81,10 @@ void printSerialMessage() {
     lcd.setCursor(0, 0);
     lcd.print(message);
   }
+
+  Serial.flush();
 }
+
 // case '4' start a new game
 void newGame() {
   lcd.clear();
@@ -128,7 +137,18 @@ void resignGame() {
   lcd.print("%%% GAMEOVER %%%");
   lcd.setCursor(0, 1);
   lcd.print("<<< RESIGNED >>>");
-  Serial.print(RESIGN_SIG);
+  Serial.println(RESIGN_SIG);
+  Serial.flush();
+}
+
+void seekGame() {
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("///// SEEK /////");
+  lcd.setCursor(0, 1);
+  lcd.print("  FINDING GAME  ");
+  Serial.println(SEEK_SIG);
+  Serial.flush();
 }
 
 
@@ -148,14 +168,23 @@ void lcd_init()
 int main() {
   // setup ardino and some house keeping idk
   init();
+  // and lcd, and ardino Serial connect
+  lcd_init();
 
   //set up interupt pins TODO python side etc
   pinMode(RESIGN_BUTTON, INPUT_PULLUP);
   // trigger when button pressed, but not when released
   attachInterrupt(digitalPinToInterrupt(RESIGN_BUTTON), resignGame, FALLING);
-  // and lcd, and ardino Serial connect
-  lcd_init();
 
+  //SEEK button
+  pinMode(SEEK_BUTTON, INPUT_PULLUP);
+  // trigger when button pressed, but not when released
+  attachInterrupt(digitalPinToInterrupt(SEEK_BUTTON), clearLCD, FALLING);
+
+  //clear button (non interupt)
+  pinMode(LCD_CLEAR_BUTTON, INPUT_PULLUP);
+
+  byte clear_sig = 1;
   while(true) //(gameOver == false)
   {
     while(Serial.available() == false){
@@ -165,6 +194,9 @@ int main() {
     Serial.readBytesUntil(SEPERATOR, what_to_do, 1);
 
     switch (what_to_do[0]) {
+      case '1':
+        lcd.clear();
+        break;
       case '2':
         signalGameOver();
         break;
