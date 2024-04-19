@@ -501,7 +501,7 @@ Will only try twice before calling game_done"
         elif "winner" in game_state:  # confirmed worked once on their resign
             self.game_done(winner=game_state["winner"])
         elif nl_inst.game_over.is_set():
-            self.game_done(winner=game_state["winner"])
+            self.game_done()
         else:
             logger.info("game not found to be over.")
 
