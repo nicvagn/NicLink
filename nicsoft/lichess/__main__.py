@@ -22,8 +22,8 @@ import traceback
 from serial import SerialException
 
 # chess stuff
-import chess.pgn
 import chess
+import chess.pgn
 import berserk
 from berserk.exceptions import ResponseError
 
@@ -323,6 +323,9 @@ and setting moved event",
                 self.berserk_board_client.make_move(self.game_id, move)
                 # once move has been made set self.response_error_on_last_attempt to false and return
                 self.response_error_on_last_attempt = False
+
+                # exit function on success
+                return
             except ResponseError as err:
                 log_handled_exception(err)
 
@@ -410,10 +413,6 @@ Will only try twice before calling game_done"
                 tmp_chessboard.push_uci(move)
                 last_move = move
 
-            # highlight last made move
-            if last_move is not None:
-                nl_inst.set_move_LEDs(last_move)
-
             logger.info("The last move was found to be: %s", last_move)
 
             # set the nl_inst.last move
@@ -421,13 +420,19 @@ Will only try twice before calling game_done"
 
         return tmp_chessboard
 
-    def signal_game_state_change(self, game_state) -> None:
+    def signal_game_state_change(self, game_state: GameState, last_move=None) -> None:
         """signal a state change, this is just to signal the external clock rn"""
 
         logger.info(
-            "\nsignal_game_state_change(self, game_state) entered with game state: ",
+            "\nsignal_game_state_change(self, game_state) entered with game state: %s",
             game_state,
         )
+
+        if last_move is not None:
+            # update the last move
+            self.last_move = last_move
+            # tell nl about the move
+            nl_inst.opponent_moved(self.last_move)
 
         # if chess_clock send new timestamp to clock
         if isinstance(self.chess_clock, ChessClock):
@@ -473,11 +478,12 @@ Will only try twice before calling game_done"
             logger.info("calling self.make_move(%s)", move)
             self.make_move(move)
         else:
+            opponent_move = None
             if game_state["moves"] != "":
                 # update the last move
-                self.last_move = str(tmp_chessboard.pop())
-                # a move was made, signal it
-                self.signal_game_state_change(game_state)
+                opponent_move = str(tmp_chessboard.pop())
+            # a move was made, signal it
+            self.signal_game_state_change(game_state, last_move=opponent_move)
 
     def check_for_game_over(self, game_state) -> None:
         """check a game state to see if the game is through if so raise an exception."""

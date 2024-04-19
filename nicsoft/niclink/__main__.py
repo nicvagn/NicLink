@@ -487,8 +487,10 @@ turn? %s =====\n board we are using to check for moves:\n%s",
 
         return False
 
-    def opponent_moved(move: str) -> None:
-        """the other player moved in a chess game"""
+    def opponent_moved(self, move: str) -> None:
+        """the other player moved in a chess game.
+        Signal LEDS_changed and update last move
+        """
         self.last_move = move
         self.LEDS_changed.set()
 
