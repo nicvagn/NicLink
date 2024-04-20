@@ -147,13 +147,7 @@ void drawn_game() {
   lcd.print("<<<<< DRAW >>>>>");
   buzzer();
 }
-// buzzer - activate noise case 9 
-void buzzer() {
-  //buzzer high
-  digitalWrite(BUZZER_PIN, HIGH);
-  delay(500);
-  digitalWrite(BUZZER_PIN, LOW);
-}
+
 //bound to button interupt
 void resignGame() {
   lcd.clear();
@@ -175,6 +169,13 @@ void seekGame() {
   Serial.flush();
 }
 
+// buzzer - activate noise
+void buzzer() {
+  //buzzer high
+  digitalWrite(BUZZER_PIN, HIGH);
+  delay(500);
+  digitalWrite(BUZZER_PIN, LOW);
+}
 
 // initialize lcd and show splash
 void lcd_init()
