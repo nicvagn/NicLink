@@ -1,6 +1,7 @@
 #define RESIGN_BUTTON 2
 #define SEEK_BUTTON 3
 #define LCD_CLEAR_BUTTON  4
+#define BUZZER_PIN 6
 #define RESIGN_SIG "^^^"
 #define SEEK_SIG "(})"
 #include <LiquidCrystal.h>
@@ -130,7 +131,7 @@ void drawn_game() {
   lcd.print("<<<<< DRAW >>>>>");
 }
 
-//button interupt
+//bound to button interupt
 void resignGame() {
   lcd.clear();
   lcd.setCursor(0, 0);
@@ -140,7 +141,7 @@ void resignGame() {
   Serial.println(RESIGN_SIG);
   Serial.flush();
 }
-
+//bound to button interupt
 void seekGame() {
   lcd.clear();
   lcd.setCursor(0, 0);
@@ -151,6 +152,13 @@ void seekGame() {
   Serial.flush();
 }
 
+// buzzer - activate noise
+void buzzer() {
+  //buzzer high
+  digitalWrite(BUZZER_PIN, HIGH);
+  delay(500);
+  digitalWrite(BUZZER_PIN, LOW);
+}
 
 // initialize lcd and show splash
 void lcd_init()
@@ -183,6 +191,9 @@ int main() {
 
   //clear button (non interupt)
   pinMode(LCD_CLEAR_BUTTON, INPUT_PULLUP);
+
+  //buzzer pin
+  pinMode(BUZZER_PIN, OUTPUT);
 
   byte clear_sig = 1;
   while(true) //(gameOver == false)
@@ -223,6 +234,10 @@ int main() {
       case '8':
         // game is a draw
         drawn_game();
+        break;
+      case '9':
+        // activate buzzer
+        buzzer();
         break;
       case '@':
         //say hello
