@@ -1,6 +1,5 @@
 #define RESIGN_BUTTON 2
-#define SEEK_BUTTON 3
-#define LCD_CLEAR_BUTTON  4
+#define LCD_CLEAR_BUTTON  3
 #define BUZZER_PIN 6
 #define RESIGN_SIG "^^^"
 #define SEEK_SIG "(})"
@@ -46,6 +45,7 @@ char lcd_ln_2_buff[16];
 void clearLCD() {
     lcd.clear();
     Serial.println("lcd cleared");
+    Serial.flush();
 }
 // case '2'
 void signalGameOver() {
@@ -53,6 +53,7 @@ void signalGameOver() {
   gameOver = true;
   lcd.setCursor(0, 0);
   lcd.print("%%% GAMEOVER %%%");
+  Serial.flush();
 }
 
 // case '3' print a String to the LCD
@@ -94,6 +95,7 @@ void newGame() {
   lcd.print("=== Nic-Link ===");
   lcd.setCursor(0, 1);
   lcd.print("$$$ New Game $$$");
+  Serial.flush();
 }
 
 // case '5'show the nl chessclock splash screan
@@ -102,6 +104,7 @@ void niclink_splash() {
   lcd.print("=== Nic-Link ===");
   lcd.setCursor(0, 1);
   lcd.print("]External Clock[");
+  Serial.flush();
 }
 
 //case '6'
@@ -111,6 +114,7 @@ void white_won() {
   lcd.print("%%%% WINNER %%%%");
   lcd.setCursor(0, 1);
   lcd.print("= white victor =");
+  Serial.flush();
 }
 
 //case '7'
@@ -120,6 +124,7 @@ void black_won() {
   lcd.print("%%%% WINNER %%%%");
   lcd.setCursor(0, 1);
   lcd.print("= black victor =");
+  Serial.flush();
 }
 
 // case '8'
@@ -129,6 +134,7 @@ void drawn_game() {
   lcd.print("%%% GAMEOVER %%%");
   lcd.setCursor(0, 1);
   lcd.print("<<<<< DRAW >>>>>");
+  Serial.flush();
 }
 
 //bound to button interupt
@@ -161,8 +167,7 @@ void buzzer() {
 }
 
 // initialize lcd and show splash
-void lcd_init()
-{
+void lcd_init() {
   lcd.begin(16, 2);
   Serial.setTimeout(TIMEOUT);  // in milli seconds
 
@@ -184,13 +189,10 @@ int main() {
   // trigger when button pressed, but not when released
   attachInterrupt(digitalPinToInterrupt(RESIGN_BUTTON), resignGame, FALLING);
 
-  //SEEK button
-  pinMode(SEEK_BUTTON, INPUT_PULLUP);
-  // trigger when button pressed, but not when released
-  attachInterrupt(digitalPinToInterrupt(SEEK_BUTTON), clearLCD, FALLING);
-
-  //clear button (non interupt)
+  //lcd clear button
   pinMode(LCD_CLEAR_BUTTON, INPUT_PULLUP);
+  // trigger when button pressed, but not when released
+  attachInterrupt(digitalPinToInterrupt(LCD_CLEAR_BUTTON), clearLCD, FALLING);
 
   //buzzer pin
   pinMode(BUZZER_PIN, OUTPUT);
