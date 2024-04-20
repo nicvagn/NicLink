@@ -1,6 +1,17 @@
+/*
+#  chess_clock is a part of NicLink
+#
+#  NicLink is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or ( at your option ) any later version.
+#
+#  NicLink is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License along with NicLink. If not, see <https://www.gnu.org/licenses/>.
+*/
+
 #define RESIGN_BUTTON 2
 #define SEEK_BUTTON 3
 #define LCD_CLEAR_BUTTON  4
+#define BUZZER_PIN 6
 #define RESIGN_SIG "^^^"
 #define SEEK_SIG "(})"
 #include <LiquidCrystal.h>
@@ -41,6 +52,9 @@ char lcd_ln_1_buff[16];
 // and the second
 char lcd_ln_2_buff[16];
 
+// defnined here so it can be used below
+void buzzer();
+
 //case '1' clearLCD
 void clearLCD() {
     lcd.clear();
@@ -52,6 +66,7 @@ void signalGameOver() {
   gameOver = true;
   lcd.setCursor(0, 0);
   lcd.print("%%% GAMEOVER %%%");
+  buzzer();
 }
 
 // case '3' print a String to the LCD
@@ -110,6 +125,7 @@ void white_won() {
   lcd.print("%%%% WINNER %%%%");
   lcd.setCursor(0, 1);
   lcd.print("= white victor =");
+  buzzer();
 }
 
 //case '7'
@@ -119,6 +135,7 @@ void black_won() {
   lcd.print("%%%% WINNER %%%%");
   lcd.setCursor(0, 1);
   lcd.print("= black victor =");
+  buzzer();
 }
 
 // case '8'
@@ -128,9 +145,16 @@ void drawn_game() {
   lcd.print("%%% GAMEOVER %%%");
   lcd.setCursor(0, 1);
   lcd.print("<<<<< DRAW >>>>>");
+  buzzer();
 }
-
-//button interupt
+// buzzer - activate noise case 9 
+void buzzer() {
+  //buzzer high
+  digitalWrite(BUZZER_PIN, HIGH);
+  delay(500);
+  digitalWrite(BUZZER_PIN, LOW);
+}
+//bound to button interupt
 void resignGame() {
   lcd.clear();
   lcd.setCursor(0, 0);
@@ -140,7 +164,7 @@ void resignGame() {
   Serial.println(RESIGN_SIG);
   Serial.flush();
 }
-
+//bound to button interupt
 void seekGame() {
   lcd.clear();
   lcd.setCursor(0, 0);
@@ -184,6 +208,9 @@ int main() {
   //clear button (non interupt)
   pinMode(LCD_CLEAR_BUTTON, INPUT_PULLUP);
 
+  //buzzer pin
+  pinMode(BUZZER_PIN, OUTPUT);
+
   byte clear_sig = 1;
   while(true) //(gameOver == false)
   {
@@ -223,6 +250,10 @@ int main() {
       case '8':
         // game is a draw
         drawn_game();
+        break;
+      case '9':
+        // activate buzzer
+        buzzer();
         break;
       case '@':
         //say hello
