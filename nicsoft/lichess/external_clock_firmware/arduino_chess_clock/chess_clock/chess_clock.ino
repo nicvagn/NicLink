@@ -52,7 +52,13 @@ char lcd_ln_1_buff[16];
 char lcd_ln_2_buff[16];
 
 // defnined here so it can be used below
-void buzzer();
+// buzzer - activate noise
+void buzzer() {
+  //buzzer high
+  digitalWrite(BUZZER_PIN, HIGH);
+  delay(500);
+  digitalWrite(BUZZER_PIN, LOW);
+}
 
 //case '1' clearLCD
 void clearLCD() {
@@ -162,6 +168,7 @@ void resignGame() {
   lcd.setCursor(0, 1);
   lcd.print("<<< RESIGNED >>>");
   Serial.println(RESIGN_SIG);
+  buzzer();
   Serial.flush();
 }
 //bound to button interupt
@@ -173,14 +180,6 @@ void seekGame() {
   lcd.print("  FINDING GAME  ");
   Serial.println(SEEK_SIG);
   Serial.flush();
-}
-
-// buzzer - activate noise
-void buzzer() {
-  //buzzer high
-  digitalWrite(BUZZER_PIN, HIGH);
-  delay(500);
-  digitalWrite(BUZZER_PIN, LOW);
 }
 
 // initialize lcd and show splash
@@ -201,6 +200,8 @@ int main() {
   // and lcd, and ardino Serial connect
   lcd_init();
 
+  //buzzer pin
+  pinMode(BUZZER_PIN, OUTPUT);
   //set up interupt pins TODO python side etc
   pinMode(RESIGN_BUTTON, INPUT_PULLUP);
   // trigger when button pressed, but not when released
@@ -210,9 +211,6 @@ int main() {
   pinMode(LCD_CLEAR_BUTTON, INPUT_PULLUP);
   // trigger when button pressed, but not when released
   attachInterrupt(digitalPinToInterrupt(LCD_CLEAR_BUTTON), clearLCD, FALLING);
-
-  //buzzer pin
-  pinMode(BUZZER_PIN, OUTPUT);
 
   byte clear_sig = 1;
   while(true) //(gameOver == false)
