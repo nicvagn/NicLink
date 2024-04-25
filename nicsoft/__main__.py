@@ -7,8 +7,9 @@
 
 # a basic test of NicLink through python interface
 
-import niclink
 import readchar
+
+import niclink
 
 nl_instance = niclink.NicLinkManager(2)
 print("press enter when a move is on a board")
@@ -26,7 +27,6 @@ while leave == "n":
         try:
             # find move from the FEN change
             move = nl_instance.get_last_move()
-            breakpoint()
         except RuntimeError as re:
             print(
                 f" Invalid move: {re} \nreset the board to the previous position an try again\n"
@@ -39,7 +39,7 @@ while leave == "n":
 
         # make the move on the game board
         nl_instance.make_move_game_board(move)
-
+        print(f"MOVE: {move}")
         print("=========================================")
 
     print("leave? ('n for no, != 'n' yes: ")
