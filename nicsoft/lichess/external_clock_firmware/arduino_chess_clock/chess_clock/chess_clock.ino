@@ -78,8 +78,6 @@ void signalGameOver() {
 
 // case '3' print a String to the LCD
 void printSerialMessage() {
-
-  lcd.clear();
   String message = Serial.readString();
   int mes_len = message.length();
   if( mes_len > 16 ) {
