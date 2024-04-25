@@ -12,5 +12,5 @@ nicsoft/lib*
 nicsoft/include
 nicsoft/niclink/_niclink*.so
 **/TODO
-**/NicLink.log
+**/*.log
 external_clock/old

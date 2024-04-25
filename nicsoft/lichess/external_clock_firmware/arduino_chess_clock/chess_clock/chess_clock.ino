@@ -1,3 +1,13 @@
+/*
+#  chess_clock is a part of NicLink
+#
+#  NicLink is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or ( at your option ) any later version.
+#
+#  NicLink is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License along with NicLink. If not, see <https://www.gnu.org/licenses/>.
+*/
+
 #define RESIGN_BUTTON 2
 #define LCD_CLEAR_BUTTON  3
 #define BUZZER_PIN 6
@@ -41,6 +51,15 @@ char lcd_ln_1_buff[16];
 // and the second
 char lcd_ln_2_buff[16];
 
+// defnined here so it can be used below
+// buzzer - activate noise
+void buzzer() {
+  //buzzer high
+  digitalWrite(BUZZER_PIN, HIGH);
+  delay(500);
+  digitalWrite(BUZZER_PIN, LOW);
+}
+
 //case '1' clearLCD
 void clearLCD() {
     lcd.clear();
@@ -53,13 +72,12 @@ void signalGameOver() {
   gameOver = true;
   lcd.setCursor(0, 0);
   lcd.print("%%% GAMEOVER %%%");
+  buzzer();
   Serial.flush();
 }
 
 // case '3' print a String to the LCD
 void printSerialMessage() {
-
-  lcd.clear();
   String message = Serial.readString();
   int mes_len = message.length();
   if( mes_len > 16 ) {
@@ -114,6 +132,7 @@ void white_won() {
   lcd.print("%%%% WINNER %%%%");
   lcd.setCursor(0, 1);
   lcd.print("= white victor =");
+  buzzer();
   Serial.flush();
 }
 
@@ -124,6 +143,7 @@ void black_won() {
   lcd.print("%%%% WINNER %%%%");
   lcd.setCursor(0, 1);
   lcd.print("= black victor =");
+  buzzer();
   Serial.flush();
 }
 
@@ -134,6 +154,7 @@ void drawn_game() {
   lcd.print("%%% GAMEOVER %%%");
   lcd.setCursor(0, 1);
   lcd.print("<<<<< DRAW >>>>>");
+  buzzer();
   Serial.flush();
 }
 
@@ -145,6 +166,7 @@ void resignGame() {
   lcd.setCursor(0, 1);
   lcd.print("<<< RESIGNED >>>");
   Serial.println(RESIGN_SIG);
+  buzzer();
   Serial.flush();
 }
 //bound to button interupt
@@ -156,14 +178,6 @@ void seekGame() {
   lcd.print("  FINDING GAME  ");
   Serial.println(SEEK_SIG);
   Serial.flush();
-}
-
-// buzzer - activate noise
-void buzzer() {
-  //buzzer high
-  digitalWrite(BUZZER_PIN, HIGH);
-  delay(500);
-  digitalWrite(BUZZER_PIN, LOW);
 }
 
 // initialize lcd and show splash
@@ -184,6 +198,8 @@ int main() {
   // and lcd, and ardino Serial connect
   lcd_init();
 
+  //buzzer pin
+  pinMode(BUZZER_PIN, OUTPUT);
   //set up interupt pins TODO python side etc
   pinMode(RESIGN_BUTTON, INPUT_PULLUP);
   // trigger when button pressed, but not when released
@@ -193,9 +209,6 @@ int main() {
   pinMode(LCD_CLEAR_BUTTON, INPUT_PULLUP);
   // trigger when button pressed, but not when released
   attachInterrupt(digitalPinToInterrupt(LCD_CLEAR_BUTTON), clearLCD, FALLING);
-
-  //buzzer pin
-  pinMode(BUZZER_PIN, OUTPUT);
 
   byte clear_sig = 1;
   while(true) //(gameOver == false)
