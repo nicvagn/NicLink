@@ -100,7 +100,7 @@ class ChessClock:
     ):  # , port="/dev/ttyACM0", baudrate=115200, timeout=100.0) -> None:
         """initialize connection with ardino, and record start time"""
         # the refresh rate of the lcd
-        self.TIME_REFRESH = 0.5
+        self.TIME_REFRESH = 0.3
         if logger is not None:
             self.logger = logger
         else:
@@ -147,7 +147,7 @@ class ChessClock:
                 % (self.create_timestamp(self.displayed_wtime, self.displayed_btime))
             )
         else:
-            self.logger.warn(
+            self.logger.warning(
                 "ChessClock.game_over(): self.displayed_btime or self.displayed_wtime is None"
             )
         self.logger.info("ChessClock.game_over(...) called")
@@ -230,6 +230,11 @@ class ChessClock:
             self.displayed_wtime: timedelta = game_state.wtime
             self.displayed_btime: timedelta = game_state.btime
 
+            logger.info("first move of game? %s", game_state.first_move())
+            # make sure countown thread is running if both players have moved
+            if game_state.first_move():
+                if not self.countdown.is_alive():
+                    self.countdown.start()
             # record the time player has left at move time
             if self.white_to_move.is_set():
                 self.time_left_at_move = self.displayed_wtime
@@ -241,7 +246,7 @@ class ChessClock:
                 self.white_to_move.set()
 
     def update_lcd(self, wtime: timedelta, btime: timedelta) -> None:
-        """keep the external timer displaying correct time.
+        """display wtime and btime on lcd. creates a timestamp from given times
         The time stamp shuld be formated with both w and b timestamp set up to display
         correctly on a 16 x 2 lcd
         """
@@ -253,14 +258,14 @@ class ChessClock:
         )
         self.send_string(timestamp)
 
-    def initialize_clock(self, gameState: GameState) -> None:
+    def initialize_clock(self, game_state: GameState) -> None:
         """initilize the clock. This involves reading the time from lila event
         and displaying the game time on the ext clock
         @param initial gameState from berserk
         """
         self.logger.info(
             "\nfunction entered:\ninitialize_clock(...) entered w gameState %s",
-            gameState,
+            game_state,
         )
 
         # make sure countown is exited
@@ -269,41 +274,33 @@ class ChessClock:
                 raise Exception("ChessClock.countdown() is still alive")
         self.logger.info(
             "\ngameState.is_white_to_move: %s\n",
-            gameState.is_white_to_move(),
+            game_state.is_white_to_move(),
         )
         # allow for joining a game in progress. ie: if it's black's move
-        if gameState.is_white_to_move(gameState):
-            self.time_left_at_move = gameState.get_wtime()
+        if game_state.is_white_to_move():
+            self.time_left_at_move = game_state.get_wtime()
             self.white_to_move.set()
         else:
-            self.time_left_at_move = gameState.get_btime()
+            self.time_left_at_move = game_state.get_btime()
             self.white_to_move.clear()
 
         # init lcd by displaying the starting white and black times
 
-        if gameState.has_moves():
+        # countdown thread
+        self.countdown = Thread(target=self.time_keeper, args=(self,), daemon=True)
+        """if both blayers have not moved, lila will not count down"""
+        if game_state.first_move():
             # start timekeeper thread
-            self.countdown = Thread(target=self.time_keeper, args=(self,), daemon=True)
             self.countdown.start()
         else:
             self.logger.info(
                 "ChessClock.initialize_clock(...): clock initialized, but not started.\
 'hasMoved' not True"
             )
+            # display time both players have
             self.update_lcd(game_state.get_wtime(), game_state.get_btime())
         # signal that clock is initalized
         self.clock_initialized.set()
-
-    def display_initial_time(self, game_state: GameState) -> None:
-        with self.time_lock:
-            # record the move_time
-            self.logger.info("\ndisplay inital time entered: %s\n")
-            wtime = game_state.get_wtime()
-            btime = game_state.get_btime()
-
-            ts = self.create_timestamp(wtime, btime)
-
-            self.update_lcd(gameState.get_wtime(), gameState.get_btime())
 
     def create_timestamp(self, wtime: timedelta, btime: timedelta) -> str:
         """create timestamp with white and black time for display on lcd
@@ -377,6 +374,7 @@ class ChessClock:
                     """time_keeper(...) exiting. 
 chess_clock.game_over_event.is_set()"""
                 )
+
             if chess_clock.move_time is None:
                 logger.warning("chess_clock.move_time is None")
                 sleep(chess_clock.TIME_REFRESH)
@@ -443,6 +441,7 @@ def handle_game_start(
         return
 
     # clear game_over_event
+    # start timekeeper thread
     chess_clock.game_over_event.clear()
     # check for correspondance
     logger.info("\nhandle_game_start(...) called with game_start: %s", game_start)
@@ -455,6 +454,7 @@ def handle_game_start(
 
 
 def main() -> None:
+    """test ChessClock"""
     global logger
     PORT = "/dev/ttyACM0"
     BR = 115200  # baudrate for Serial connection
@@ -462,53 +462,50 @@ def main() -> None:
     SCRIPT_DIR = os.path.dirname(__file__)
     TOKEN_FILE = os.path.join(SCRIPT_DIR, "lichess_token/token")
 
-    try:
-        logger.info("reading token from %s", TOKEN_FILE)
-        with open(TOKEN_FILE) as f:
-            token = f.read().strip()
-
-    except FileNotFoundError:
-        print(f"ERROR: cannot find token file")
-        sys.exit(-1)
-    except PermissionError:
-        print(f"ERROR: permission denied on token file")
-        sys.exit(-1)
-
-    try:
-        session: Session = berserk.TokenSession(token)
-    except:
-        e = sys.exc_info()[0]
-        log_handled_exception(e)
-        print(f"cannot create session: {e}")
-        logger.info("cannot create session", e)
-        sys.exit(-1)
-
-    try:
-        berserk_client: Client = berserk.Client(session)
-    except KeyboardInterrupt as err:
-        log_handled_exception(err)
-        print("KeyboardInterrupt: bye")
-        sys.exit(0)
-    except:
-        e = sys.exc_info()[0]
-        error_txt = f"cannot create lichess client: {e}"
-        logger.info(error_txt)
-        print(error_txt)
-        sys.exit(-1)
-
-    # get username
-    try:
-        account_info = berserk_client.account.get()
-        username = account_info["username"]
-        print(f"\nUSERNAME: { username }\n")
-    except KeyboardInterrupt:
-        print("KeyboardInterrupt: bye")
-        sys.exit(0)
-    except:
-        e = sys.exc_info()[0]
-        logger.info("cannot get lichess acount info: %s", e)
-        print(f"cannot get lichess acount info: {e}")
-        sys.exit(-1)
+    SAMPLE_GAMESTATE0 = GameState(
+        {
+            "type": "gameState",
+            "moves": "",
+            "wtime": timedelta(minutes=3),
+            "btime": timedelta(minutes=3),
+            "winc": timedelta(seconds=3),
+            "binc": timedelta(seconds=3),
+            "status": "started",
+        }
+    )
+    SAMPLE_GAMESTATE1 = GameState(
+        {
+            "type": "gameState",
+            "moves": "e2e4",
+            "wtime": timedelta(minutes=3),
+            "btime": timedelta(minutes=3),
+            "winc": timedelta(seconds=3),
+            "binc": timedelta(seconds=3),
+            "status": "started",
+        }
+    )
+    SAMPLE_GAMESTATE2 = GameState(
+        {
+            "type": "gameState",
+            "moves": "e2e4 e6e5",
+            "wtime": timedelta(minutes=3),
+            "btime": timedelta(minutes=2, seconds=44),
+            "winc": timedelta(seconds=3),
+            "binc": timedelta(seconds=3),
+            "status": "started",
+        }
+    )
+    SAMPLE_GAMESTATE3 = GameState(
+        {
+            "type": "gameState",
+            "moves": "e2e4 e6e5 d2d4",
+            "wtime": timedelta(seconds=24),
+            "btime": timedelta(seconds=13),
+            "winc": timedelta(seconds=3),
+            "binc": timedelta(seconds=3),
+            "status": "started",
+        }
+    )
 
     chess_clock = ChessClock(
         PORT,
@@ -517,39 +514,31 @@ def main() -> None:
         logger=logger,
     )
 
-    # test_chessclock(chess_clock)
-    # main program loop
-    while True:
-        try:
-            logger.debug("\n==== event loop ====\n")
-            print("=== Waiting for lichess event ===")
-            for event in berserk_client.board.stream_incoming_events():
-                if event["type"] == "challenge":
-                    logger.info("challenge received: %s", event)
-                    print("\n==== Challenge received ====\n")
-                    print(event)
-                elif event["type"] == "gameStart":
-                    logger.info("\n'gameStart' received from stream in main()")
-                    # a game is starting, it is handled by a function
-                    handle_game_start(event, berserk_client.board, chess_clock)
-                elif event["type"] == "gameFull":
-                    logger.info("\ngameFull received\n")
-                    if event["status"] == "started":
-                        print("GAME FULL received")
-                        raise NotImplementedError("gamefull event: %s", event)
-
-        except ResponseError as e:
-            print(f"ERROR: Invalid server response: {e}")
-            logger.info("Invalid server response: %s", e)
-            if "Too Many Requests for url" in str(e):
-                sleep(150)
-            else:
-                # kill the program
-                raise RuntimeError("UNKNOWN ResponseError %s", e)
-        # sleep for some time b/f pulling endpoint again
-        sleep(100)
+    logger.debug("\n==== test loop ====\n")
+    print("clock initialized. Ready for move made.")
+    chess_clock.initialize_clock(SAMPLE_GAMESTATE0)
+    readchar.readchar()
+    chess_clock.move_made(SAMPLE_GAMESTATE1)
+    readchar.readchar()
+    chess_clock.move_made(SAMPLE_GAMESTATE2)
+    readchar.readchar()
+    chess_clock.move_made(SAMPLE_GAMESTATE3)
+    readchar.readchar()
 
 
 if __name__ == "__main__":
+    # if run as __main__ set up logging
     logger = logging.getLogger("chess_clock")
+
+    consoleHandler = logging.StreamHandler(sys.stdout)
+
+    logger.info("DEBUG is set.")
+    logger.setLevel(logging.DEBUG)
+    consoleHandler.setLevel(logging.DEBUG)
+
+    formatter = logging.Formatter("%(asctime)s %(levelname)s %(module)s %(message)s")
+
+    consoleHandler.setFormatter(formatter)
+    logger.addHandler(consoleHandler)
+
     main()

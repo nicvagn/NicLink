@@ -55,13 +55,21 @@ class GameState:
         else:
             raise NoMoves("no moves in this GameState")
 
-    def is_white_to_move() -> bool:
+    def first_move(self) -> bool:
+        """have both player's moved?
+        @returns: (bool) if both players have moved
+        """
+        if len(self.moves) < 2:
+            return False
+        return True
+
+    def is_white_to_move(self) -> bool:
         """is white to move in this gamestate
         @returns: (bool) if it is whites move
         """
         if self.has_moves():
             # if odd number of moves, black to move
-            return len(moves) % 2 == 0
+            return len(self.moves) % 2 == 0
         else:
             # if there are no moves, it is white to move
             return True
