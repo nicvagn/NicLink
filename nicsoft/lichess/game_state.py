@@ -5,6 +5,7 @@
 #  You should have received a copy of the GNU General Public License along with NicLink. If not, see <https://www.gnu.org/licenses/>.
 
 from datetime import timedelta
+from typing import List
 
 
 class GameState:
@@ -17,12 +18,17 @@ class GameState:
                              a game_state["type"] != "gameState"""
             )
 
-        self.moves: str = game_state["moves"]
+        self.moves: List[str] = game_state["moves"].split(" ")
         self.wtime: timedelta = game_state["wtime"]
         self.btime: timedelta = game_state["btime"]
         self.winc: timedelta = game_state["winc"]
         self.binc: timedelta = game_state["binc"]
+        self.speed: str = game_state["speed"]
         self.status: str = game_state["status"]
+
+    def get_moves(self) -> List[str]:
+        """get the moves from this GameState in an array"""
+        return self.moves
 
     def get_wtime(self) -> timedelta:
         """get white's time from this GameState"""

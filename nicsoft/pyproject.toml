@@ -4,21 +4,12 @@
 #
 #  you should have received a copy of the gnu general public license along with nic_soft. if not, see <https://www.gnu.org/licenses/>.
 
-[build-system]
-requires = ["setuptools"]
-
-[tool.setuptools.packages]
-find = {} # defaults
-
 [project]
-version = '0.7.0'
-
-name = "nic_soft"
-authors = [
-    {name = "Nicolas Vaagen", emal="nicolasvaagen@gmail.com"},
-]
-description = 'A package containing NicLink and associated software. NicLink is a "driver" for chessnut air boards.'
-# packages = 
+name="nicsoft"
+version="0.8.0"
+author="Nicolas Vaagen"
+author_email="nicolasvaagen@gmail.com"
+description='A package containing NicLink and associated software. NicLink is a "driver" for chessnut air boards.'
 install_requires=['chess', 'pybind11']
 dependencies=[
     "pyfirmata",
@@ -33,11 +24,10 @@ dependencies=[
     "dbus-fast==1.83.1",
     "pybind11",
     "pyfirmata",
-    "pyserial",
 ]
 keywords=["Chessnut", "Chessnut air", "e-board", "EasyLinkSDK", "chess", "lichess", "boardAPI"]
 classifiers= [
-    "Development Status :: in progress",
+    "Development Status :: ongoing",
     "Intended Audience :: Chessnut air owners",
     "Programming language :: Python :: 3.12+",
     "Programming language :: C++",
@@ -52,5 +42,11 @@ license = {file = "LICENSE"}
 
 [project.urls]
 Repository = 'https://github.com/nicvagn/NicLink'
-'Bug Reports' = 'https://github.com/nicvagn/NicLink/issues'
+issues = 'https://github.com/nicvagn/NicLink/issues'
 
+
+[tool.setuptools.packages]
+find = {} # defaults
+
+[build-system]
+requires = ["setuptools"]

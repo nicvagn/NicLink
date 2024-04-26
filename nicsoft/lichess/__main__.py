@@ -6,36 +6,37 @@
 #
 #  You should have received a copy of the GNU General Public License along with NicLink. If not, see <https://www.gnu.org/licenses/>.
 
-# sys stuff
-import sys
-import time
+import argparse
+import importlib.util
 import logging
 import logging.handlers
 import os
+
+# sys stuff
 import sys
-import argparse
 import threading
-import importlib.util
+import time
 import traceback
 
-# exceptions
-from serial import SerialException
+import berserk
 
 # chess stuff
 import chess
 import chess.pgn
-import berserk
 from berserk.exceptions import ResponseError
-
-# NicLink shit
-from niclink import NicLinkManager
-from niclink.nl_exceptions import *
 
 # external chess clock functionality
 from chess_clock import ChessClock
 
 # other Nic modules
 from game_state import GameState, timedelta
+
+# exceptions
+from serial import SerialException
+
+# NicLink shit
+from niclink import NicLinkManager
+from niclink.nl_exceptions import *
 
 # parsing command line arguments
 parser = argparse.ArgumentParser()
@@ -150,18 +151,6 @@ class Game(threading.Thread):
         self.berserk_board_client = berserk_client.board
         # id of the game we are playing
         self.game_id = game_id
-        ### niclink options
-        self.bluetooth = bluetooth
-        # if there is an external_clock
-        # TODO: update ChessClock params to be easily changable
-        # try to connect to the clock, but do not fail if you dont
-        if chess_clock:
-            try:
-                self.chess_clock = ChessClock("/dev/ttyACM0", 115200, 100.0)
-            except SerialException as ex:
-                logger.error("Chess clock could not be connected %s" % ex)
-                self.chess_clock = False
-
         # incoming board stream
         self.stream = self.berserk_board_client.stream_game_state(game_id)
         # current state from stream
@@ -171,6 +160,26 @@ class Game(threading.Thread):
 
         # the most reasontly parsed game_state, in a GameState class wrapper
         self.game_state = GameState(self.current_state["state"])
+        ### niclink options
+        self.bluetooth = bluetooth
+        ### external clock constants ###
+        SERIAL_PORT = "/dev/ttyACM0"
+        BAUDRATE = 115200
+        TIMEOUT = 100.0
+        """if there is an external_clock try to connect to the clock, 
+        but do not fail if you dont
+        """
+        if chess_clock:
+            try:
+                self.chess_clock = ChessClock(
+                    SERIAL_PORT,
+                    BAUDRATE,
+                    TIMEOUT,
+                    logger=logger,
+                )
+            except SerialException as ex:
+                logger.error("Chess clock could not be connected %s" % ex)
+                self.chess_clock = False
 
         self.playing_white = playing_white
         if starting_fen and False:  # HACK: make 960 work
@@ -192,7 +201,7 @@ class Game(threading.Thread):
             self.make_first_move()
         # if we are joining a game in progress or move second
         else:
-            self.handle_state_change(self.current_state["state"])
+            self.handle_state_change(GameState(self.current_state["state"]))
 
     def run(self) -> None:
         """run the thread until game is through, ie: while the game stream is open then kill it w self.game_done()"""
@@ -209,11 +218,6 @@ class Game(threading.Thread):
 
                 # signal new game state recived
                 self.signal_game_state_change(self.game_state)
-
-                self.white_time: timedelta = event["wtime"]
-                self.black_time: timedelta = event["btime"]
-                # logger.info("white time (seconds): %s\n", self.white_time.seconds)
-                # logger.info("black time (seconds): %s\n", self.black_time.seconds)
 
                 logger.info("state_change_thread is: %s", state_change_thread)
                 # if there is a state_change_thread
@@ -255,7 +259,7 @@ class Game(threading.Thread):
         """stop the thread, game should be over, or maybe a rage quit"""
         global logger, nl_inst
         # if there is an external clock, display gameover
-        if isinstance(self.chess_clock, ChessClock):
+        if self.chess_clock:
             if winner is None:
                 self.chess_clock.game_over()
             elif winner == "white":
@@ -424,7 +428,7 @@ Will only try twice before calling game_done"
         """signal a state change, this is just to signal the external clock rn"""
 
         logger.info(
-            "\nsignal_game_state_change(self, game_state) entered with game state: %s",
+            "\nsignal_game_state_change(self, game_state) entered with GameState: %s",
             game_state,
         )
 
@@ -436,19 +440,17 @@ Will only try twice before calling game_done"
 
         # if chess_clock send new timestamp to clock
         if isinstance(self.chess_clock, ChessClock):
-            self.chess_clock.updateLCD(
-                self.game_state.get_wtime(), self.game_state.get_btime()
-            )
+            self.chess_clock.move_made(game_state)
 
-    def handle_state_change(self, game_state) -> None:
+    def handle_state_change(self, game_state: GameState) -> None:
         """Handle a state change in the lichess game."""
         global nl_inst, logger
 
         logger.info("\ngame_state: %s\n", game_state)
 
+        # get all the moves of the game
+        moves = game_state.get_moves()
         # update a tmp chessboard with the current state
-        moves = game_state["moves"].split(" ")
-        # update tmp chessboard
         tmp_chessboard = self.update_tmp_chessboard(moves)
 
         # check for game over
@@ -457,6 +459,7 @@ Will only try twice before calling game_done"
             # set the winner var
             if result.winner is None:
                 winner = "no winner"
+
             elif result.winner:
                 winner = "White"
             else:
