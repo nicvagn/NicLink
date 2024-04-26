@@ -7,6 +7,15 @@
 from datetime import timedelta
 from typing import List
 
+""" some exceptions """
+
+
+class NoMoves(Exception):
+    """raised when GameState has no moves"""
+
+    def __init__(self, message):
+        self.message = message
+
 
 class GameState:
     """A class used to contain all the information in a berserk board api game state."""
@@ -23,12 +32,39 @@ class GameState:
         self.btime: timedelta = game_state["btime"]
         self.winc: timedelta = game_state["winc"]
         self.binc: timedelta = game_state["binc"]
-        self.speed: str = game_state["speed"]
         self.status: str = game_state["status"]
+
+        if "winner" in game_state:
+            self.winner: str = game_state["winner"]
+        else:
+            self.winner = False
+
+    def has_moves(self) -> bool:
+        """does this game state have any moves? ie: moves was not ''
+        @returns: (bool) does this gamestate have any moves?"""
+        return self.moves != [""]
 
     def get_moves(self) -> List[str]:
         """get the moves from this GameState in an array"""
         return self.moves
+
+    def get_last_move(self) -> str:
+        """get the last move in uci"""
+        if self.has_moves():
+            return self.moves[-1]
+        else:
+            raise NoMoves("no moves in this GameState")
+
+    def is_white_to_move() -> bool:
+        """is white to move in this gamestate
+        @returns: (bool) if it is whites move
+        """
+        if self.has_moves():
+            # if odd number of moves, black to move
+            return len(moves) % 2 == 0
+        else:
+            # if there are no moves, it is white to move
+            return True
 
     def get_wtime(self) -> timedelta:
         """get white's time from this GameState"""

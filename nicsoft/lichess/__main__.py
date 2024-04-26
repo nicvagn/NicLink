@@ -27,6 +27,7 @@ from berserk.exceptions import ResponseError
 
 # external chess clock functionality
 from chess_clock import ChessClock
+from game_start import GameStart
 
 # other Nic modules
 from game_state import GameState, timedelta
@@ -204,7 +205,9 @@ class Game(threading.Thread):
             self.handle_state_change(GameState(self.current_state["state"]))
 
     def run(self) -> None:
-        """run the thread until game is through, ie: while the game stream is open then kill it w self.game_done()"""
+        """run the thread until game is through, ie: while the game stream is open
+        then kill it w self.game_done()
+        """
         global nl_inst, logger
         state_change_thread = None
 
@@ -236,7 +239,7 @@ class Game(threading.Thread):
 
                 # start new state change thread
                 state_change_thread = threading.Thread(
-                    target=self.handle_state_change, args=(event,)
+                    target=self.handle_state_change, args=(GameState(event),)
                 )
                 state_change_thread.start()
 
@@ -255,19 +258,21 @@ class Game(threading.Thread):
         """get the current game_state"""
         return self.game_state
 
-    def game_done(self, winner=None) -> None:
+    def game_done(self, game_state: GameState = None) -> None:
         """stop the thread, game should be over, or maybe a rage quit"""
         global logger, nl_inst
-        # if there is an external clock, display gameover
-        if self.chess_clock:
-            if winner is None:
-                self.chess_clock.game_over()
-            elif winner == "white":
-                self.chess_clock.white_won()
-            else:  # must be black
-                self.chess_clock.black_won()
-        print("good game")
         logger.info("Game.game_done() entered")
+        # if there is an external clock, display gameover message
+        if self.chess_clock:
+            if game_state.winner:
+                if game_state.winner == "white":
+                    self.chess_clock.white_won()
+                elif game_state.winner == "black":  # must be black
+                    self.chess_clock.black_won()
+                else:
+                    # if no winner
+                    self.chess_clock.game_over()
+        print("good game")
         # tell the user and NicLink the game is through
         nl_inst.game_over.set()
         nl_inst.beep()
@@ -279,7 +284,7 @@ class Game(threading.Thread):
 
     def await_move_thread(self, fetch_list: list) -> None:
         """await move in a way that does not stop the user from exiting and when move is found,
-        set it to index 0 on fetch_list in UCI. This function should be ran in in i it's own Thread.
+        set it to index 0 on fetch_list in UCI. This function should be ran in it's own Thread.
         """
         global logger, nl_inst
         logger.info("\nGame.await_move_thread(...) entered\n")
@@ -424,7 +429,7 @@ Will only try twice before calling game_done"
 
         return tmp_chessboard
 
-    def signal_game_state_change(self, game_state: GameState, last_move=None) -> None:
+    def signal_game_state_change(self, game_state: GameState) -> None:
         """signal a state change, this is just to signal the external clock rn"""
 
         logger.info(
@@ -432,9 +437,9 @@ Will only try twice before calling game_done"
             game_state,
         )
 
-        if last_move is not None:
+        if game_state.has_moves is not None:
             # update the last move
-            self.last_move = last_move
+            self.last_move: str = game_state.get_last_move()
             # tell nl about the move
             nl_inst.opponent_moved(self.last_move)
 
@@ -481,28 +486,18 @@ Will only try twice before calling game_done"
             logger.info("calling self.make_move(%s)", move)
             self.make_move(move)
         else:
-            opponent_move = None
-            if game_state["moves"] != "":
-                # update the last move
-                opponent_move = str(tmp_chessboard.pop())
             # a move was made, signal it
-            self.signal_game_state_change(game_state, last_move=opponent_move)
+            self.signal_game_state_change(game_state)
 
-    def check_for_game_over(self, game_state) -> None:
+    def check_for_game_over(self, game_state: GameState) -> None:
         """check a game state to see if the game is through if so raise an exception."""
         global logger, nl_inst
         logger.debug(
             "check_for_game_over(self, game_state) entered w/ gamestate: %s"
             % game_state
         )
-        if game_state["status"] == "gameFull":
-            logger.error("\n\ngameFull received !!!")
-            while True:  # be obnozios so I know
-                nl_inst.beep()
-                time.sleep(1)
-            self.game_done()
-        elif "winner" in game_state:  # confirmed worked once on their resign
-            self.game_done(winner=game_state["winner"])
+        if game_state.winner:
+            self.game_done(game_state=game_state)
         elif nl_inst.game_over.is_set():
             self.game_done()
         else:
@@ -564,13 +559,13 @@ def handle_game_start(event) -> None:
         log_handled_exception(e)
 
 
-def handle_ongoing_game(game_data):
+def handle_ongoing_game(game_start: GameStart):
     """handle joining a game that is alredy underway"""
 
     print("\n+++ joining game in progress +++\n")
     print(f"Playing: { game_data['color'] }")
 
-    if game_data["isMyTurn"]:
+    if game_data.is_white_to_move():
         print("it is your turn. make a move.")
     else:
         print("it is your opponents turn.")
@@ -585,7 +580,7 @@ def handle_resign(event=None) -> None:
     game.game_done()
 
 
-def is_correspondence(gameId) -> bool:
+def is_correspondence(gameId: str) -> bool:
     """is the game a correspondence game?"""
     global berserk_client, logger
     try:
