@@ -4,9 +4,9 @@
 #
 #  You should have received a copy of the GNU General Public License along with NicLink. If not, see <https://www.gnu.org/licenses/>.
 
-import _niclink
+from niclink import NicLinkManager
 
 print("\nTURNING OUT ALL THE LIGHTS\n")
 
-_niclink.connect()
-_niclink.lightsOut()
+man = NicLinkManager(2)
+man.turn_off_all_leds()
