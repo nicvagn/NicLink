@@ -4,6 +4,7 @@
 #
 #  You should have received a copy of the GNU General Public License along with NicLink. If not, see <https://www.gnu.org/licenses/>.
 
+from datetime import timedelta
 
 """sample
 
@@ -46,3 +47,21 @@ class GameStart:
         self.opponent = game_start["opponent"]
         self.isMyTurn = game_start["isMyTurn"]
         self.secondsLeft = game_start["secondsLeft"]
+
+    # HACK: asumes black and white time is seconds left
+    def get_wtime(self) -> timedelta:
+        """get whites time from this gamestart"""
+        return timedelta(seconds=self.secondsLeft)
+
+    # HACK:
+    def get_btime(self) -> timedelta:
+        """get black's time from GameStart"""
+        return timedelta(seconds=self.secondsLeft)
+
+    def is_white(self) -> bool:
+        """are they playing white in this GameStart"""
+        return self.colour == "white"
+
+    def is_my_turn(self) -> bool:
+        """is iy my turn in this GameStart"""
+        return self.isMyTurn

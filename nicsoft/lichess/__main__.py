@@ -436,8 +436,8 @@ Will only try twice before calling game_done"
             "\nsignal_game_state_change(self, game_state) entered with GameState: %s",
             game_state,
         )
-
-        if game_state.has_moves is not None:
+        breakpoint()
+        if not game_state.first_move():
             # update the last move
             self.last_move: str = game_state.get_last_move()
             # tell nl about the move

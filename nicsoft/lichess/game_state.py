@@ -50,18 +50,19 @@ class GameState:
 
     def get_last_move(self) -> str:
         """get the last move in uci"""
+        breakpoint()
         if self.has_moves():
             return self.moves[-1]
         else:
             raise NoMoves("no moves in this GameState")
 
     def first_move(self) -> bool:
-        """have both player's moved?
-        @returns: (bool) if both players have moved
+        """does this gamestate have two moves?
+        @returns: (bool) is first move
         """
         if len(self.moves) < 2:
-            return False
-        return True
+            return True
+        return False
 
     def is_white_to_move(self) -> bool:
         """is white to move in this gamestate
