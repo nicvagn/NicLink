@@ -1,4 +1,3 @@
-#! /bin/python
 #  chess_clock is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or ( at your option ) any later version.
 #
 #  chess_clock is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
@@ -17,15 +16,10 @@ import readchar
 import serial
 from berserk import Client
 from berserk.exceptions import ResponseError
-from game_start import GameStart
+from game import Game
 from game_state import GameState
 
 from niclink.nl_exceptions import *
-
-### events ###
-# is the lcd being used for a game
-lcd_displaying_game = Event()
-
 
 """
 snip from chess_clock.ino
@@ -103,7 +97,7 @@ class ChessClock:
         if logger is not None:
             self.logger = logger
         else:
-            raise Exception("no logger")
+            self.logger = logging.getLogger("chess_clock")
         self.chess_clock = serial.Serial(
             port=serial_port, baudrate=baudrate, timeout=timeout
         )
@@ -115,15 +109,16 @@ class ChessClock:
         # the countdown thread var
         self.countdown: None | Thread = None
         self.move_time: None | datetime = None
+        # is the lcd handling a game?
+        self.handling_game = Event()
         # event to signal white to move
         self.white_to_move: threading.Event = Event()
         # event to signal game over
-        self.game_over_event: threading.Event = Event()
+        self.countdown_kill: threading.Event = Event()
         # a lock for accessing the time vars
         self.time_lock = Lock()
         # lcd use lock
         self.lcd_lock = Lock()
-
         # time left for the player that moved, at move time
         self.time_left_at_move: timedelta = None
 
@@ -140,10 +135,9 @@ class ChessClock:
 
     def game_over(self, display_message=True) -> None:
         """Case 2: signal game over, w ASCII 2 and stop counting down"""
-        global lcd_displaying_game
         self.logger.info("game_over(...) entered")
-        self.game_over_event.set()
-        lcd_displaying_game.clear()
+        self.countdown_kill.set()
+        self.handling_game.clear()
         """if a message of gameover should be shown. We do not want           \this if we are displaying a custom message"""
         if display_message:
             self.chess_clock.write("2".encode("ascii"))
@@ -170,22 +164,39 @@ class ChessClock:
 
     def start_new_game(
         self,
-        game_start: GameStart,
+        game: Game,
     ) -> None:
-        """Case 4: signal clock to start a new game
-        reset all the game time data.
+        """Case 4: handle game start event. reset all the game time data.
+        @param game - berserk event incased in conviniance class
+        @raises: RuntimeError if the chess clock is still handling a game
         """
-        self.logger.info("\nchess_clock: start_new_game entered \n")
+        self.logger.info("\nchess_clock: start_new_game entered with Game %s \n", game)
+        # no clock for correspondence
+        if game.speed == "correspondence":
+            logger.info("SKIPPING correspondence game w/ id %s \n", game.gameId)
+            return
+        # make sure countdown thread is dead
+        while self.countdown.is_alive():
+            self.countdown_kill.set()
+            sleep(self.TIME_REFRESH)
 
-        # clear game_over_event
-        self.game_over_event.clear()
+        self.countdown_kill.clear()
+        # create a new coutdown thread
+        self.countdown = Thread(target=self.time_keeper, args=(self,), daemon=True)
         # create starting timestamp
-        self.update_lcd(game_start.get_wtime(), game_start.get_btime())
+        self.update_lcd(game.get_wtime(), game.get_btime())
 
-        """Do not display that a new game has been started,
-        keep the time of the new game up
-        old: self.chess_clock.write("4".encode("ascii"))
-        """
+        # check for correspondance
+        self.logger.info(
+            "\nhandle_game_start(...) called with game_start['game'].gameId: %s",
+            game.gameId,
+        )
+
+        # start the chess clock for this game
+        if not self.handling_game.is_set():
+            self.countdown
+        else:
+            raise RuntimeError("ChessClock.handling_game is set.")
 
     def show_splash(self) -> None:
         """Case 5: show the nl splash"""
@@ -246,33 +257,6 @@ class ChessClock:
         )
         self.send_string(timestamp)
 
-    def handle_game_start(self, game_start: GameStart) -> None:
-        """handle game start event.
-        @param game_start - berserk event incased in conviniance class
-        @raises: RuntimeError if the chess clock is still handleing a game
-        """
-        global logger, lcd_handling_game
-
-        # no clock for correspondence
-        if game_start.speed == "correspondence":
-            logger.info("SKIPPING correspondence game w/ id %s \n", game_start.gameId)
-            return
-
-        # clear game_over_event
-        # start timekeeper thread
-        chess_clock.game_over_event.clear()
-        # check for correspondance
-        logger.info(
-            "\nhandle_game_start(...) called with game_start.gameId: %s",
-            game_start.gameId,
-        )
-
-        # start the chess clock for this game
-        if not lcd_displaying_game.is_set():
-            self.start_new_game(game_start)
-        else:
-            raise RuntimeError("lcd displaying game currently")
-
     def create_timestamp(self, wtime: timedelta, btime: timedelta) -> str:
         """create timestamp with white and black time for display on lcd
         @param: wtime timedelta contaning whites time
@@ -332,17 +316,17 @@ class ChessClock:
         @param: chess_clock (ChessClock) - a ChessClock
         @raises:
             NicLinkGameOver:
-                - if game_over_event is set
+                - if countdown_kill is set
                 - if white or black flags
         """
-
+        # loop inifinatly
         while True:
             # if the game is over, kill the time_keeper
-            if chess_clock.game_over_event.is_set():
-                chess_clock.logger.warning("game_over_event is set")
+            if chess_clock.countdown_kill.is_set():
+                chess_clock.logger.warning("countdown_kill is set")
                 raise NicLinkGameOver(
                     """time_keeper(...) exiting. 
-chess_clock.game_over_event.is_set()"""
+chess_clock.countdown_kill.is_set()"""
                 )
 
             if chess_clock.move_time is None:
@@ -389,18 +373,40 @@ chess_clock.game_over_event.is_set()"""
                     chess_clock.black_won()
                     # kill the thread
                     raise NicLinkGameOver("black flaged")
-                # update the clock
+                # update the clock, updates displayed time
                 chess_clock.update_lcd(chess_clock.displayed_wtime, new_btime)
 
             sleep(chess_clock.TIME_REFRESH)
 
 
 ### testing ###
+def test_timekeeper(cc: ChessClock, game: Game) -> None:
+    """test the chess clock's countdown"""
+    print("TEST: countdown")
+    GS = GameState(
+        {
+            "type": "gameState",
+            "moves": "e2e4 e6e5 d2d4",
+            "wtime": timedelta(seconds=24),
+            "btime": timedelta(seconds=13),
+            "winc": timedelta(seconds=3),
+            "binc": timedelta(seconds=3),
+            "status": "started",
+        }
+    )
+    cc.start_new_game(game)
+    x = "n"
+    while x == "n":
+        cc.move_made(GS)
+        print("press 'n' to move in game, not 'n' to quit")
+        x = readchar.readchar()
+
+    cc.game_over()
 
 
 def test_display_options(cc: ChessClock) -> None:
     """test all the display options"""
-    print("testing display options. press a key to display next")
+    print("TEST: testing display options. press a key to display next")
 
     print("game_over w message.")
     cc.game_over()
@@ -439,8 +445,9 @@ def main() -> None:
     TOKEN_FILE = os.path.join(SCRIPT_DIR, "lichess_token/token")
 
     test_display_opts = True
+    test_countdown = True
 
-    RAW_GAME_START = {
+    RAW_GAME = {
         "fullId": "4lmop23qqa8S",
         "gameId": "4lmop23q",
         "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
@@ -457,7 +464,7 @@ def main() -> None:
         "isMyTurn": True,
         "secondsLeft": 1200,
     }
-    GAME_START = GameStart(RAW_GAME_START)
+    GAME_START = Game(RAW_GAME)
     SAMPLE_GAMESTATE0 = GameState(
         {
             "type": "gameState",
@@ -509,6 +516,9 @@ def main() -> None:
         REFRESH_DELAY,
         logger=logger,
     )
+
+    if test_countdown:
+        test_timekeeper(chess_clock, GAME_START)
     if test_display_opts:
         print("look at lcd")
         test_display_options(chess_clock)
@@ -526,9 +536,9 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    global logger
     # if run as __main__ set up logging
     logger = logging.getLogger("chess_clock")
-
     consoleHandler = logging.StreamHandler(sys.stdout)
 
     logger.info("DEBUG is set.")

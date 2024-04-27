@@ -50,7 +50,6 @@ class GameState:
 
     def get_last_move(self) -> str:
         """get the last move in uci"""
-        breakpoint()
         if self.has_moves():
             return self.moves[-1]
         else:

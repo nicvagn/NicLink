@@ -4,64 +4,36 @@
 #
 #  You should have received a copy of the GNU General Public License along with NicLink. If not, see <https://www.gnu.org/licenses/>.
 
-from datetime import timedelta
+from typing import TypedDict
+
+from game import Game
 
 """sample
 
-{'fullId': 'V272Z7t1PcgG',
- 'gameId': 'V272Z7t1',
- 'fen': 'rnbqkb1r/pp3ppp/3p1n2/2p1p3/2P1P3/2N2N2/PP1P1PPP/R1BQKB1R w KQkq - 0 5',
- 'color': 'white',
- 'lastMove': 'e7e5',
- 'source': 'lobby',
- 'status': {'id': 20, 'name': 'started'},
- 'variant': {'key': 'standard', 'name': 'Standard'},
- 'speed': 'correspondence',
- 'perf': 'correspondence',
- 'rated': True, 'hasMoved': True,
- 'opponent': {'id': 'caleb-isaac-leiva',
-              'username': 'Caleb-Isaac-Leiva',
-              'rating': 1500},
- 'isMyTurn': True,
- 'secondsLeft': 1205340}
-
+{'type': 'gameStart',
+ 'game': {
+     'fullId': 'aTBGIIVYsqYL',
+     'gameId': 'aTBGIIVY',
+     'fen': 'r4rk1/p1p1q1pp/1pb1pnn1/2N2p2/5B2/5PP1/PQ2P1BP/2RR2K1 w - - 1 22',
+     'color': 'white',
+     'lastMove': 'd8e7',
+     'source': 'friend',
+     'status': {'id': 20, 'name': 'started'},
+     'variant': {'key': 'standard', 'name': 'Standard'},
+     'speed': 'correspondence',
+     'perf': 'correspondence',
+     'rated': False,
+     'hasMoved': True,
+     'opponent': {'id': 'musaku', 'username': 'musaku', 'rating': 1500},
+     'isMyTurn': True,
+     'compat': {'bot': False, 'board': True},
+     'id': 'aTBGIIVY'}
+    }
 """
 
 
-class GameStart:
-    """A class used to contain all the information in a berserk board api game start."""
+class GameStart(TypedDict):
+    """A class used to contain all the information in a berserk board api game start"""
 
-    def __init__(self, game_start: dict) -> None:
-        """initialize this GameStart from berserk dict"""
-        self.fullId = game_start["fullId"]
-        self.gameId = game_start["gameId"]
-        self.fen = game_start["fen"]
-        self.colour = game_start["color"]
-        self.lastMove = game_start["lastMove"]
-        self.source = game_start["source"]
-        self.status = game_start["status"]
-        self.variant = game_start["variant"]
-        self.speed = game_start["speed"]
-        self.perf = game_start["perf"]
-        self.rated = game_start["rated"]
-        self.opponent = game_start["opponent"]
-        self.isMyTurn = game_start["isMyTurn"]
-        self.secondsLeft = game_start["secondsLeft"]
-
-    # HACK: asumes black and white time is seconds left
-    def get_wtime(self) -> timedelta:
-        """get whites time from this gamestart"""
-        return timedelta(seconds=self.secondsLeft)
-
-    # HACK:
-    def get_btime(self) -> timedelta:
-        """get black's time from GameStart"""
-        return timedelta(seconds=self.secondsLeft)
-
-    def is_white(self) -> bool:
-        """are they playing white in this GameStart"""
-        return self.colour == "white"
-
-    def is_my_turn(self) -> bool:
-        """is iy my turn in this GameStart"""
-        return self.isMyTurn
+    type: str
+    game: Game
