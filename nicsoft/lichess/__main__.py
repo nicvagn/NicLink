@@ -11,7 +11,6 @@ import importlib.util
 import logging
 import logging.handlers
 import os
-
 # sys stuff
 import sys
 import threading
@@ -19,19 +18,15 @@ import time
 import traceback
 
 import berserk
-
 # chess stuff
 import chess
 import chess.pgn
 from berserk.exceptions import ResponseError
-
 # external chess clock functionality
 from chess_clock import ChessClock
 from game_start import GameStart
-
 # other Nic modules
 from game_state import GameState, timedelta
-
 # exceptions
 from serial import SerialException
 
@@ -39,6 +34,12 @@ from serial import SerialException
 from niclink import NicLinkManager
 from niclink.nl_exceptions import *
 
+### types ###
+""" sample 
+{'type': 'gameStart', 'game': {'fullId': 'aTBGIIVYsqYL', 'gameId': 'aTBGIIVY', 'fen': 'r4rk1/p1p1q1pp/1pb1pnn1/2N2p2/5B2/5PP1/PQ2P1BP/2RR2K1 w - - 1 22', 'color': 'white', 'lastMove': 'd8e7', 'source': 'friend', 'status': {'id': 20, 'name': 'started'}, 'variant': {'key': 'standard', 'name': 'Standard'}, 'speed': 'correspondence', 'perf': 'correspondence', 'rated': False, 'hasMoved': True, 'opponent': {'id': 'musaku', 'username': 'musaku', 'rating': 1500}, 'isMyTurn': True, 'compat': {'bot': False, 'board': True}, 'id': 'aTBGIIVY'}}
+"""
+type GameStart = dict[
+### command line ###
 # parsing command line arguments
 parser = argparse.ArgumentParser()
 parser.add_argument("--tokenfile")
@@ -518,9 +519,10 @@ def show_FEN_on_board(FEN) -> None:
     print(tmp_chessboard)
 
 
-def handle_game_start(event) -> None:
+def handle_game_start(game_start: GameStart) -> None:
     """handle game start event"""
     global berserk_client, logger, game
+    print(game_start)
     game_data = event["game"]
 
     # check if game speed is correspondence, skip those if --correspondence argument is not set
@@ -563,7 +565,7 @@ def handle_ongoing_game(game_start: GameStart):
     """handle joining a game that is alredy underway"""
 
     print("\n+++ joining game in progress +++\n")
-    print(f"Playing: { game_data['color'] }")
+    print(f"Playing: { game_start.colour }")
 
     if game_data.is_white_to_move():
         print("it is your turn. make a move.")
