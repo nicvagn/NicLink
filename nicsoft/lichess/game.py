@@ -82,7 +82,7 @@ class Game:
         """is this a correspondence GameStart"""
         return self.correspondence == "True"
 
-    def is_white(self) -> bool:
+    def playing_white(self) -> bool:
         """are they playing white in this GameStart"""
         return self.colour == "white"
 

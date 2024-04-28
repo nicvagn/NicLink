@@ -11,6 +11,7 @@ import importlib.util
 import logging
 import logging.handlers
 import os
+
 # sys stuff
 import sys
 import threading
@@ -18,15 +19,20 @@ import time
 import traceback
 
 import berserk
+
 # chess stuff
 import chess
 import chess.pgn
 from berserk.exceptions import ResponseError
+
 # external chess clock functionality
 from chess_clock import ChessClock
+from game import Game as GameEvent  # game is already a class
 from game_start import GameStart
+
 # other Nic modules
 from game_state import GameState, timedelta
+
 # exceptions
 from serial import SerialException
 
@@ -38,7 +44,6 @@ from niclink.nl_exceptions import *
 """ sample 
 {'type': 'gameStart', 'game': {'fullId': 'aTBGIIVYsqYL', 'gameId': 'aTBGIIVY', 'fen': 'r4rk1/p1p1q1pp/1pb1pnn1/2N2p2/5B2/5PP1/PQ2P1BP/2RR2K1 w - - 1 22', 'color': 'white', 'lastMove': 'd8e7', 'source': 'friend', 'status': {'id': 20, 'name': 'started'}, 'variant': {'key': 'standard', 'name': 'Standard'}, 'speed': 'correspondence', 'perf': 'correspondence', 'rated': False, 'hasMoved': True, 'opponent': {'id': 'musaku', 'username': 'musaku', 'rating': 1500}, 'isMyTurn': True, 'compat': {'bot': False, 'board': True}, 'id': 'aTBGIIVY'}}
 """
-type GameStart = dict[
 ### command line ###
 # parsing command line arguments
 parser = argparse.ArgumentParser()
@@ -437,7 +442,6 @@ Will only try twice before calling game_done"
             "\nsignal_game_state_change(self, game_state) entered with GameState: %s",
             game_state,
         )
-        breakpoint()
         if not game_state.first_move():
             # update the last move
             self.last_move: str = game_state.get_last_move()
@@ -519,31 +523,27 @@ def show_FEN_on_board(FEN) -> None:
     print(tmp_chessboard)
 
 
+# TODO: handle_game_start event classed require reworking. as in they are broken
 def handle_game_start(game_start: GameStart) -> None:
     """handle game start event"""
     global berserk_client, logger, game
-    print(game_start)
-    game_data = event["game"]
+    logger.info("\nhandle_game_start(Game) enterd w game_start: \n %s\n", game_start)
 
+    game_data = game_start["game"]
+    game_fen = game_data["fen"]
     # check if game speed is correspondence, skip those if --correspondence argument is not set
     if not correspondence:
-        if is_correspondence(game_data["id"]):
-            logger.info("skipping correspondence game w/ id: %s", game_data["id"])
+        if game_data["speed"] == "correspondence":
+            logger.info("skipping correspondence game w/ id: %s\n", game_data["id"])
             return
 
-    playing_white = game_data["color"] == "white"
-
     logger.info("\ngame start received: \nyou play: %s", game_data["color"])
-
-    game_fen = game_data["fen"]
-    print(
-        f"game start:\ngame board: \n{ chess.Board(game_fen) }\nyour turn?: { game_data['isMyTurn'] }\n"
-    )
 
     if game_data["hasMoved"]:
         """handle ongoing game"""
         handle_ongoing_game(game_data)
 
+    playing_white = game_data["color"] == "white"
     try:
         game = Game(
             berserk_client,
@@ -580,27 +580,6 @@ def handle_resign(event=None) -> None:
         logger.info("handle_resign entered: event: %", event)
     # end the game
     game.game_done()
-
-
-def is_correspondence(gameId: str) -> bool:
-    """is the game a correspondence game?"""
-    global berserk_client, logger
-    try:
-        for game in berserk_client.games.get_ongoing():
-            if game["gameId"] == gameId:
-                if game["speed"] == "correspondence":
-                    return True
-    except KeyboardInterrupt as err:
-        log_handled_exception(err)
-        print("KeyboardInterrupt: bye")
-        sys.exit(0)
-    except:
-        e = sys.exc_info()[0]
-        print(f"cannot determine game speed: {e}")
-        logger.info("cannot determine if game is correspondence: ", e)
-        log_handled_exception(e)
-        return False
-    return False
 
 
 # entry point
@@ -693,8 +672,11 @@ def main():
                         print("\n==== Challenge received ====\n")
                         print(event)
                     elif event["type"] == "gameStart":
-                        # a game is starting, it is handled by a function
-                        handle_game_start(event)
+                        # TODO: MAKE USE RIGHT CLASS
+                        # wrap the game in a helper class
+                        gameStart = GameStart(event)
+                        # and handle getting it started
+                        handle_game_start(gameStart)
                     elif event["type"] == "gameFull":
                         nl_inst.game_over.set()
                         handle_resign(event)
