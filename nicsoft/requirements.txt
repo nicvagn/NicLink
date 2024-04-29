@@ -1,7 +1,9 @@
+Adafruit-PureIO==1.1.11
+Adafruit_GPIO==1.0.3
 async-timeout==4.0.2
 asyncio==3.4.3
 attrs==23.2.0
-berserk==0.13.2
+berserk @ file:///home/nrv/dev/berserk
 bleak==0.21.1
 certifi==2024.2.2
 charset-normalizer==3.3.2
@@ -14,16 +16,17 @@ jsonschema-specifications==2023.12.1
 ndjson==0.3.1
 prompt-toolkit==3.0.39
 pybind11==2.11.1
-pyFirmata==1.1.0
 pyproject-toml==0.0.10
 pyserial==3.5
 python-dateutil==2.9.0.post0
+pyzmq==25.1.2
 readchar==4.0.5
 referencing==0.33.0
 requests==2.31.0
 rpds-py==0.18.0
 setuptools==69.1.1
 six==1.16.0
+spidev==3.6
 stockfish==3.28.0
 toml==0.10.2
 typing_extensions==4.10.0

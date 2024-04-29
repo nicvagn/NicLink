@@ -2,7 +2,7 @@
 
 # Notice
 
-> version 0.8
+> version 0.9
 
 > checkout this software, it solves the problem's I wanted to solve with NicLink:
     https://chromewebstore.google.com/detail/chessconnect/dmkkcjpbclkkhbdnjgcciohfbnpoaiam?hl=en-GB
