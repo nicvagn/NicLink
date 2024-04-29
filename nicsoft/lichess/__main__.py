@@ -15,8 +15,8 @@ import os
 # sys stuff
 import sys
 import threading
-import time
 import traceback
+from time import sleep
 
 import berserk
 
@@ -27,7 +27,7 @@ from berserk.exceptions import ResponseError
 
 # external chess clock functionality
 from chess_clock import ChessClock
-from game import Game as GameEvent  # game is already a class
+from game import Game as LichessGame  # game is already a class
 from game_start import GameStart
 
 # other Nic modules
@@ -40,10 +40,6 @@ from serial import SerialException
 from niclink import NicLinkManager
 from niclink.nl_exceptions import *
 
-### types ###
-""" sample 
-{'type': 'gameStart', 'game': {'fullId': 'aTBGIIVYsqYL', 'gameId': 'aTBGIIVY', 'fen': 'r4rk1/p1p1q1pp/1pb1pnn1/2N2p2/5B2/5PP1/PQ2P1BP/2RR2K1 w - - 1 22', 'color': 'white', 'lastMove': 'd8e7', 'source': 'friend', 'status': {'id': 20, 'name': 'started'}, 'variant': {'key': 'standard', 'name': 'Standard'}, 'speed': 'correspondence', 'perf': 'correspondence', 'rated': False, 'hasMoved': True, 'opponent': {'id': 'musaku', 'username': 'musaku', 'rating': 1500}, 'isMyTurn': True, 'compat': {'bot': False, 'board': True}, 'id': 'aTBGIIVY'}}
-"""
 ### command line ###
 # parsing command line arguments
 parser = argparse.ArgumentParser()
@@ -54,23 +50,28 @@ parser.add_argument("--quiet", action="store_true")
 parser.add_argument("--debug", action="store_true")
 args = parser.parse_args()
 
-### constants ###
-# refresh refresh delay for NicLink and Lichess
-REFRESH_DELAY = 0.01
-# POLL_DELAY for checking for new games
-POLL_DELAY = 10
+### globals ###
+global game
+global logger
+game = None
 
 correspondence = False
 if args.correspondence:
     correspondence = True
+
+# the script dir, used to import the lila token file
+script_dir = os.path.dirname(__file__)
 
 DEBUG = False
 # DEBUG = True
 if args.debug:
     DEBUG = True
 
-# the script dir, used to import the lila token file
-script_dir = os.path.dirname(__file__)
+### constants ###
+# refresh refresh delay for NicLink and Lichess
+REFRESH_DELAY = 0.01
+# POLL_DELAY for checking for new games
+POLL_DELAY = 10
 
 ### lichess token parsing ###
 TOKEN_FILE = os.path.join(script_dir, "lichess_token/token")
@@ -132,7 +133,7 @@ def log_handled_exception(exception) -> None:
 print(
     "\n\n|=====================| NicLink on Lichess startup |=====================|\n\n"
 )
-logger.info("=== NicLink Lichess startup ===\n")
+logger.info("NicLink Lichess startup\n")
 
 
 class Game(threading.Thread):
@@ -187,6 +188,8 @@ class Game(threading.Thread):
             except SerialException as ex:
                 logger.error("Chess clock could not be connected %s" % ex)
                 self.chess_clock = False
+        else:
+            self.chess_clock = False
 
         self.playing_white = playing_white
         if starting_fen and False:  # HACK: make 960 work
@@ -201,7 +204,6 @@ class Game(threading.Thread):
             self.starting_fen = None
 
         logger.info("game init w id: %s", game_id)
-        logger.info(berserk_client.games.get_ongoing())
 
         # if white, make the first move
         if self.playing_white and self.current_state["state"]["moves"] == "":
@@ -218,7 +220,7 @@ class Game(threading.Thread):
         state_change_thread = None
 
         for event in self.stream:
-            logger.debug("event: %s", event)
+            logger.debug("event in self.stream: %s", event)
             if event["type"] == "gameState":
 
                 # update the game stata in this class with a stream game_state
@@ -239,13 +241,13 @@ class Game(threading.Thread):
                         if state_change_thread.is_alive():
                             # check that the game is not over.
                             # Will call game_done if so.
-                            self.check_for_game_over(event)
+                            self.check_for_game_over(self.game_state)
                             # try to join state_change_thread with a one second time_out
                             state_change_thread.join(timeout=REFRESH_DELAY)
 
                 # start new state change thread
                 state_change_thread = threading.Thread(
-                    target=self.handle_state_change, args=(GameState(event),)
+                    target=self.handle_state_change, args=(self.game_state,)
                 )
                 state_change_thread.start()
 
@@ -267,24 +269,29 @@ class Game(threading.Thread):
     def game_done(self, game_state: GameState = None) -> None:
         """stop the thread, game should be over, or maybe a rage quit"""
         global logger, nl_inst
-        logger.info("Game.game_done() entered")
+        logger.info("\nGame.game_done(GameState) entered.\n GameState %s", game_state)
         # if there is an external clock, display gameover message
         if self.chess_clock:
-            if game_state.winner:
-                if game_state.winner == "white":
-                    self.chess_clock.white_won()
-                elif game_state.winner == "black":  # must be black
-                    self.chess_clock.black_won()
-                else:
-                    # if no winner
-                    self.chess_clock.game_over()
-        print("good game")
+            if game_state is not None:
+                if game_state.winner:
+                    if game_state.winner == "white":
+                        self.chess_clock.white_won()
+                    elif game_state.winner == "black":  # must be black
+                        self.chess_clock.black_won()
+                    else:
+                        # if no winner
+                        self.chess_clock.game_over()
+            else:
+                # if no game state was given
+                self.chess_clock.game_over()
+
+        print("\n    %%%%% GOOD GAME %%%%%\n")
         # tell the user and NicLink the game is through
         nl_inst.game_over.set()
         nl_inst.beep()
         nl_inst.gameover_lights()
-        time.sleep(3)
-        nl_inst.turn_off_all_leds()
+        sleep(3)
+        nl_inst.turn_off_all_LEDs()
         # stop the thread
         raise NicLinkGameOver("Game over")
 
@@ -326,6 +333,11 @@ and setting moved event",
         global logger, nl_inst
         logger.info("move made: %s", move)
 
+        # if chess clock, tell chess clock
+        if self.chess_clock:
+            pass
+            # TODO:
+
         while not nl_inst.game_over.is_set():
             logger.info(
                 "make_move() attempt w move: %s nl_inst.game_over.is_set(): %s",
@@ -356,7 +368,7 @@ and setting moved event",
                     f"ResponseError: { err }trying again after three seconds.  \
 Will only try twice before calling game_done"
                 )
-                time.sleep(3)
+                sleep(3)
 
                 if self.response_error_on_last_attempt == True:
                     self.response_error_on_last_attempt = False
@@ -402,7 +414,7 @@ Will only try twice before calling game_done"
         get_move_thread.start()
         # wait for a move on chessboard
         while not nl_inst.game_over.is_set() or self.check_for_game_over(
-            self.current_state["state"]
+            GameState(self.current_state["state"])  # TODO: FIND MORE EFFICIENT WAY
         ):
 
             if self.has_moved.is_set():
@@ -421,8 +433,8 @@ Will only try twice before calling game_done"
         else:
             tmp_chessboard = chess.Board()
 
+        # if the move list is not empty
         if move_list != [""]:
-            last_move = None
             for move in move_list:
                 # make the moves on a board
                 tmp_chessboard.push_uci(move)
@@ -439,8 +451,9 @@ Will only try twice before calling game_done"
         """signal a state change, this is just to signal the external clock rn"""
 
         logger.info(
-            "\nsignal_game_state_change(self, game_state) entered with GameState: %s",
+            "\nsignal_game_state_change(self, game_state) entered with GameState: %s of type %s",
             game_state,
+            type(game_state),
         )
         if not game_state.first_move():
             # update the last move
@@ -449,7 +462,8 @@ Will only try twice before calling game_done"
             nl_inst.opponent_moved(self.last_move)
 
         # if chess_clock send new timestamp to clock
-        if isinstance(self.chess_clock, ChessClock):
+        if self.chess_clock:
+            logger.info("\n\nGameState sent to ChessClock: %s \n", game_state)
             self.chess_clock.move_made(game_state)
 
     def handle_state_change(self, game_state: GameState) -> None:
@@ -481,6 +495,10 @@ Will only try twice before calling game_done"
             logger.info("game done detected, calling game_done(). winner: %s\n", winner)
             # stop the tread (this does some cleanup and throws an exception)
             self.game_done(winner=winner)
+        # if there is a chess clock
+        if self.chess_clock:
+            # signal move
+            self.chess_clock.move_made(game_state)
 
         # tmp_chessboard.turn == True when white, false when black playing_white is same
         if tmp_chessboard.turn == self.playing_white:
@@ -523,63 +541,89 @@ def show_FEN_on_board(FEN) -> None:
     print(tmp_chessboard)
 
 
-# TODO: handle_game_start event classed require reworking. as in they are broken
-def handle_game_start(game_start: GameStart) -> None:
-    """handle game start event"""
+def handle_game_start(
+    game_start: GameStart, chess_clock: bool | ChessClock = False
+) -> None:
+    """handle game start event
+    @param game_start: Typed Dict containing the game start info
+    @param chess_clock: ase we using an external chess clock?
+    @global berserk_client: client made for ous session with lila
+    @global game: the Game class object, global bc has to be accessed everywhere
+    """
     global berserk_client, logger, game
-    logger.info("\nhandle_game_start(Game) enterd w game_start: \n %s\n", game_start)
 
-    game_data = game_start["game"]
-    game_fen = game_data["fen"]
     # check if game speed is correspondence, skip those if --correspondence argument is not set
     if not correspondence:
-        if game_data["speed"] == "correspondence":
-            logger.info("skipping correspondence game w/ id: %s\n", game_data["id"])
+        if game_start["game"]["speed"] == "correspondence":
+            logger.info(
+                "skipping correspondence game w/ id: %s\n", game_start["game"]["id"]
+            )
             return
 
-    logger.info("\ngame start received: \nyou play: %s", game_data["color"])
+    logger.info(
+        "\nhandle_game_start(GameStart) enterd w game_start: \n %s\n", str(game_start)
+    )
+    game_data = LichessGame(game_start["game"])
+    game_fen = game_data.fen
 
-    if game_data["hasMoved"]:
+    print(f"\ngame start received: { str(game_start) }\nyou play: ", game_data.colour)
+
+    if game_data.hasMoved:
         """handle ongoing game"""
         handle_ongoing_game(game_data)
 
-    playing_white = game_data["color"] == "white"
+    playing_white = game_data.playing_white()
     try:
+        if game and game.is_alive():
+            logger.error(
+                "\nERROR: tried to start a new game while game thread is still alive"
+            )
+            raise NicLinkHandlingGame(
+                "the game thread is still alive, a new game can not be started"
+            )
+
         game = Game(
             berserk_client,
-            game_data["id"],
+            game_data.id,
             playing_white,
             starting_fen=game_fen,
-            chess_clock=True,
+            chess_clock=chess_clock,
         )  # ( game_data['color'] == "white" ) is used to set is_white bool
         game.daemon = True
+
+        logger.info("|| starting Game thread for game with id: %s\n", game_data.id)
         game.start()  # start the game thread
 
     except ResponseError as e:
         if "This game cannot be played with the Board API" in str(e):
             print("cannot play this game via board api")
         log_handled_exception(e)
+    except KeyboardInterrupt:
+        # mak exig good? IDK
+        sys.exit(0)
 
 
-def handle_ongoing_game(game_start: GameStart):
+def handle_ongoing_game(game: LichessGame) -> None:
     """handle joining a game that is alredy underway"""
 
-    print("\n+++ joining game in progress +++\n")
-    print(f"Playing: { game_start.colour }")
-
-    if game_data.is_white_to_move():
+    print("\n$$$ joining game in progress $$$\n")
+    logger.info("joining game in proggress, game: \n %s", game)
+    if game.isMyTurn:
         print("it is your turn. make a move.")
     else:
         print("it is your opponents turn.")
 
 
 def handle_resign(event=None) -> None:
-    """handle ending the game in the case where you resign"""
-    global nl_inst, logger, game
-    if event is not None:
-        logger.info("handle_resign entered: event: %", event)
+    """handle ending the game in the case where you resign."""
+    global logger, game
     # end the game
-    game.game_done()
+    if event is not None:
+        logger.info("handle_resign entered: event: %s", event)
+        game.game_done(event=event)
+    else:
+        logger.info("handle_resign entered with no event")
+        game.game_done()
 
 
 # entry point
@@ -591,7 +635,7 @@ def main():
     simplejson_spec = importlib.util.find_spec("simplejson")
     if simplejson_spec is not None:
         print(
-            f"ERROR: simplejson is installed. The berserk lichess client will not work with simplejson. Please remove the module. Aborting."
+            "ERROR: simplejson is installed. The berserk lichess client will not work with simplejson. Please remove the module. Aborting."
         )
         sys.exit(-1)
 
@@ -601,7 +645,7 @@ def main():
         nl_inst.start()
 
     except ExitNicLink:
-        logger.info("ExitNicLink exception caught in main()")
+        logger.error("ExitNicLink exception caught in main()")
         print("Thank's for using NicLink")
         sys.exit(0)
 
@@ -616,10 +660,12 @@ def main():
             token = f.read().strip()
 
     except FileNotFoundError:
-        print(f"ERROR: cannot find token file")
+        logger.error(
+            "ERROR: cannot find token file @ ",
+        )
         sys.exit(-1)
     except PermissionError:
-        print(f"ERROR: permission denied on token file")
+        logger.error(f"ERROR: permission denied on token file")
         sys.exit(-1)
 
     try:
@@ -643,7 +689,7 @@ def main():
     except:
         e = sys.exc_info()[0]
         error_txt = f"cannot create lichess client: {e}"
-        logger.info(error_txt)
+        logger.error(error_txt)
         print(error_txt)
         sys.exit(-1)
 
@@ -657,7 +703,7 @@ def main():
         sys.exit(0)
     except:
         e = sys.exc_info()[0]
-        logger.info("cannot get lichess acount info: %s", e)
+        logger.error("cannot get lichess acount info: %s", e)
         print(f"cannot get lichess acount info: {e}")
         sys.exit(-1)
     try:
@@ -672,20 +718,21 @@ def main():
                         print("\n==== Challenge received ====\n")
                         print(event)
                     elif event["type"] == "gameStart":
-                        # TODO: MAKE USE RIGHT CLASS
-                        # wrap the game in a helper class
+                        # wrap the gameStart in a Typed Dict class
                         gameStart = GameStart(event)
                         # and handle getting it started
                         handle_game_start(gameStart)
                     elif event["type"] == "gameFull":
-                        nl_inst.game_over.set()
+                        logger.info("\ngameFull received\n")
                         handle_resign(event)
                         print("GAME FULL received")
-                        logger.info("\ngameFull received\n")
 
                     # check for kill switch
                     if nl_inst.kill_switch.is_set():
                         sys.exit(0)
+
+                    sleep(REFRESH_DELAY)  # berserk keep's the stream alive
+                    # :. if we don't sleep, computer will spin
 
             except KeyboardInterrupt:
                 logger.info("KeyboardInterrupt: bye")
@@ -696,17 +743,17 @@ def main():
                 finally:
                     raise ExitNicLink("KeyboardInterrupt in __main__")
             except ResponseError as e:
-                print(f"ERROR: Invalid server response: {e}")
-                logger.info("Invalid server response: %s", e)
+                logger.error("Invalid server response: %s", e)
                 if "Too Many Requests for url" in str(e):
-                    time.sleep(10)
+                    sleep(10)
 
             except NicLinkGameOver:
                 logger.info("NicLinkGameOver excepted, good game?")
                 print("game over, you can play another. Waiting for lichess event...")
                 handle_resign()
 
-            time.sleep(POLL_DELAY)
+            logger.info("berserk stream exited")
+            sleep(POLL_DELAY)
 
     except ExitNicLink:
         print("Have a nice life")

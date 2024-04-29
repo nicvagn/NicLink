@@ -54,6 +54,10 @@ class Game:
             self.secondsLeft: number = game_event["secondsLeft"]
         else:
             self.secondsLeft = None
+        if "hasMoved" in game_event:
+            self.hasMoved: bool = game_event["hasMoved"]
+        else:
+            self.hasMoved = "unknown"
 
     def __str__(self) -> str:
         """returns a partial rep. of this Game as a str"""
@@ -65,6 +69,7 @@ class Game:
                 "color": self.colour,
                 "status": self.status,
                 "speed": self.speed,
+                "hasMoved": self.hasMoved,
             }
         )
 

@@ -138,8 +138,10 @@ class ChessClock:
         self.logger.info("game_over(...) entered")
         self.countdown_kill.set()
         self.handling_game.clear()
-        """if a message of gameover should be shown. We do not want           \this if we are displaying a custom message"""
+
         if display_message:
+            """if a message of gameover should be shown. We do not
+            want this if we are displaying a custom message"""
             self.chess_clock.write("2".encode("ascii"))
 
         if self.displayed_btime is not None and self.displayed_wtime is not None:
@@ -161,6 +163,9 @@ class ChessClock:
             self.chess_clock.write("3".encode("ascii"))
             # send the message
             self.chess_clock.write(message.encode("ascii"))
+
+        # from doc: Flush of file like objects. In this case, wait until all data is written.
+        self.chess_clock.flush()
 
     def start_new_game(
         self,
@@ -194,7 +199,8 @@ class ChessClock:
 
         # start the chess clock for this game
         if not self.handling_game.is_set():
-            self.countdown
+            # creat new coundown thread if not handling game
+            self.countdown.start()
         else:
             raise RuntimeError("ChessClock.handling_game is set.")
 
@@ -218,22 +224,27 @@ class ChessClock:
         self.game_over(display_message=False)
 
     def move_made(self, game_state: GameState) -> None:
-        """a move was made in the game this chess clock is for.
-        self.move_time is set.
+        """a move was made in the game this chess clock is for, self.move_time is set.
+        @param: game_state the game state at the time of move, or None if there is None
         """
         with self.time_lock:
             # record the move_time
             self.move_time = datetime.now()
             self.logger.info("\nrecorded move time: %s\n", self.move_time)
-            self.displayed_wtime: timedelta = game_state.wtime
-            self.displayed_btime: timedelta = game_state.btime
 
-            self.logger.info("first move of game? %s", game_state.first_move())
-            # make sure countown thread is running if both players have moved
-            if not game_state.first_move():
-                if not self.countdown.is_alive():
-                    self.logger.info("countdown thread started")
-                    self.countdown.start()
+            if game_state is not None:
+                self.displayed_wtime: timedelta = game_state.wtime
+                self.displayed_btime: timedelta = game_state.btime
+                # make sure countown thread is running if both players have moved
+                if not game_state.first_move():
+                    if not self.countdown.is_alive():
+                        self.logger.info("countdown thread started")
+                        self.countdown.start()
+
+            else:
+                # TODO: add incriment
+                pass
+
             # record the time player has left at move time
             if self.white_to_move.is_set():
                 self.time_left_at_move = self.displayed_wtime
@@ -292,19 +303,17 @@ class ChessClock:
             )
             return timestamp
 
-    @staticmethod
-    def did_flag(player_time: timedelta) -> bool:
+    def did_flag(self, player_time: timedelta) -> bool:
         """check if a timedelta is 0 total_seconds or less. ie: they flaged
         @param: player_time (timedelta) - timedelta of how much time a player has
         @returns: (bool) if they flaged
         """
-        global logger
-        logger.info("did_flag(player_time) with player time %s", player_time)
+        self.logger.info("did_flag(player_time) with player time %s", player_time)
         if type(player_time) is timedelta:
             if player_time.total_seconds() <= 0:
                 return True
         else:
-            logger.warning(
+            self.logger.warning(
                 "ChessClock.did_flag(player_time): player_time is not a timedelta"
             )
 
@@ -348,13 +357,18 @@ chess_clock.countdown_kill.is_set()"""
 
             # if it is white to move
             if chess_clock.white_to_move.is_set():
-                # breakpoint()
+                # because sometimes time_left_at_move is an int of secondsLeft
+                if type(chess_clock.time_left_at_move) is not timedelta:
+                    chess_clock.time_left_at_move = timedelta(
+                        seconds=chess_clock.time_left_at_move
+                    )
+
                 # create a new timedelta with the updated wtime
                 new_wtime = chess_clock.time_left_at_move - (
                     datetime.now() - chess_clock.move_time
                 )
                 # check for flag for white
-                if ChessClock.did_flag(new_wtime):
+                if chess_clock.did_flag(new_wtime):
                     chess_clock.white_won()
                     # kill the thread
                     raise NicLinkGameOver("white flaged")
@@ -362,14 +376,19 @@ chess_clock.countdown_kill.is_set()"""
                 chess_clock.update_lcd(new_wtime, chess_clock.displayed_btime)
             # else black to move
             else:
-                # breakpoint()
+                # because sometimes time_left_at_move is an int of secondsLeft
+                if type(chess_clock.time_left_at_move) is not timedelta:
+                    chess_clock.time_left_at_move = timedelta(
+                        seconds=chess_clock.time_left_at_move
+                    )
+
                 # create a new timedelta object w updated b time
                 new_btime = chess_clock.time_left_at_move - (
                     datetime.now() - chess_clock.move_time
                 )
 
                 # check if black has flaged
-                if ChessClock.did_flag(chess_clock.displayed_btime):
+                if chess_clock.did_flag(chess_clock.displayed_btime):
                     chess_clock.black_won()
                     # kill the thread
                     raise NicLinkGameOver("black flaged")
@@ -438,6 +457,7 @@ def test_display_options(cc: ChessClock) -> None:
 def main() -> None:
     """test ChessClock"""
     global logger
+
     PORT = "/dev/ttyACM0"
     BR = 115200  # baudrate for Serial connection
     REFRESH_DELAY = 100.0  # refresh delay for chess_clock

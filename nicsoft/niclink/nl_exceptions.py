@@ -38,3 +38,10 @@ class NicLinkGameOver(Exception):
 
     def __init__(self, message):
         self.message = message
+
+
+class NicLinkHandlingGame(Exception):
+    """NicLink is handling a game, and the action can not be preformed"""
+
+    def __init__(self, message):
+        self.message = message

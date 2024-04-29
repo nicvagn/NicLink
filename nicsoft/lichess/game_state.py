@@ -93,3 +93,7 @@ class GameState:
     def get_status(self) -> str:
         """get the status from this GameState"""
         return self.status
+
+    def __str__(self) -> str:
+        return f"GameState, Moves: { self.moves }, status: {self.status},\n \
+                wtime: { self.wtime } btime: { self.btime }"
