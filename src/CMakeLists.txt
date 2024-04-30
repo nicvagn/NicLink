@@ -25,11 +25,13 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 # pyBind
 find_package(Python COMPONENTS Interpreter Development REQUIRED)
 find_package(PythonLibs REQUIRED)
-# using te add_subdir method
-find_package(pybind11 CONFIG REQUIRED)
 
+# find_package method for pybind
+#find_package(pybind11 CONFIG REQUIRED)
+
+# using the add_subdir method
+add_subdirectory("thirdparty/pybind11")
 # easylink SDK setup #
-
 # use internal hidapi and spdlog
 add_subdirectory("thirdparty/libusb-cmake")
 add_subdirectory("thirdparty/hidapi")

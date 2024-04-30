@@ -1,3 +1,6 @@
 [submodule "src/thirdparty/libusb-cmake"]
 	path = src/thirdparty/libusb-cmake
-	url = https://github.com/libusb/libusb-cmake.git
+    url = https://github.com/libusb/libusb-cmake.git
+[submodule "src/thirdparty/pybind11"]
+	path = src/thirdparty/pybind11
+	url = https://github.com/pybind/pybind11.git
