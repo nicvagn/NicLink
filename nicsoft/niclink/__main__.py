@@ -26,6 +26,32 @@ import niclink.nl_bluetooth
 from niclink.nl_exceptions import *
 
 ### CONSTANTS ###
+ONES = np.array(
+    [
+        "11111111",
+        "11111111",
+        "11111111",
+        "11111111",
+        "11111111",
+        "11111111",
+        "11111111",
+        "11111111",
+    ],
+    dtype=np.str_,
+)
+ZEROS = np.array(
+    [
+        "00000000",
+        "00000000",
+        "00000000",
+        "00000000",
+        "00000000",
+        "00000000",
+        "00000000",
+        "00000000",
+    ],
+    dtype=np.str_,
+)
 
 
 class NicLinkManager(threading.Thread):
@@ -201,43 +227,33 @@ Is the board connected and turned on?"
                 str of len 8 with the 1 for 0 off
                 for the led of that square
         """
-        breakpoint()
+        self.logger.info(
+            "set_all_LEDs(light_board: np.ndarray[np.str_]): called with \
+                light_board %s",
+            light_board,
+        )
+        """
         r0 = str(light_board[0])
-        print(type(r0))
+        r1 = str(light_board[1])
+        r2 = str(light_board[2])
+        r3 = str(light_board[3])
+        r4 = str(light_board[4])
+        r5 = str(light_board[5])
+        r6 = str(light_board[6])
+        r7 = str(light_board[7])
+        """
         # the pybind11 use 8 str, because it is difficult
         # to use complex data structures between languages
         self.nl_interface.set_all_LEDs(
-            "11111111",
-            "11111111",
-            "11111111",
-            "11111111",
-            "11111111",
-            "11111111",
-            "11111111",
-            "11111111",
+            str(light_board[0]),
+            str(light_board[1]),
+            str(light_board[2]),
+            str(light_board[3]),
+            str(light_board[4]),
+            str(light_board[5]),
+            str(light_board[6]),
+            str(light_board[7]),
         )
-        breakpoint()
-        self.nl_interface.set_all_LEDs(
-            "00000000",
-            "00000000",
-            "00000000",
-            "00000000",
-            "00000000",
-            "00000000",
-            "00000000",
-            "00000000",
-        )
-
-        """
-            light_board[0],
-            light_board[1],
-            light_board[2],
-            light_board[3],
-            light_board[4],
-            light_board[5],
-            light_board[6],
-            light_board[7],
-        """
 
     def turn_off_all_LEDs(self) -> None:
         """turn off all the leds"""
@@ -655,26 +671,12 @@ def test_usb():
     nl_man.show_board_diff(b1, b2)
     print("(test usb connection) testing  set_all_LEDs.")
     # create a np.array of all true
-    zeros = np.array(
-        [
-            "0,0,0,0,0,0,0,0",
-            "0,0,0,0,0,0,0,0",
-            "0,0,0,0,0,0,0,0",
-            "0,0,0,0,0,0,0,0",
-            "0,0,0,0,0,0,0,0",
-            "0,0,0,0,0,0,0,0",
-            "0,0,0,0,0,0,0,0",
-            "0,0,0,0,0,0,0,0",
-            "0,0,0,0,0,0,0,0",
-        ],
-        dtype=np.str_,
-    )
 
-    nl_man.set_all_LEDs(zeros)
+    nl_man.set_all_LEDs(ONES)
     print("all the lights should be on, confirm and press enter")
     readchar.readchar()
 
-    nl_man.set_all_LEDs(np.zeros((8, 8), dtype=np.bool_))
+    nl_man.set_all_LEDs(ZEROS)
     print("all the lights should be off, confirm and press enter")
     readchar.readchar()
 
