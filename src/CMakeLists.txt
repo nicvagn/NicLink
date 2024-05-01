@@ -9,7 +9,6 @@ CMAKE_POLICY(SET CMP0076 NEW)
 # STILL LOAD PYTHON
 CMAKE_POLICY(SET CMP0148 OLD)
 
-
 # set settings
 set(PYBIND11_PYTHON_VERSION 3.12)
 # set the wich standard version (C++) the target's will be compiled with. Make it required

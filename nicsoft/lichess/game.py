@@ -36,6 +36,9 @@ class Game:
 
     def __init__(self, game_event: dict) -> None:
         """initialize this Game"""
+        logger = logging.getLogger("nl_lichess")
+        logger.info("Game class created")
+
         self.fullId: str = game_event["fullId"]
         self.gameId: str = game_event["gameId"]
         self.id = self.gameId

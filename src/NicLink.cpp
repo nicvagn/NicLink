@@ -1,4 +1,5 @@
 #include <python3.12/Python.h>
+#include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/iostream.h>
 #include "EasyLink.h"
@@ -145,6 +146,17 @@ void setLED(int x, int y, bool LEDsetting)
     chessLink -> switchRealTimeMode();
 }
 
+/** TODO:
+ * set all the led's given ...
+ *
+void setAllLEDs(py::array_t<py::bool_> light_map)
+{
+    if(light_map[0][0])
+    {
+        cout << "f yea 77777777" << endl;
+    }
+}
+ */
 /**
  * set all the led's given std::string's of all the rows
  */

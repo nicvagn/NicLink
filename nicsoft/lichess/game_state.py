@@ -21,6 +21,12 @@ class GameState:
     """A class used to contain all the information in a berserk board api game state."""
 
     def __init__(self, game_state: dict) -> None:
+        # TODO: FIND OUT HOW EXPENSIVE THIS IS
+        self.logger = logging.getLogger("nl_lichess")
+
+        self.logger.info(
+            "GameState: gs created w game_state: dict -> %s \n -------- \n", game_state
+        )
         if game_state["type"] != "gameState":
             raise ValueError(
                 """'GameState instantiated with 

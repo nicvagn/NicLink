@@ -15,13 +15,17 @@ import time
 # type hints
 from numbers import Number
 
+# pip libraries
 import chess
+import numpy as np
 import readchar
 
 # mine
 import niclink._niclink as _niclink
 import niclink.nl_bluetooth
 from niclink.nl_exceptions import *
+
+### CONSTANTS ###
 
 
 class NicLinkManager(threading.Thread):
@@ -47,6 +51,7 @@ class NicLinkManager(threading.Thread):
         else:
             self.logger = logging.getLogger("niclink")
             self.logger.setLevel(logging.ERROR)
+            self.logger.error("niclink made it's own logger")
 
         if bluetooth:
             # connect the board w bluetooth
@@ -77,6 +82,8 @@ class NicLinkManager(threading.Thread):
         # and such
         self.lock = threading.Lock()
 
+        self.led_map = np.zeros((8, 8), dtype=np.str_)
+
         # initialize the led helper thread
         """ the led helper thread is charged with always keeping
         the last move indicated with the LEDs
@@ -102,7 +109,6 @@ class NicLinkManager(threading.Thread):
 
     def _run_game(self):
         """handle a chessgame over NicLink"""
-
         # run a game
         while not self.game_over.is_set() and not self.kill_switch.is_set():
             time.sleep(self.thread_sleep_delay)
@@ -122,7 +128,7 @@ class NicLinkManager(threading.Thread):
 
         if testFEN == "" or None:
             exceptionMessage = "Board initialization error. '' or None for FEN.  \
-                    Is the board connected and turned on?"
+Is the board connected and turned on?"
             raise RuntimeError(exceptionMessage)
 
         self.logger.info(f"Board initialized: initial fen: { testFEN }\n")
@@ -162,12 +168,12 @@ class NicLinkManager(threading.Thread):
         @param: status: True | False"""
 
         # find the file number by itteration
-        files = ["a", "b", "c", "d", "e", "f", "g", "h"]
+        files = np.array(["a", "b", "c", "d", "e", "f", "g", "h"])
         found = False
         letter = square[0]
 
         file_num = 0
-        while file_num < len(files):
+        while file_num < 8:
             if letter == files[file_num]:
                 found = True
                 break
@@ -189,14 +195,40 @@ class NicLinkManager(threading.Thread):
         # this is supper fucked, but the chessboard interaly starts counting at h8
         self.nl_interface.set_LED(7 - num, 7 - file_num, status)
 
-    def set_all_LEDs(self, light_board: list[str]) -> None:
+    def set_all_LEDs(self, light_board: np.ndarray[np.str_]) -> None:
         """set all led's on ext. chess board
         @param: light_board - a list of len 8 made up of
                 str of len 8 with the 1 for 0 off
                 for the led of that square
         """
-
+        breakpoint()
+        r0 = str(light_board[0])
+        print(type(r0))
+        # the pybind11 use 8 str, because it is difficult
+        # to use complex data structures between languages
         self.nl_interface.set_all_LEDs(
+            "11111111",
+            "11111111",
+            "11111111",
+            "11111111",
+            "11111111",
+            "11111111",
+            "11111111",
+            "11111111",
+        )
+        breakpoint()
+        self.nl_interface.set_all_LEDs(
+            "00000000",
+            "00000000",
+            "00000000",
+            "00000000",
+            "00000000",
+            "00000000",
+            "00000000",
+            "00000000",
+        )
+
+        """
             light_board[0],
             light_board[1],
             light_board[2],
@@ -205,7 +237,7 @@ class NicLinkManager(threading.Thread):
             light_board[5],
             light_board[6],
             light_board[7],
-        )
+        """
 
     def turn_off_all_LEDs(self) -> None:
         """turn off all the leds"""
@@ -220,7 +252,12 @@ class NicLinkManager(threading.Thread):
             raise NoNicLinkFEN("No fen got from board")
 
     def put_board_FEN_on_board(self, boardFEN: str) -> chess.Board:
-        """show just the board part of FEN on asci chessboard, then return it for logging purposes"""
+        """show just the board part of FEN on asci chessboard,
+           then return it for logging purposes
+        @param: boardFEN: just the board part of a fen,
+                          ie: 8/8/8/8/8/8/8 for empty board ...
+        @return: a chess.Board with that board fen on it
+        """
         tmp_board = chess.Board()
         tmp_board.set_board_fen(boardFEN)
         print(tmp_board)
@@ -230,7 +267,8 @@ class NicLinkManager(threading.Thread):
         self, new_FEN: str
     ) -> str:  # a move in quardinate notation
         """get the move that occured to change the game_board fen into a given FEN.
-        return the move in coordinate notation
+        @param: new_FEN a board fen of the pos. of external board to parse move from
+        return: the move in coordinate notation
         """
         old_FEN = self.game_board.board_fen()
         if new_FEN == old_FEN:
@@ -269,7 +307,7 @@ current board: \n%s\n board we are using to check legal moves: \n%s\n",
         error_board.set_board_fen(new_FEN)
         self.show_board_diff(error_board, self.game_board)
         message = f"Board we see:\n{ str(error_board) }\nis not a possible result from \
-                a legal move on:\n{ str(self.game_board) }\n"
+a legal move on:\n{ str(self.game_board) }\n"
         raise IllegalMove(message)
 
     def check_for_move(self) -> bool | str:
@@ -318,7 +356,7 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
             except ValueError:
                 self.logger.warn(
                     "self.find_move_from_FEN_change(new_FEN) returned None. \
-                            No move was found."
+No move was found."
                 )
                 return False
             with self.lock:
@@ -326,8 +364,10 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
 
         else:
             self.logger.info("no change.")
+            # pause for a refresher
+            time.sleep(self.refresh_delay)
 
-        return False
+            return False
 
     def set_move_LEDs(self, move: str | chess.Move) -> None:
         """highlight a move. Light up the origin and destination LED"""
@@ -338,6 +378,9 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
         # make sure move is of type str
         if type(move) != str:
             try:
+                self.logger.error(
+                    "\n\n set_move_LEDs entered with a move of type chess.Move\n\n"
+                )
                 move = move.uci()
             except Exception as err:
                 message = f"{err} was raised exception on trying to convert move { move } to uci."
@@ -393,7 +436,7 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
                 # FIX: OLD Investigate why i did that
                 # if self.last_move is not None:
                 #    self.set_move_LEDs(self.last_move)
-                time.sleep(0.001)
+                time.sleep(0.5)
 
                 continue
 
@@ -468,6 +511,26 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
         @param: board1 - refrence board
         @param: board2 - board to display diff from refrence board
         """
+        # cread a board for recording diff on
+        diff_board = np.zeros((8, 8), dtype=np.byte)
+        # go through the squares and turn on the light for ones that are in error
+        for n in range(0, 8):
+            # because unicode ord("a") is 96, :. the offset
+            for a in range(ord("a"), ord("h")):
+                square = chr(a) + str(n + 1)  # real life is not 0 based
+                py_square = chess.parse_square(square)
+                if board1.piece_at(py_square) != board2.piece_at(py_square):
+                    # record the diff in diff array
+                    diff_board[n][a - 97] = 1
+
+        print(diff_board)
+
+    '''
+    def show_board_diff(self, board1: chess.Board, board2: chess.Board) -> None:
+        """show the differance between two boards and output differance on a chessboard
+        @param: board1 - refrence board
+        @param: board2 - board to display diff from refrence board
+        """
         # go through the squares and turn on the light for ones that are in error
         self.LEDS_in_use.set()  # say we are using the led's
         is_diff = False
@@ -498,6 +561,7 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
         # if there is a diff beep
         if is_diff:
             self.beep()
+    '''
 
     def get_game_FEN(self) -> str:
         """get the game board FEN"""
@@ -549,54 +613,6 @@ def _led_manager(nl_man: NicLinkManager, refresh_delay: float) -> None:
         time.sleep(refresh_delay)
 
 
-# TODO:
-def test_bt():
-    """test nl_bluetooth"""
-    global logger
-    nl_instance = NicLinkManager(2, logger=logger, bluetooth=True)
-
-
-def test_usb():
-    """test usb connection"""
-    global logger
-
-    nl_instance = NicLinkManager(2, logger=logger)
-
-    print("(test usb connection) testing  set_all_LEDs.")
-
-    all_on = "11111111"
-    on = [all_on, all_on, all_on, all_on, all_on, all_on, all_on, all_on]
-    nl_instance.set_all_LEDs(on)
-
-    print("all the lights should be on, confirm and press enter")
-    readchar.readchar()
-
-    nl_instance.set_all_LEDs(
-        [
-            "00000000",
-            "00000000",
-            "00000000",
-            "00000000",
-            "00000000",
-            "00000000",
-            "00000000",
-            "00000000",
-        ]
-    )
-
-    print("all the lights should be off, confirm and press enter")
-    readchar.readchar()
-
-    print("(test usb connection) set up the board and press enter.")
-    nl_instance.show_game_board()
-    print("===============")
-    readchar.readkey()
-
-    while True:
-        move = nl_instance.await_move()
-        print(move)
-
-
 # logger setup
 logger = logging.getLogger("niclink")
 logger.setLevel(logging.DEBUG)
@@ -617,6 +633,60 @@ def log_handled_exeption(exception: Exception) -> None:
 
 # setup except hook
 sys.excepthook = log_except_hook
+
+
+###### TEST SHIT #######
+def test_bt():
+    """test nl_bluetooth"""
+    global logger
+    nl_man = NicLinkManager(2, logger=logger, bluetooth=True)
+
+
+def test_usb():
+    """test usb connection"""
+    global logger
+    b1 = chess.Board()
+    b2 = chess.Board()
+    b2.push_uci("e2e4")
+    nl_man = NicLinkManager(2, logger=logger)
+    # so nothing messes with the leds
+    nl_man.LEDS_in_use.set()
+    print("TEST: man.show_board_diff(b1,b2)")
+    nl_man.show_board_diff(b1, b2)
+    print("(test usb connection) testing  set_all_LEDs.")
+    # create a np.array of all true
+    zeros = np.array(
+        [
+            "0,0,0,0,0,0,0,0",
+            "0,0,0,0,0,0,0,0",
+            "0,0,0,0,0,0,0,0",
+            "0,0,0,0,0,0,0,0",
+            "0,0,0,0,0,0,0,0",
+            "0,0,0,0,0,0,0,0",
+            "0,0,0,0,0,0,0,0",
+            "0,0,0,0,0,0,0,0",
+            "0,0,0,0,0,0,0,0",
+        ],
+        dtype=np.str_,
+    )
+
+    nl_man.set_all_LEDs(zeros)
+    print("all the lights should be on, confirm and press enter")
+    readchar.readchar()
+
+    nl_man.set_all_LEDs(np.zeros((8, 8), dtype=np.bool_))
+    print("all the lights should be off, confirm and press enter")
+    readchar.readchar()
+
+    print("(test usb connection) set up the board and press enter.")
+    nl_man.show_game_board()
+    print("===============")
+    readchar.readkey()
+
+    while True:
+        move = nl_man.await_move()
+        print(move)
+
 
 if __name__ == "__main__":
     # test_bt()
