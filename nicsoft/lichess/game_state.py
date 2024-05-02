@@ -4,6 +4,7 @@
 #
 #  You should have received a copy of the GNU General Public License along with NicLink. If not, see <https://www.gnu.org/licenses/>.
 
+import logging
 from datetime import timedelta
 from typing import List
 
