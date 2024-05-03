@@ -4,8 +4,9 @@
 #
 #  You should have received a copy of the GNU General Public License along with NicLink. If not, see <https://www.gnu.org/licenses/>.
 
-from niclink import NicLinkManager
 import time
+
+from niclink import NicLinkManager
 
 print("\n\n====== NicLink test lights ====== \n")
 
@@ -15,18 +16,27 @@ nl = NicLinkManager(1)
 
 print("all the lights should come on, starting with a1 finishing with h8")
 
-for x in range(1, 9):
-    nl.beep()
-    for a in range(1, 9):
-        square = chr(ord("`") + a) + str(x)
-        print(square + " on")
-        nl.set_led(square, True)
 
-        time.sleep((0.01))
+def set_led():
+    for x in range(1, 9):
+        nl.beep()
+        for a in range(1, 9):
+            square = chr(ord("`") + a) + str(x)
+            print(square + " on")
+            nl.set_led(square, True)
+
+            time.sleep((0.01))
+
+    for x in range(1, 9):
+        for a in range(1, 9):
+            square = chr(ord("`") + a) + str(x)
+            print(square + " off")
+            nl.set_led(square, False)
 
 
-for x in range(1, 9):
-    for a in range(1, 9):
-        square = chr(ord("`") + a) + str(x)
-        print(square + " off")
-        nl.set_led(square, False)
+def set_move_leds():
+    move = "e2e4"
+    nl.set_move_LEDs(move)
+
+
+set_move_leds()

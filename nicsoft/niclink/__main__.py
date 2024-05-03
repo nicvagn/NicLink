@@ -53,6 +53,12 @@ ZEROS = np.array(
     dtype=np.str_,
 )
 
+FILES = np.array(["a", "b", "c", "d", "e", "f", "g", "h"])
+
+NO_MOVE_DELAY = 0.8
+
+LIGHT_THREAD_DELAY = 0.5
+
 
 class NicLinkManager(threading.Thread):
     """manage Chessnut air external board in it's own thread"""
@@ -99,8 +105,6 @@ class NicLinkManager(threading.Thread):
         self.has_moved = threading.Event()
         self.kill_switch = threading.Event()
         self.start_game = threading.Event()
-        self.LEDS_in_use = threading.Event()
-        self.LEDS_changed = threading.Event()
         """
 
         ### threading lock ###
@@ -109,15 +113,6 @@ class NicLinkManager(threading.Thread):
         self.lock = threading.Lock()
 
         self.led_map = np.zeros((8, 8), dtype=np.str_)
-
-        # initialize the led helper thread
-        """ the led helper thread is charged with always keeping
-        the last move indicated with the LEDs
-        """
-        move_LED_man = threading.Thread(
-            target=_led_manager, daemon=True, args=(self, self.thread_sleep_delay)
-        )
-        move_LED_man.start()
 
     def run(self):
         """run and wait for a game to begin"""
@@ -131,18 +126,20 @@ class NicLinkManager(threading.Thread):
         # disconnect from board
         self.disconnect()
 
-        raise ExitNicLink("Thank you for using NicLink")
+        raise ExitNicLink("Thank you for using NicLink (raised in NicLinkManager.run()")
 
     def _run_game(self):
         """handle a chessgame over NicLink"""
-        # run a game
-        while not self.game_over.is_set() and not self.kill_switch.is_set():
-            time.sleep(self.thread_sleep_delay)
+        # run a game, ie wait for GemeOver event
+        self.game_over.wait()
+        # game is over, reset NicLink
+        self.reset()
+        self.logger.info("_run_game(...): game_over event set, resetting NicLink")
 
     def connect(self, bluetooth: bool = False):
         """connect to the chessboard
-        @param: bluetooth - should we use bluetooth"""
-
+        @param: bluetooth - should we use bluetooth
+        """
         # connect to the chessboard, this must be done first
         self.nl_interface.connect()
 
@@ -183,24 +180,23 @@ Is the board connected and turned on?"
         self.has_moved = threading.Event()
         self.kill_switch = threading.Event()
         self.start_game = threading.Event()
-        self.LEDS_in_use = threading.Event()
-        self.LEDS_changed = threading.Event()
 
-        self.logger.info("\nNicLinkManager reset\n")
+        self.logger.info("NicLinkManager reset\n")
 
     def set_led(self, square: str, status: bool):
         """set an LED at a given square to a status
         @param: square (square: a1, e4 etc)
-        @param: status: True | False"""
+        @param: status: True | False
+        """
+        global FILES
 
         # find the file number by itteration
-        files = np.array(["a", "b", "c", "d", "e", "f", "g", "h"])
         found = False
         letter = square[0]
 
         file_num = 0
         while file_num < 8:
-            if letter == files[file_num]:
+            if letter == FILES[file_num]:
                 found = True
                 break
             file_num += 1
@@ -210,16 +206,35 @@ Is the board connected and turned on?"
 
         if not found:
             raise ValueError(f"{ square[1] } is not a valid file")
-        """
-        # modify the led map to reflect this change
-        if status:
-            led = 1
-        else:
-            led = 0
-        """
 
         # this is supper fucked, but the chessboard interaly starts counting at h8
         self.nl_interface.set_LED(7 - num, 7 - file_num, status)
+
+    def set_move_LEDs(self, move: str) -> None:
+        """highlight a move. Light up the origin and destination LED
+        @param: move: a move in uci
+        """
+        self.logger.info("man.set_move_LEDs( %s ) called\n", move)
+        # turn off the led's
+        self.turn_off_all_LEDs()
+        # make sure move is of type str
+        if type(move) != str:
+            try:
+                self.logger.error(
+                    "\n\n set_move_LEDs entered with a move of type chess.Move\n\n"
+                )
+                move = move.uci()
+            except Exception as err:
+                message = f"{err} was raised exception on trying to convert move { move } to uci."
+                self.logger.error(message)
+        if move is not None:
+            self.logger.info("led on(origin): %s", move[:2])
+            self.set_led(move[:2], True)  # source
+
+            self.logger.info("led on(dest): %s", move[2:4])
+            self.set_led(move[2:4], True)  # dest
+        else:
+            raise NoMove("NicLinkManager.set_move_LEDs(): Move is None")
 
     def set_all_LEDs(self, light_board: np.ndarray[np.str_]) -> None:
         """set all led's on ext. chess board
@@ -232,16 +247,7 @@ Is the board connected and turned on?"
                 light_board %s",
             light_board,
         )
-        """
-        r0 = str(light_board[0])
-        r1 = str(light_board[1])
-        r2 = str(light_board[2])
-        r3 = str(light_board[3])
-        r4 = str(light_board[4])
-        r5 = str(light_board[5])
-        r6 = str(light_board[6])
-        r7 = str(light_board[7])
-        """
+
         # the pybind11 use 8 str, because it is difficult
         # to use complex data structures between languages
         self.nl_interface.set_all_LEDs(
@@ -289,7 +295,6 @@ Is the board connected and turned on?"
         old_FEN = self.game_board.board_fen()
         if new_FEN == old_FEN:
             print("no fen differance")
-            # HACK: self.turn_off_all_LEDs()
             raise NoMove("No FEN differance")
 
         self.logger.debug("new_FEN" + new_FEN)
@@ -347,11 +352,6 @@ a legal move on:\n{ str(self.game_board) }\n"
             # check if the move is valid, and set last move
             try:
                 self.last_move = self.find_move_from_FEN_change(new_FEN)
-                """ I do not think this is needed, as we want keyboard except's to bubble up
-                    except KeyboardInterrupt:
-                    self.logger.info("KeyboardInterrupt: bye")
-                    sys.exit(0)
-                """
             except RuntimeError as err:
                 log_handled_exeption(err)
                 self.logger.warning(
@@ -385,39 +385,14 @@ No move was found."
 
             return False
 
-    def set_move_LEDs(self, move: str | chess.Move) -> None:
-        """highlight a move. Light up the origin and destination LED"""
-        self.LEDS_in_use.set()
-        self.LEDS_changed.set()
-        # turn off the led's
-        self.turn_off_all_LEDs()
-        # make sure move is of type str
-        if type(move) != str:
-            try:
-                self.logger.error(
-                    "\n\n set_move_LEDs entered with a move of type chess.Move\n\n"
-                )
-                move = move.uci()
-            except Exception as err:
-                message = f"{err} was raised exception on trying to convert move { move } to uci."
-                self.logger.error(message)
-        if move is not None:
-            self.logger.info("led on(origin): %s", move[:2])
-            self.set_led(move[:2], True)  # source
-
-            self.logger.info("led on(dest): %s", move[2:4])
-            self.set_led(move[2:4], True)  # dest
-        else:
-            raise NoMove("NicLinkManager.set_move_LEDs(): Move is None")
-        self.LEDS_in_use.clear()
-
     def await_move(self) -> str | None:
         """wait for legal move, and return it in coordinate notation after
         making it on internal board
         """
+        global NO_MOVE_DELAY
         # loop until we get a valid move
         attempts = 0
-        while not self.game_over.is_set() and not self.kill_switch.is_set():
+        while not self.kill_switch.is_set():
             self.logger.info(
                 "is game_over threading event set? %s", self.game_over.is_set()
             )
@@ -437,9 +412,6 @@ No move was found."
                         move,
                         attempts,
                     )
-                    # a move has been played
-                    self.make_move_game_board(move)
-                    self.logger.info("move made on gameboard. move %s", move)
                 else:
                     self.logger.info("no move")
                     # if move is false continue
@@ -449,10 +421,7 @@ No move was found."
                 # no move made, wait refresh_delay and continue
                 attempts += 1
                 self.logger.info("NoMove from chessboard. Attempt: %s", attempts)
-                # FIX: OLD Investigate why i did that
-                # if self.last_move is not None:
-                #    self.set_move_LEDs(self.last_move)
-                time.sleep(0.5)
+                time.sleep(NO_MOVE_DELAY)
 
                 continue
 
@@ -460,14 +429,19 @@ No move was found."
                 # IllegalMove made, waiting then trying again
                 attempts += 1
                 self.logger.error(
-                    "\n %s | waiting refresh_delay= %s and checking again.\n",
+                    "\nIllegal Move: %s | waiting NO_MOVE_DELAY= %s and checking again.\n",
                     err,
-                    self.refresh_delay,
+                    NO_MOVE_DELAY,
                 )
-                time.sleep(self.thread_sleep_delay)
+                time.sleep(NO_MOVE_DELAY)
                 continue
 
             return move
+
+        # exit Niclink
+        raise ExitNicLink(
+            "in await_move():\nkill_switch.is_set: %s" % (self.kill_switch.is_set(),)
+        )
 
     def get_last_move(self) -> str:
         """get the last move played on the chessboard"""
@@ -478,10 +452,16 @@ No move was found."
             return self.last_move
 
     def make_move_game_board(self, move: str) -> None:
-        """make a move on the internal rep. of the game_board. update the last move made"""
+        """make a move on the internal rep. of the game_board.
+        update the last move made. This is not done automatically,
+        so external program's can have more control
+        @param: move - move in uci str
+        """
+        self.logger.info("move made on gameboard. move %s", move)
         self.game_board.push_uci(move)
         # update the last move
         self.last_move = move
+        self.set_move_LEDs(move)
         self.logger.info(
             "made move on internal board, BOARD POST MOVE:\n%s", self.game_board
         )
@@ -495,7 +475,10 @@ No move was found."
         self.set_board_FEN(self.game_board, FEN)
 
     def show_FEN_on_board(self, FEN: str) -> chess.Board:
-        """print a FEN on on a chessboard"""
+        """print a FEN on on a chessboard
+        @param: FEN - (str) FEN to display on board
+        @returns: a board with the fen on it
+        """
         board = chess.Board()
         self.set_board_FEN(board, FEN)
         print(board)
@@ -511,16 +494,15 @@ No move was found."
         print(self.game_board)
 
     def set_game_board(self, board: chess.Board) -> None:
-        """set the game board"""
+        """set the game board
+        @param: board - the board to set as the game board
+        """
         with self.lock:
             self.game_board = board
 
     def gameover_lights(self) -> None:
         """show some fireworks"""
-        self.LEDS_in_use.set()
-        self.LEDS_changed.set()
         self.nl_interface.gameover_lights()
-        self.LEDS_in_use.clear()
 
     def show_board_diff(self, board1: chess.Board, board2: chess.Board) -> None:
         """show the differance between two boards and output differance on a chessboard
@@ -539,45 +521,12 @@ No move was found."
                     # record the diff in diff array
                     diff_board[n][a - 97] = 1
 
-        print(diff_board)
+        self.logger.info("show_board_diff: diff_board %s\n", diff_board)
 
-    '''
-    def show_board_diff(self, board1: chess.Board, board2: chess.Board) -> None:
-        """show the differance between two boards and output differance on a chessboard
-        @param: board1 - refrence board
-        @param: board2 - board to display diff from refrence board
-        """
-        # go through the squares and turn on the light for ones that are in error
-        self.LEDS_in_use.set()  # say we are using the led's
-        is_diff = False
-        for n in range(1, 9):
-            for a in range(ord("a"), ord("h") + 1):
-                square = chr(a) + str(n)
-                py_square = chess.parse_square(square)
-                if board1.piece_at(py_square) != board2.piece_at(py_square):
-
-                    if self.game_over.is_set() or self.kill_switch.is_set():
-                        logger.info(
-                            "show_board_diff quit early because of threading events"
-                        )
-                        return
-
-                    print(
-                        f"\n\nSquare { square } is not the same. \n board1: \
-{ board1.piece_at(py_square) } \n board2: { board2.piece_at(py_square) }"
-                    )
-                    # say that we changed the led's
-                    self.LEDS_changed.set()
-                    self.set_led(square, True)
-
-                    is_diff = True
-
-        # we are no longer using the LEDs
-        self.LEDS_in_use.clear()
-        # if there is a diff beep
-        if is_diff:
+        if np.count_nonzero(diff_board) != 0:
             self.beep()
-    '''
+            self.logger.info("show_board_diff: diff found, self.beep()ing\n")
+            time.sleep(NO_MOVE_DELAY)
 
     def get_game_FEN(self) -> str:
         """get the game board FEN"""
@@ -609,24 +558,10 @@ No move was found."
     def opponent_moved(self, move: str) -> None:
         """the other player moved in a chess game.
         Signal LEDS_changed and update last move
+        @param: move - the move in a uci str
         """
         self.last_move = move
-        self.LEDS_changed.set()
-
-
-def _led_manager(nl_man: NicLinkManager, refresh_delay: float) -> None:
-    """a thread to keep the led's displaying the previous move"""
-
-    while not nl_man.kill_switch.is_set():
-        if not nl_man.LEDS_in_use.is_set():
-            # if the last move has changed,
-            # or the lcd's have been changed, display the move
-            if nl_man.LEDS_changed.is_set() and nl_man.last_move is not None:
-                nl_man.turn_off_all_LEDs()
-                nl_man.set_move_LEDs(nl_man.last_move)
-                nl_man.LEDS_changed.clear()
-        # let other thread's run
-        time.sleep(refresh_delay)
+        self.set_move_LEDs(move)
 
 
 # logger setup
@@ -666,7 +601,6 @@ def test_usb():
     b2.push_uci("e2e4")
     nl_man = NicLinkManager(2, logger=logger)
     # so nothing messes with the leds
-    nl_man.LEDS_in_use.set()
     print("TEST: man.show_board_diff(b1,b2)")
     nl_man.show_board_diff(b1, b2)
     print("(test usb connection) testing  set_all_LEDs.")
@@ -682,11 +616,12 @@ def test_usb():
 
     print("(test usb connection) set up the board and press enter.")
     nl_man.show_game_board()
-    print("===============")
+    print("= set up cb, and test move parsing and set_move_LEDs(move) ")
     readchar.readkey()
 
     while True:
         move = nl_man.await_move()
+
         print(move)
 
 

@@ -296,7 +296,7 @@ class Game(threading.Thread):
         raise NicLinkGameOver("Game over")
 
     def await_move_thread(self, fetch_list: list) -> None:
-        """await move in a way that does not stop the user from exiting and when move is found,
+        """await move in a way that does not stop the user from exiting. and when move is found,
         set it to index 0 on fetch_list in UCI. This function should be ran in it's own Thread.
         """
         global logger, nl_inst
@@ -443,20 +443,21 @@ Will only try twice before calling game_done"
 
             logger.info("The last move was found to be: %s", last_move)
 
+            # TODO: fing a better way
             # set the nl_inst.last move
             nl_inst.last_move = last_move
 
         return tmp_chessboard
 
     def signal_game_state_change(self, game_state: GameState) -> None:
-        """signal a state change, this is just to signal the external clock rn"""
+        """signal a state change, signal the external clock and set the last move"""
 
         logger.info(
             "\nsignal_game_state_change(self, game_state) entered with GameState: %s of type %s",
             game_state,
             type(game_state),
         )
-        if not game_state.first_move():
+        if game_state.has_moves():
             # update the last move
             self.last_move: str = game_state.get_last_move()
             # tell nl about the move
@@ -464,8 +465,9 @@ Will only try twice before calling game_done"
 
         # if chess_clock send new timestamp to clock
         if self.chess_clock:
-            logger.info("\n\nGameState sent to ChessClock: %s \n", game_state)
-            self.chess_clock.move_made(game_state)
+            if not game_state.first_move():
+                logger.info("\n\nGameState sent to ChessClock: %s \n", game_state)
+                self.chess_clock.move_made(game_state)
 
     def handle_state_change(self, game_state: GameState) -> None:
         """Handle a state change in the lichess game."""
@@ -710,7 +712,7 @@ def main():
         # main program loop
         while True:
             try:
-                logger.debug("\n==== event loop ====\n")
+                logger.debug("==== lichess event loop start ====\n")
                 print("=== Waiting for lichess event ===")
                 for event in berserk_client.board.stream_incoming_events():
                     if event["type"] == "challenge":
