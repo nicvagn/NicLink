@@ -349,8 +349,6 @@ and setting moved event",
                     raise IllegalMove("Move is None")
                 self.berserk_board_client.make_move(self.game_id, move)
 
-                # set the NicLink last move for LED indication
-                self.nl_inst.make_move_on_game_board(move)
                 # once move has been made set self.response_error_on_last_attempt to false and return
                 self.response_error_on_last_attempt = False
 
@@ -420,12 +418,11 @@ Will only try twice before calling game_done"
         while not nl_inst.game_over.is_set() or self.check_for_game_over(
             GameState(self.current_state["state"])  # TODO: FIND MORE EFFICIENT WAY
         ):
-            sleep(REFRESH_DELAY)
             if self.has_moved.is_set():
                 move = move_fetch_list[0]
                 self.has_moved.clear()
                 return move
-
+            sleep(REFRESH_DELAY)
         raise NoMove("No move in get_move_from_chessboard(...)")
 
     def update_tmp_chessboard(self, move_list: list[str]) -> chess.Board:

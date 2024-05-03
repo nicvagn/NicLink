@@ -115,7 +115,7 @@ class NicLinkManager(threading.Thread):
         the last move indicated with the LEDs
         """
         move_LED_man = threading.Thread(
-            target=_led_manager, daemon=True, args=(self, refresh_delay)
+            target=_led_manager, daemon=True, args=(self, self.thread_sleep_delay)
         )
         move_LED_man.start()
 
@@ -464,7 +464,7 @@ No move was found."
                     err,
                     self.refresh_delay,
                 )
-                time.sleep(self.refresh_delay)
+                time.sleep(self.thread_sleep_delay)
                 continue
 
             return move
