@@ -57,7 +57,7 @@ FILES = np.array(["a", "b", "c", "d", "e", "f", "g", "h"])
 
 NO_MOVE_DELAY = 0.8
 
-LIGHT_THREAD_DELAY = 0.5
+LIGHT_THREAD_DELAY = 1
 
 
 class NicLinkManager(threading.Thread):
@@ -375,6 +375,8 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
 No move was found."
                 )
                 return False
+
+            # return the move
             with self.lock:
                 return self.last_move
 
@@ -457,10 +459,16 @@ No move was found."
         so external program's can have more control
         @param: move - move in uci str
         """
+        if self.last_move == move:
+            self.logger.error(
+                "make_move_game_board(move) called w move == self.last_move. returning"
+            )
+            return
         self.logger.info("move made on gameboard. move %s", move)
         self.game_board.push_uci(move)
         # update the last move
         self.last_move = move
+        # FIX: here
         self.set_move_LEDs(move)
         self.logger.info(
             "made move on internal board, BOARD POST MOVE:\n%s", self.game_board

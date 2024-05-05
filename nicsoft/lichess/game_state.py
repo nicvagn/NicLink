@@ -26,12 +26,13 @@ class GameState:
         self.logger = logging.getLogger("nl_lichess")
 
         self.logger.info(
-            "GameState: gs created w game_state: dict -> %s \n -------- \n", game_state
+            "GameState: gs created w game_state: dict -> %s \n -gamestate bellow- \n",
+            game_state,
         )
         if game_state["type"] != "gameState":
             raise ValueError(
-                """'GameState instantiated with 
-                             a game_state["type"] != "gameState"""
+                """GameState instantiated with 
+a game_state["type"] != "gameState"""
             )
 
         self.moves: List[str] = game_state["moves"].split(" ")

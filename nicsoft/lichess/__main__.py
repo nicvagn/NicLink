@@ -67,6 +67,11 @@ DEBUG = False
 if args.debug:
     DEBUG = True
 
+if args.clock:
+    CHESS_CLOCK = True
+else:
+    CHESS_CLOCK = False
+
 ### constants ###
 # refresh refresh delay for NicLink and Lichess
 REFRESH_DELAY = 0.1
@@ -146,7 +151,7 @@ class Game(threading.Thread):
         playing_white,
         bluetooth=False,
         starting_fen=False,
-        chess_clock=False,
+        chess_clock=CHESS_CLOCK,
         **kwargs,
     ):
         """Game, the client.board, niclink instance, the game id on lila, idk fam"""
