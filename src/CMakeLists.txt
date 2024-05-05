@@ -32,14 +32,14 @@ find_package(PythonLibs REQUIRED)
 add_subdirectory("thirdparty/pybind11")
 # easylink SDK setup #
 # use internal hidapi and spdlog
-add_subdirectory("thirdparty/libusb-cmake")
+#add_subdirectory("thirdparty/libusb-cmake")
 add_subdirectory("thirdparty/hidapi")
 add_subdirectory("thirdparty/spdlog")
 
 if(CMAKE_HOST_APPLE)
   link_libraries(hidapi)
 elseif(CMAKE_HOST_UNIX)
-  link_libraries(hidapi_libusb)
+  link_libraries(hidapi_hidraw)
 elseif(CMAKE_HOST_WIN32)
   link_libraries(hidapi)
 else()
