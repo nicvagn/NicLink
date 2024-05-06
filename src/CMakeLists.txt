@@ -1,13 +1,22 @@
 cmake_minimum_required(VERSION 3.4...3.18)
 
-project(_niclink LANGUAGES CXX)
-
 # SET'S LIST NO LONGER IGNORES EMPTY SETS
 cmake_policy(SET CMP0007 NEW) 
 # change relative source path's to absolute
 CMAKE_POLICY(SET CMP0076 NEW)
 # STILL LOAD PYTHON
 CMAKE_POLICY(SET CMP0148 OLD)
+project(_niclink LANGUAGES CXX)
+
+#TODO: set four your system
+# NOTE: removed as not debbuging c++ code link_libraries(spdlog_header_only)
+set(SPDLOG OFF) # Very fast, header-only/compiled, C++ logging library.
+# NOTE: not needed if using hidraw backend to libusb
+set(LIBUSB OFF) # i am using th hidraw backend adjust if you are not ant need libusb
+# see https://github.com/libusb/libusb
+# see thirdparty/hidapi/README.md
+option(HIDAPI_WITH_LIBUSB "Build LIBUSB-based implementation of HIDAPI" OFF)
+
 
 # set settings
 set(PYBIND11_PYTHON_VERSION 3.12)
@@ -25,16 +34,21 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 find_package(Python COMPONENTS Interpreter Development REQUIRED)
 find_package(PythonLibs REQUIRED)
 
-# find_package method for pybind
-#find_package(pybind11 CONFIG REQUIRED)
-
-# using the add_subdir method
 add_subdirectory("thirdparty/pybind11")
-# easylink SDK setup #
-# use internal hidapi and spdlog
-#add_subdirectory("thirdparty/libusb-cmake")
-add_subdirectory("thirdparty/hidapi")
-add_subdirectory("thirdparty/spdlog")
+# using the add_subdir method
+
+# easylink SDK setup # use internal hidapi and spdlog
+set(HIDAPI_WITH_HIDRAW ON) # for my settup
+add_subdirectory("thirdparty/hidapi-git")
+if(SPDLOG)
+    add_subdirectory("thirdparty/spdlog")
+endif()
+# NOTE: THIS IS NOT NEEDED IF BUILDING WITH THE HIDRAW BACKEND
+if(LIBUSB)
+    add_subdirectory("thirdparty/libusb-cmake")
+    option(HIDAPI_WITH_LIBUSB "Build LIBUSB-based implementation of HIDAPI" ON)
+endif()
+
 
 if(CMAKE_HOST_APPLE)
   link_libraries(hidapi)
@@ -50,7 +64,6 @@ endif()
 # Debug mode
 # ADD_DEFINITIONS(-D_DEBUG_FLAG)
 
-link_libraries(spdlog_header_only)
 
 # pybind and python include dirs
 include_directories(PUBLIC ${PYBIND11_INCLUDE_DIRS})
@@ -63,7 +76,7 @@ add_library(easylink SHARED ${SOURCE_FILES})
 #add_executable(NicLink)
 
 # link it with the libraies I replaced linking with the created lib to linking directly
-link_libraries(easylink hidapi::hidapi spdlog::spdlog pybind11::headers ${PYTHON_LIBRARIES})
+link_libraries(easylink pybind11::headers ${PYTHON_LIBRARIES})
 # C++ standard 11
 # add the pibind module
 

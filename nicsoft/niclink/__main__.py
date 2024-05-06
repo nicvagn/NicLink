@@ -83,7 +83,7 @@ class NicLinkManager(threading.Thread):
         else:
             self.logger = logging.getLogger("niclink")
             self.logger.setLevel(logging.ERROR)
-            self.logger.error("niclink made it's own logger")
+            self.logger.error("niclink made it's own logger with logging level ERROR")
 
         if bluetooth:
             # connect the board w bluetooth
@@ -111,8 +111,6 @@ class NicLinkManager(threading.Thread):
         # used for access to critical vars to provent race conditions
         # and such
         self.lock = threading.Lock()
-
-        self.led_map = np.zeros((8, 8), dtype=np.str_)
 
     def run(self):
         """run and wait for a game to begin"""
@@ -213,10 +211,9 @@ Is the board connected and turned on?"
     def set_move_LEDs(self, move: str) -> None:
         """highlight a move. Light up the origin and destination LED
         @param: move: a move in uci
+        @side_effect: changes board led's. Shut's off all led's, and display's  the move
         """
         self.logger.info("man.set_move_LEDs( %s ) called\n", move)
-        # turn off the led's
-        self.turn_off_all_LEDs()
         # make sure move is of type str
         if type(move) != str:
             try:
@@ -227,14 +224,16 @@ Is the board connected and turned on?"
             except Exception as err:
                 message = f"{err} was raised exception on trying to convert move { move } to uci."
                 self.logger.error(message)
-        if move is not None:
-            self.logger.info("led on(origin): %s", move[:2])
-            self.set_led(move[:2], True)  # source
 
-            self.logger.info("led on(dest): %s", move[2:4])
-            self.set_led(move[2:4], True)  # dest
-        else:
-            raise NoMove("NicLinkManager.set_move_LEDs(): Move is None")
+        self.logger.info("move LED's on for move: %s", move)
+        move_led_map = build_led_map_for_move(move)
+        # TODO: make log, not print
+        self.logger.info(
+            "move led map created. Move: %s \n map: %s", move, move_led_map
+        )
+        log_led_map(move_led_map)
+
+        self.set_all_LEDs(move_led_map)
 
     def set_all_LEDs(self, light_board: np.ndarray[np.str_]) -> None:
         """set all led's on ext. chess board
@@ -518,8 +517,10 @@ No move was found."
         @param: board2 - board to display diff from refrence board
         """
         # cread a board for recording diff on
-        diff_board = np.zeros((8, 8), dtype=np.byte)
+        diff_board = [[False] * 8] * 8
         # go through the squares and turn on the light for ones that are in error
+        diff = False
+        diff_squares = []
         for n in range(0, 8):
             # because unicode ord("a") is 96, :. the offset
             for a in range(ord("a"), ord("h")):
@@ -527,14 +528,15 @@ No move was found."
                 py_square = chess.parse_square(square)
                 if board1.piece_at(py_square) != board2.piece_at(py_square):
                     # record the diff in diff array
-                    diff_board[n][a - 97] = 1
+                    diff_board[n][a - 97] = True
+                    diff = True
 
         self.logger.info("show_board_diff: diff_board %s\n", diff_board)
 
-        if np.count_nonzero(diff_board) != 0:
+        if diff:
             self.beep()
-            self.logger.info("show_board_diff: diff found, self.beep()ing\n")
-            time.sleep(NO_MOVE_DELAY)
+
+            self.logger.info("show_board_diff: diff found\n")
 
     def get_game_FEN(self) -> str:
         """get the game board FEN"""
@@ -570,6 +572,73 @@ No move was found."
         """
         self.last_move = move
         self.set_move_LEDs(move)
+
+
+### helper functions ###
+def square_cords(square) -> (int, int):
+    """find cordinates for a given square on the chess board. (0, 0)
+    is a1.
+    @params: square - std algebraic square, ie b3, a8
+    @returns: touple of the (x, y) coordinate of the square (0 based) (file, rank)
+    """
+    global FILES
+    rank = int(square[1]) - 1  # it's 0 based
+
+    # find the file number by itteration
+    found = False
+    letter = square[0]
+    file_num = 0
+    while file_num < 8:
+        if letter == FILES[file_num]:
+            found = True
+            break
+        file_num += 1
+
+    if not found:
+        raise ValueError(f"{ square[0] } is not a valid file")
+
+    return (file_num, rank)
+
+
+def log_led_map(led_map: np.ndarray[np.str_]) -> None:
+    """log led map pretty 8th file to the top"""
+    logger.info("\nLED map:\n")
+    logger.info(led_map[7], "\n")
+    logger.info(led_map[6], "\n")
+    logger.info(led_map[5], "\n")
+    logger.info(led_map[4], "\n")
+    logger.info(led_map[3], "\n")
+    logger.info(led_map[2], "\n")
+    logger.info(led_map[1], "\n")
+    logger.info(led_map[0], "\n")
+
+
+def build_led_map_for_move(move: str) -> np.ndarray[np.str_]:
+    """builmd the led_map for a given uci move
+    @param: move - move in uci
+    @return: constructed led_map
+    """
+    global logger, ZEROS
+    zeros = "00000000"
+    logger.info("build_led_map_for_move(%s)", move)
+
+    led_map = np.copy(ZEROS)
+
+    # get the squars and the coordinates
+    s1 = move[:2]
+    s2 = move[2:]
+
+    s1_cords = square_cords(s1)
+    s2_cords = square_cords(s2)
+
+    # set 1st square
+    led_map[s1_cords[1]] = zeros[: s1_cords[0]] + "1" + zeros[s1_cords[0] :]
+    # set second square
+    led_map[s2_cords[1]] = zeros[: s2_cords[0]] + "1" + zeros[s2_cords[0] :]
+    logger.info("led map made for move: %s\n", move)
+    log_led_map(led_map)
+
+    return led_map
 
 
 # logger setup
@@ -608,9 +677,20 @@ def test_usb():
     b2 = chess.Board()
     b2.push_uci("e2e4")
     nl_man = NicLinkManager(2, logger=logger)
-    # so nothing messes with the leds
+
+    print("TEST: set_move_led w map")
+    print("e2e4")
+    nl_man.set_move_LEDs("e2e4")
+    readchar.readchar()
+    print("BOARD CLEAR, press a key")
+    nl_man.set_all_LEDs(ZEROS)
+
+    readchar.readchar()
+
     print("TEST: man.show_board_diff(b1,b2)")
     nl_man.show_board_diff(b1, b2)
+
+    readchar.readchar()
     print("(test usb connection) testing  set_all_LEDs.")
     # create a np.array of all true
 
@@ -628,11 +708,19 @@ def test_usb():
     readchar.readkey()
 
     while True:
+        # TODO: make sure await move work's
         move = nl_man.await_move()
-
+        nl_man.make_move_game_board(move)
         print(move)
+        time.sleep(2)
 
 
 if __name__ == "__main__":
     # test_bt()
+    # print("e4", square_cords("e4"))
+    # print("h8", square_cords("h8"))
+    # print("a1", square_cords("a1"))
+    # print("f8", square_cords("f8"))
+    # print("a5", square_cords("a5"))
+    # print("b7", square_cords("b7"))
     test_usb()

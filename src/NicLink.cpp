@@ -84,7 +84,7 @@ void lightsOut()
         return;
     }
 
-    chessLink -> switchUploadMode();
+    //chessLink -> switchUploadMode();
 
     //turn off all the lights
     chessLink -> setLed({
@@ -97,7 +97,7 @@ void lightsOut()
         bitset<8>("00000000"), //
         bitset<8>("00000000"), //
     });
-    chessLink -> switchRealTimeMode();
+    //chessLink -> switchRealTimeMode();
 }
 
 /**
@@ -142,8 +142,7 @@ void setLED(int x, int y, bool LEDsetting)
     }
     // chessLink -> switchUploadMode();
     chessLink -> setLed((uint8_t) x, (uint8_t) y, LEDsetting);
-    // set back to realTimeMode
-    chessLink -> switchRealTimeMode();
+    // set back to realTimeMode chessLink -> switchRealTimeMode();
 }
 
 /** TODO:
@@ -160,20 +159,20 @@ void setAllLEDs(py::array_t<py::bool_> light_map)
 /**
  * set all the led's given std::string's of all the rows
  */
-void setAllLEDs(const std::string row8, const std::string row7,
-        const std::string row6, const std::string row5, const std::string row4,
-        const std::string row3, const std::string row2, const std::string row1)
+void setAllLEDs(const std::string rank1, const std::string rank2,
+        const std::string rank3, const std::string rank4, const std::string rank5,
+        const std::string rank6, const std::string rank7, const std::string rank8)
 {
 
     chessLink -> setLed({
-        bitset<8>(row8), //
-        bitset<8>(row7), //
-        bitset<8>(row6), //
-        bitset<8>(row5), //
-        bitset<8>(row4), //
-        bitset<8>(row3), //
-        bitset<8>(row2), //
-        bitset<8>(row1), //
+        bitset<8>(rank8), //
+        bitset<8>(rank7), //
+        bitset<8>(rank6), //
+        bitset<8>(rank5), //
+        bitset<8>(rank4), //
+        bitset<8>(rank3), //
+        bitset<8>(rank2), //
+        bitset<8>(rank1), //
     });
 }
 

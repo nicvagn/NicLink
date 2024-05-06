@@ -262,7 +262,19 @@ class Game(threading.Thread):
             elif event["type"] == "gameFull":
                 logger.info("\n\n +++ Game Full got +++\n\n")
                 self.game_done()
+            elif event["type"] == "opponentGone":
+                logger.info(">>> opponentGone <<< recived event: %s \n", event)
+                for x in range(0, 2):
+                    for x in range(0, 2):
+                        nl_inst.beep()
+                        sleep(0.2)
+                    sleep(1)
             else:  # If it is not one of these options, kill the stream
+                logger.info("\n\nNew Event: %s", event)
+                for x in range(0, 3):
+                    nl_inst.beep()
+                    sleep(0.5)
+
                 break
 
         self.game_done()
@@ -337,11 +349,6 @@ and setting moved event",
         """make a move in a lichess game"""
         global logger, nl_inst
         logger.info("move made: %s", move)
-
-        # if chess clock, tell chess clock
-        if self.chess_clock:
-            pass
-            # TODO:
 
         while not nl_inst.game_over.is_set():
             logger.info(
