@@ -360,6 +360,7 @@ and setting moved event",
                 if move is None:
                     raise IllegalMove("Move is None")
                 self.berserk_board_client.make_move(self.game_id, move)
+                nl_inst.make_move_game_board(move)
 
                 # once move has been made set self.response_error_on_last_attempt to false and return
                 self.response_error_on_last_attempt = False
@@ -396,7 +397,7 @@ Will only try twice before calling game_done"
 
     def make_first_move(self) -> None:
         """make the first move in a lichess game, before stream starts"""
-        global nl_inst, logger
+        global nl_inst, logger, REFRESH_DELAY
         logger.info("making the first move in the game")
         move = nl_inst.await_move()
         # hack
@@ -408,7 +409,7 @@ Will only try twice before calling game_done"
 
     def get_move_from_chessboard(self, tmp_chessboard: chess.Board) -> str:
         """get a move from the chessboard, and return it in UCI"""
-        global nl_inst, logger
+        global nl_inst, logger, REFRESH_DELAY
         logger.info("get_move_from_chessboard() entered. Our turn to move.\n")
 
         # set this board as NicLink game board

@@ -59,6 +59,10 @@ NO_MOVE_DELAY = 0.8
 
 LIGHT_THREAD_DELAY = 1
 
+### logger ###
+# HACK: this, find a better way to log
+logger = logging.getLogger("NicLink")
+
 
 class NicLinkManager(threading.Thread):
     """manage Chessnut air external board in it's own thread"""
@@ -227,7 +231,7 @@ Is the board connected and turned on?"
 
         self.logger.info("move LED's on for move: %s", move)
         move_led_map = build_led_map_for_move(move)
-        # TODO: make log, not print
+        # log led map
         self.logger.info(
             "move led map created. Move: %s \n map: %s", move, move_led_map
         )
@@ -243,7 +247,7 @@ Is the board connected and turned on?"
         """
         self.logger.info(
             "set_all_LEDs(light_board: np.ndarray[np.str_]): called with \
-                light_board %s",
+light_board %s",
             light_board,
         )
 
@@ -351,7 +355,7 @@ a legal move on:\n{ str(self.game_board) }\n"
             # check if the move is valid, and set last move
             try:
                 self.last_move = self.find_move_from_FEN_change(new_FEN)
-            except RuntimeError as err:
+            except IllegalMove as err:
                 log_handled_exeption(err)
                 self.logger.warning(
                     "\n===== move not valid, undue it and try again. it is white's \
@@ -368,19 +372,13 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
                 time.sleep(self.refresh_delay)
                 return False
 
-            except ValueError:
-                self.logger.warn(
-                    "self.find_move_from_FEN_change(new_FEN) returned None. \
-No move was found."
-                )
-                return False
-
             # return the move
             with self.lock:
                 return self.last_move
 
         else:
-            self.logger.info("no change.")
+            self.logger.info("no change in FEN.")
+            self.turn_off_all_LEDs()
             # pause for a refresher
             time.sleep(self.refresh_delay)
 
@@ -454,9 +452,10 @@ No move was found."
 
     def make_move_game_board(self, move: str) -> None:
         """make a move on the internal rep. of the game_board.
-        update the last move made. This is not done automatically,
-        so external program's can have more control
+        update the last move made. and update the move LED's on ext board.
+        This is not done automatically so external program's can have more control.
         @param: move - move in uci str
+        @side_effect: set's move led's
         """
         if self.last_move == move:
             self.logger.error(
@@ -515,28 +514,48 @@ No move was found."
         """show the differance between two boards and output differance on a chessboard
         @param: board1 - refrence board
         @param: board2 - board to display diff from refrence board
+        @side_effect: changes led's to show diff squares
         """
+        self.logger.info(
+            "man.show_board_diff entered w board's \n%s\nand\n%s", board1, board2
+        )
         # cread a board for recording diff on
-        diff_board = [[False] * 8] * 8
+        diff_map = np.copy(ZEROS)
+        zeros = "00000000"  # for building the diff aray that work's for the way we set LED's
+
         # go through the squares and turn on the light for ones that are in error
         diff = False
-        diff_squares = []
+        diff_squares = []  # what squares are the diff's on
         for n in range(0, 8):
-            # because unicode ord("a") is 96, :. the offset
+            # handle diff's for a file
             for a in range(ord("a"), ord("h")):
+                # get the square in algabraic notation form
                 square = chr(a) + str(n + 1)  # real life is not 0 based
                 py_square = chess.parse_square(square)
                 if board1.piece_at(py_square) != board2.piece_at(py_square):
                     # record the diff in diff array
-                    diff_board[n][a - 97] = True
+                    self.logger.info(
+                        "man.show_board_diff(...): Diff found at square %s", square
+                    )
                     diff = True
+                    # add square to list off diff squares
+                    diff_squares.append(square)
+                    # find the coordinate of the diff square
+                    diff_cords = square_cords(square)
 
-        self.logger.info("show_board_diff: diff_board %s\n", diff_board)
+                    diff_map[diff_cords[1]] = (
+                        zeros[: diff_cords[0]] + "1" + zeros[diff_cords[0] :]
+                    )
 
+        # if there is a diff, beep and show it
         if diff:
             self.beep()
-
-            self.logger.info("show_board_diff: diff found\n")
+            # set all the led's on the diff map
+            self.set_all_LEDs(diff_map)
+            self.logger.info(
+                "show_board_diff: diff found --> diff_squares: %s\n",
+                diff_squares,
+            )
 
     def get_game_FEN(self) -> str:
         """get the game board FEN"""
@@ -603,14 +622,14 @@ def square_cords(square) -> (int, int):
 def log_led_map(led_map: np.ndarray[np.str_]) -> None:
     """log led map pretty 8th file to the top"""
     logger.info("\nLED map:\n")
-    logger.info(led_map[7], "\n")
-    logger.info(led_map[6], "\n")
-    logger.info(led_map[5], "\n")
-    logger.info(led_map[4], "\n")
-    logger.info(led_map[3], "\n")
-    logger.info(led_map[2], "\n")
-    logger.info(led_map[1], "\n")
-    logger.info(led_map[0], "\n")
+    logger.info(str(led_map[7]))
+    logger.info(str(led_map[6]))
+    logger.info(str(led_map[5]))
+    logger.info(str(led_map[4]))
+    logger.info(str(led_map[3]))
+    logger.info(str(led_map[2]))
+    logger.info(str(led_map[1]))
+    logger.info(str(led_map[0]))
 
 
 def build_led_map_for_move(move: str) -> np.ndarray[np.str_]:
@@ -641,9 +660,36 @@ def build_led_map_for_move(move: str) -> np.ndarray[np.str_]:
     return led_map
 
 
-# logger setup
-logger = logging.getLogger("niclink")
-logger.setLevel(logging.DEBUG)
+#### logger setup ####
+def set_up_logger() -> None:
+    """Only run when this module is run as __main__"""
+    global logger
+
+    formatter = logging.Formatter("%(asctime)s %(levelname)s %(module)s %(message)s")
+
+    consoleHandler = logging.StreamHandler(sys.stdout)
+    consoleHandler.setFormatter(formatter)
+    consoleHandler.setLevel(logging.ERROR)
+    logger.addHandler(consoleHandler)
+
+    # logging to a file
+    fileHandler = logging.FileHandler("NicLink.log")
+    logger.addHandler(fileHandler)
+
+    DEBUG = False
+    if DEBUG:
+        logger.info("DEBUG is set.")
+        logger.setLevel(logging.DEBUG)
+        fileHandler.setLevel(logging.DEBUG)
+        consoleHandler.setLevel(logging.DEBUG)
+    else:
+        logger.info("DEBUG not set")
+        # for dev
+        logger.setLevel(logging.DEBUG)
+        consoleHandler.setLevel(logging.DEBUG)
+        fileHandler.setLevel(logging.DEBUG)
+        # logger.setLevel(logging.ERROR) for production
+        # consoleHandler.setLevel(logging.ERROR)
 
 
 #  === exception logging ===
@@ -673,10 +719,16 @@ def test_bt():
 def test_usb():
     """test usb connection"""
     global logger
+
     b1 = chess.Board()
     b2 = chess.Board()
     b2.push_uci("e2e4")
     nl_man = NicLinkManager(2, logger=logger)
+
+    logger.info("TEST: show board diff: shold be e2e4 lit up.")
+    nl_man.show_board_diff(b1, b2)
+    readchar.readchar()
+    sys.exit()
 
     print("TEST: set_move_led w map")
     print("e2e4")
@@ -723,4 +775,5 @@ if __name__ == "__main__":
     # print("f8", square_cords("f8"))
     # print("a5", square_cords("a5"))
     # print("b7", square_cords("b7"))
+    set_up_logger()
     test_usb()
