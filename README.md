@@ -63,9 +63,10 @@ Here is a snippet of said file. If on GNU/Linux you must creat a udev rule. More
   - hidapi and hidapi-devel (or -dev)
 
     - requirements:
-    - libusb (https://github.com/libusb/libusb/releases) - this is included as a submodule
     - pybind11-devel in order to compile the code
     - python-dev or python-devel or whatever it is on your distro needed to build pybind code
+    - only needed if using the libusb backend:
+      - libusb (https://github.com/libusb/libusb/releases) - this is included as a submodule
 
 - pip also obviously
 - python 3.12 and python-dev (or python-devel, you need python.h anyway) and python modules listed in requirements.txt
