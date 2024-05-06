@@ -6,6 +6,7 @@
 #
 #  You should have received a copy of the GNU General Public License along with NicLink. If not, see <https://www.gnu.org/licenses/>.
 
+import logging
 from datetime import timedelta
 
 """samples
@@ -36,6 +37,9 @@ class Game:
 
     def __init__(self, game_event: dict) -> None:
         """initialize this Game"""
+        logger = logging.getLogger("nl_lichess")
+        logger.info("Game class created")
+
         self.fullId: str = game_event["fullId"]
         self.gameId: str = game_event["gameId"]
         self.id = self.gameId

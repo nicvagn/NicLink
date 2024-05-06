@@ -4,6 +4,7 @@
 #
 #  You should have received a copy of the GNU General Public License along with NicLink. If not, see <https://www.gnu.org/licenses/>.
 
+import logging
 from datetime import timedelta
 from typing import List
 
@@ -21,10 +22,17 @@ class GameState:
     """A class used to contain all the information in a berserk board api game state."""
 
     def __init__(self, game_state: dict) -> None:
+        # TODO: FIND OUT HOW EXPENSIVE THIS IS
+        self.logger = logging.getLogger("nl_lichess")
+
+        self.logger.info(
+            "GameState: gs created w game_state: dict -> %s \n -gamestate bellow- \n",
+            game_state,
+        )
         if game_state["type"] != "gameState":
             raise ValueError(
-                """'GameState instantiated with 
-                             a game_state["type"] != "gameState"""
+                """GameState instantiated with 
+a game_state["type"] != "gameState"""
             )
 
         self.moves: List[str] = game_state["moves"].split(" ")
