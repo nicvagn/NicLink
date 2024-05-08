@@ -346,6 +346,18 @@ a legal move on:\n{ str(self.game_board) }\n"
         if new_FEN is None:
             raise ValueError("No FEN from chessboard")
 
+        last_move = self.game_board.pop()
+        # check if you just have not moved the opponent's piece
+        if new_FEN == self.game_board.board_fen():
+            self.logger.info(
+                "board fen is the board fen before opponent move made on chessboard. Returning"
+            )
+            self.game_board.push(last_move)
+            time.sleep(self.refresh_delay)
+            return False
+
+        self.game_board.push(last_move)
+
         if new_FEN != self.game_board.board_fen:
             # a change has occured on the chessboard
             # check to see if the game is over
@@ -463,10 +475,11 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
             )
             return
         self.logger.info("move made on gameboard. move %s", move)
+        # signal that a move was made
+        self.beep()
         self.game_board.push_uci(move)
         # update the last move
         self.last_move = move
-        # FIX: here
         self.set_move_LEDs(move)
         self.logger.info(
             "made move on internal board, BOARD POST MOVE:\n%s", self.game_board
