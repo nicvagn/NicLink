@@ -71,7 +71,8 @@ if args.clock:
     CHESS_CLOCK = True
 else:
     CHESS_CLOCK = False
-
+# HACK:
+CHESS_CLOCK = True
 ### constants ###
 # refresh refresh delay for NicLink and Lichess
 REFRESH_DELAY = 0.1

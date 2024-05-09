@@ -55,6 +55,7 @@ ZEROS = np.array(
 
 FILES = np.array(["a", "b", "c", "d", "e", "f", "g", "h"])
 
+
 NO_MOVE_DELAY = 0.8
 
 LIGHT_THREAD_DELAY = 1
@@ -313,7 +314,7 @@ current board: \n%s\n board we are using to check legal moves: \n%s\n",
             self.put_board_FEN_on_board(self.get_FEN()),
             self.game_board,
         )
-        # find move by bmute force
+        # find move by brute forcecc
         for move in legal_moves:
             # self.logger.info(move)
             tmp_board.push(move)  # Make the move on the board
@@ -521,17 +522,21 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
         )
         # cread a board for recording diff on
         diff_map = np.copy(ZEROS)
-        zeros = "00000000"  # for building the diff aray that work's for the way we set LED's
 
         # go through the squares and turn on the light for ones that are in error
         diff = False
         diff_squares = []  # what squares are the diff's on
+        empty_rank = "00000000"  # for building the diff aray that work's for the way we set LED's
         for n in range(0, 8):
             # handle diff's for a file
             for a in range(ord("a"), ord("h")):
                 # get the square in algabraic notation form
                 square = chr(a) + str(n + 1)  # real life is not 0 based
                 py_square = chess.parse_square(square)
+
+                # find the coordinate of the diff square
+                diff_cords = square_cords(square)
+
                 if board1.piece_at(py_square) != board2.piece_at(py_square):
                     # record the diff in diff array
                     self.logger.info(
@@ -540,11 +545,15 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
                     diff = True
                     # add square to list off diff squares
                     diff_squares.append(square)
-                    # find the coordinate of the diff square
-                    diff_cords = square_cords(square)
 
                     diff_map[diff_cords[1]] = (
-                        zeros[: diff_cords[0]] + "1" + zeros[diff_cords[0] :]
+                        empty_rank[: diff_cords[0]] + "1" + empty_rank[diff_cords[0] :]
+                    )
+
+                elif self.last_move is not None and square in self.last_move:
+                    """if the square is in our last move, it should stay lit"""
+                    diff_map[diff_cords[1]] = (
+                        empty_rank[: diff_cords[0]] + "1" + empty_rank[diff_cords[0] :]
                     )
 
         # if there is a diff, beep and show it
