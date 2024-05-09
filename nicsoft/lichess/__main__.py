@@ -745,8 +745,8 @@ def main():
                     # check for kill switch
                     if nl_inst.kill_switch.is_set():
                         sys.exit(0)
-
-                    sleep(REFRESH_DELAY)  # berserk keep's the stream alive
+                    # WARN: NOT PERMINENT
+                    sleep(2)  # berserk keep's the stream alive
                     # :. if we don't sleep, computer will spin
 
             except KeyboardInterrupt:
