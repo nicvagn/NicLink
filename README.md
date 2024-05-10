@@ -4,7 +4,7 @@
 
 > version 0.9
 
-> checkout this software, it solves the problem's I wanted to solve with NicLink:
+> check out this software, it solves the problem's I wanted to solve with NicLink:
 
     https://chromewebstore.google.com/detail/chessconnect/dmkkcjpbclkkhbdnjgcciohfbnpoaiam?hl=en-GB
 
@@ -13,7 +13,7 @@
 > you must edit the CMakeLists.txt file to work for your system
 
     ```
-    TODO: set four your system:
+    TODO: set for your system:
     NOTE: removed as not debbuging c++ code link_libraries(spdlog_header_only)
     set(SPDLOG OFF) # Very fast, header-only/compiled, C++ logging library.
     NOTE: not needed if using hidraw backend to libusb
