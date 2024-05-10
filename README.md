@@ -52,7 +52,11 @@ Here is a snippet of said file. If on GNU/Linux you must creat a udev rule. More
 
 ## requirements
 
-- get all the required submodules w `git pull recurse-submodules`
+- get all the required submodules with
+      ```
+      $ git submodule update --init --recursive
+      $ git submodule update --recursive --remote
+      ```
 - hidraw and spdlog they are internal in src/thirdparty
 - in order to compile them on Debian you need:
 
