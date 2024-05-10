@@ -26,25 +26,11 @@
 
 Here is a snippet of said file. If on GNU/Linux you must creat a udev rule. More on that later
 
-# gotchas
-
-- if: ModuleNotFoundError: No module named 'niclink' make sure your venv is setup, with the .pth file configured.
-- Make sure you are in said venv
-- make sure you can build the community fork of EasyLinkSDK because I use a basically unmodified version, just w python bindings
-  Link: `https://github.com/miguno/EasyLinkSDK`
-- if you need, install python3.12 from "deadsnakes" google is your bud.
-- if cmake can not find your PYTHON_INCLUDE_DIR OR PYTHON_LIBRARIES:
-  ````bash:
-        cmake ../src \
-        > -DPYTHON_INCLUDE_DIR=$(python3.12 -c "import sysconfig; print(sysconfig.get_path("include"))") \
-        > -DPYTHON_LIBRARY=$(python3.12 -c "import sysconfig.get_config_var('LIBDIR'))")
-        ```
-  ````
-
 # overview
 
-- see the python requirements.txt for external requirements
-- run updateNicLink.sh to compile and prepare the env
+- see the python requirements.txt for external python requirements
+- see "## requirements" below for further C++ and system req's
+- once you have the build environment ready, run updateNicLink.sh to compile and prepare the C++ EasyLinkSDK code. 
 - only tested on gnu/linux with a chessnut air.
 - branches:
   - master: behind the times. More likely to be solid
@@ -137,6 +123,21 @@ and it outputted:
 /n/usr/lib64/python312.zip/n/usr/lib64/python3.12/n/usr/lib64/python3.12/lib-dynload/n/home/nrv/.local/lib/python3.12/site-packages/n**editable**.nicsoft-0.1.0.finder.**path_hook**/n/usr/local/lib64/python3.12/site-packages/n/usr/local/lib/python3.12/site-packages/n/usr/lib64/python3.12/site-packages/n/usr/lib/python3.12/site-packages
 
 **_ jazz hands _**
+
+## gotchas
+
+- if: ModuleNotFoundError: No module named 'niclink' make sure your venv is setup, with the .pth file configured.
+- Make sure you are in said venv
+- make sure you can build the community fork of EasyLinkSDK because I use a basically unmodified version, just w python bindings
+  Link: `https://github.com/miguno/EasyLinkSDK`
+- if you need, install python3.12 from "deadsnakes" google is your bud.
+- if cmake can not find your PYTHON_INCLUDE_DIR OR PYTHON_LIBRARIES:
+  ````bash:
+        cmake ../src \
+        > -DPYTHON_INCLUDE_DIR=$(python3.12 -c "import sysconfig; print(sysconfig.get_path("include"))") \
+        > -DPYTHON_LIBRARY=$(python3.12 -c "import sysconfig.get_config_var('LIBDIR'))")
+        ```
+  ````
 
 ## compiling C++ Easylink and pybind11 module code
 
