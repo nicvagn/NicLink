@@ -30,9 +30,8 @@ Here is a snippet of said file. If on GNU/Linux you must creat a udev rule. More
 
 - see the python requirements.txt for external python requirements
 - see "## requirements" below for further C++ and system req's
-- get all the required submodules with  
+- get all the required submodules with
       $ git submodule update --init --recursive
-      $ git submodule update --recursive --remote
   
 - once you have the build environment ready, run updateNicLink.sh to compile and prepare the C++ EasyLinkSDK code. 
 - only tested on gnu/linux with a chessnut air.
