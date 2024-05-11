@@ -15,14 +15,15 @@ project(niclink LANGUAGES CXX)
 # NOTE: removed as not debbuging c++ code link_libraries(spdlog_header_only)
 set(SPDLOG OFF) # Very fast, header-only/compiled, C++ logging library.
 # NOTE: not needed if using hidraw backend to libusb
-set(LIBUSB OFF) # i am using th hidraw backend adjust if you are not ant need libusb
+set(LIBUSB ON) # i am using th hidraw backend adjust if you are not ant need libusb
 # NOTE: adjust if using libusb
 # see https://github.com/libusb/libusb
 # see thirdparty/hidapi/README.md
-set(HIDRAW ON)
-# the version of python to use, for the pybing module, and etc
+set(HIDRAW OFF)
+# see thirdparty/hidapi/README.md
 # WARNING: only tested w 3.12
 set(PY_VERSION 3.12)
+# the version of python to use, for the pybing module, and etc
 ########################## CONFIG DONE ############################
 
 # set settings
