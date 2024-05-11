@@ -4,7 +4,7 @@
 
 > version 0.9
 
-> checkout this software, it solves the problem's I wanted to solve with NicLink:
+> check out this software, it solves the problem's I wanted to solve with NicLink:
 
     https://chromewebstore.google.com/detail/chessconnect/dmkkcjpbclkkhbdnjgcciohfbnpoaiam?hl=en-GB
 
@@ -13,7 +13,7 @@
 > you must edit the CMakeLists.txt file to work for your system
 
     ```
-    TODO: set four your system:
+    TODO: set for your system:
     NOTE: removed as not debbuging c++ code link_libraries(spdlog_header_only)
     set(SPDLOG OFF) # Very fast, header-only/compiled, C++ logging library.
     NOTE: not needed if using hidraw backend to libusb
@@ -26,34 +26,33 @@
 
 Here is a snippet of said file. If on GNU/Linux you must creat a udev rule. More on that later
 
-# gotchas
-
-- if: ModuleNotFoundError: No module named 'niclink' make sure your venv is setup, with the .pth file configured.
-- Make sure you are in said venv
-- make sure you can build the community fork of EasyLinkSDK because I use a basically unmodified version, just w python bindings
-  Link: `https://github.com/miguno/EasyLinkSDK`
-- if you need, install python3.12 from "deadsnakes" google is your bud.
-- if cmake can not find your PYTHON_INCLUDE_DIR OR PYTHON_LIBRARIES:
-  ````bash:
-        cmake ../src \
-        > -DPYTHON_INCLUDE_DIR=$(python3.12 -c "import sysconfig; print(sysconfig.get_path("include"))") \
-        > -DPYTHON_LIBRARY=$(python3.12 -c "import sysconfig.get_config_var('LIBDIR'))")
-        ```
-  ````
-
 # overview
 
-- see the python requirements.txt for external requirements
-- run updateNicLink.sh to compile and prepare the env
+- see the python requirements.txt for external python requirements
+- see "## requirements" below for further C++ and system req's
+- get all the required submodules with
+      $ git submodule update --init --recursive
+  
+- once you have the build environment ready, run updateNicLink.sh to compile and prepare the C++ EasyLinkSDK code. 
 - only tested on gnu/linux with a chessnut air.
 - branches:
   - master: behind the times. More likely to be solid
   - dev: the wild west of new features
 
 ## requirements
+on Fedora:
+```
+cmake
+gcc
+g++
+python-devel
+pybind11-devel
+libudev-devel
+hidapi-devel
+```
+> detailed ramblings:
 
-- get all the required submodules w `git pull recurse-submodules`
-- hidraw and spdlog they are internal in src/thirdparty
+- hidraw and spdlog are internal in src/thirdparty
 - in order to compile them on Debian you need:
 
   - checkout the community fork of the EasylinkSDK and get that building first.
@@ -92,11 +91,13 @@ it would be swell to hear how installing NicLink goes. requirements.txt should h
 
     python -m venv nicsoft  - This creates a python venv in nicsoft, and should be ran in the NicLink root dir
     cd nicsoft              - enter nicsoft
-    . ./source_pyvenv.sh    - this uses a lille convenance script, but basically all you have to do is source ./bin/activate (other file extensions if not in bash)
+    . ./source_pyvenv.sh    - this uses a lille convenance script, but basically all you have to do is source ./bin/activate (other file extensions if not in bash (or zsh))
+    
+then:
 
-python -m pip install -r requirements.txt - install python requirements, needed to compile and run NicLink
+`python -m pip install -r requirements.txt` -- install python requirements, needed to compile and run NicLink
 
-> In order to setup your python path correctly, put the niclink.pth file someware in your venv python path.
+> In order to setup your python path correctly, put a (adjusted for your system) niclink.pth file somewhere in your venv python path.
 
 for me I modified the niclink.pth file to be: 1. /home/nrv/NicLink
 
@@ -120,7 +121,9 @@ to find out your venv's python path:
 >> print('\n'.join(sys.path))
 ```
 
-> this will tell you your pythonpath 2. create a .pth file pointing to the .../NicLink/nicsoft dir in one of the listed dirs in your pythonpath 3. profit
+    1. this will tell you your pythonpath
+    2. create a .pth file pointing to the .../NicLink/nicsoft dir in one of the listed dirs in your pythonpath
+    3. profit
 
 to test that NicLink dir was added to your python path:
 
@@ -133,6 +136,21 @@ and it outputted:
 /n/usr/lib64/python312.zip/n/usr/lib64/python3.12/n/usr/lib64/python3.12/lib-dynload/n/home/nrv/.local/lib/python3.12/site-packages/n**editable**.nicsoft-0.1.0.finder.**path_hook**/n/usr/local/lib64/python3.12/site-packages/n/usr/local/lib/python3.12/site-packages/n/usr/lib64/python3.12/site-packages/n/usr/lib/python3.12/site-packages
 
 **_ jazz hands _**
+
+## gotchas
+
+- if: ModuleNotFoundError: No module named 'niclink' make sure your venv is setup, with the .pth file configured.
+- Make sure you are in said venv
+- make sure you can build the community fork of EasyLinkSDK because I use a basically unmodified version, just w python bindings
+  Link: `https://github.com/miguno/EasyLinkSDK`
+- if you need, install python3.12 from "deadsnakes" google is your bud.
+- if cmake can not find your PYTHON_INCLUDE_DIR OR PYTHON_LIBRARIES:
+  ````bash:
+        cmake ../src \
+        > -DPYTHON_INCLUDE_DIR=$(python3.12 -c "import sysconfig; print(sysconfig.get_path("include"))") \
+        > -DPYTHON_LIBRARY=$(python3.12 -c "import sysconfig.get_config_var('LIBDIR'))")
+        ```
+  ````
 
 ## compiling C++ Easylink and pybind11 module code
 
