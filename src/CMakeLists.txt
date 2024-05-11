@@ -11,7 +11,7 @@ CMAKE_POLICY(SET CMP0148 OLD)
 project(niclink LANGUAGES CXX)
 
 
-#TODO: set four your system
+#TODO: set for your system
 # NOTE: removed as not debbuging c++ code link_libraries(spdlog_header_only)
 set(SPDLOG OFF) # Very fast, header-only/compiled, C++ logging library.
 # NOTE: not needed if using hidraw backend to libusb
