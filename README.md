@@ -1,8 +1,8 @@
 # NicLink - A python interface for the Chessnut Air
 
-# Notice
-
 > version 0.9
+
+# Notice
 
 > check out this software, it solves the problem's I wanted to solve with NicLink:
 
@@ -31,7 +31,7 @@ Here is a snippet of said file. If on GNU/Linux you must creat a udev rule. More
 - see the python requirements.txt for external python requirements
 - see "## requirements" below for further C++ and system req's
 - get all the required submodules with
-  $ git submodule update --init --recursive
+  `$ git submodule update --init --recursive`
 - once you have the build environment ready, run updateNicLink.sh to compile and prepare the C++ EasyLinkSDK code.
 - only tested on gnu/linux with a chessnut air.
 - branches:
@@ -83,8 +83,6 @@ hidapi-devel
 
 ## Setting up python venv
 
-make sure python-dev (or python-devel or ...) libusb-1.0-0-dev libudev-dev or equivalent are installed
-
 In order to use NicLink while it is in development, it is advised to use a virtual environment.
 I do not have a good enough understanding, but you have the internet.
 ( here is a start: https://python.land/virtual-environments/virtualenv ) Go ham.
@@ -120,11 +118,9 @@ and modified: - nicsoft/lib/python3.12/site-packages/niclink.pth to add
 /home/nrv/dev/NicLink/nicsoft/
 ```
 
-(I no longer recal what the first line does, but if it aint broke, don't fix)
+## to find out your venv's python path:
 
-to find out your venv's python path:
-
-( while in the venv )
+> ( while in the venv )
 
 1. go into your python interpreter and do:
 
@@ -137,7 +133,7 @@ to find out your venv's python path:
     2. create a .pth file pointing to the .../NicLink/nicsoft dir in one of the listed dirs on your pythonpath
     3. profit
 
-to test that NicLink dir was added to your python path:
+2. test that NicLink dir was added to your python path:
 
 ```
 >>> import sys
@@ -172,13 +168,13 @@ and it outputted:
 
 ## compiling C++ Easylink and pybind11 module code
 
-> after you set up the python environment, and are in said environment
+> after you set up the python environment and C++ dependancies, and are in the python environment:
 
-- under gnu/linux + Tux Racer run the bash script updateNicLink.sh. It handles usind cmake
-  to create the make files, and compiling them in the build dir. It then moves the .so created
-  into the niclink dir for use in the pyenv.
+    - under gnu/linux + Tux Racer run the bash script updateNicLink.sh. It handles usind cmake
+      to create the make files, and compiling them in the build dir. It then moves the .so created
+      into the niclink dir for use in the pyenv.
 
-- I do not develop under any other os, so figure it out I guess. Or, install gentoo.
+    - I do not develop under any other os, so figure it out I guess. Or, install gentoo.
 
 ## Using the board on lichess with the board api
 
