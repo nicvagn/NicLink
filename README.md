@@ -31,16 +31,17 @@ Here is a snippet of said file. If on GNU/Linux you must creat a udev rule. More
 - see the python requirements.txt for external python requirements
 - see "## requirements" below for further C++ and system req's
 - get all the required submodules with
-      $ git submodule update --init --recursive
-  
-- once you have the build environment ready, run updateNicLink.sh to compile and prepare the C++ EasyLinkSDK code. 
+  $ git submodule update --init --recursive
+- once you have the build environment ready, run updateNicLink.sh to compile and prepare the C++ EasyLinkSDK code.
 - only tested on gnu/linux with a chessnut air.
 - branches:
   - master: behind the times. More likely to be solid
   - dev: the wild west of new features
 
 ## requirements
+
 on Fedora:
+
 ```
 cmake
 gcc
@@ -50,6 +51,7 @@ pybind11-devel
 libudev-devel
 hidapi-devel
 ```
+
 > detailed ramblings:
 
 - hidraw and spdlog are internal in src/thirdparty
@@ -83,28 +85,38 @@ hidapi-devel
 
 make sure python-dev (or python-devel or ...) libusb-1.0-0-dev libudev-dev or equivalent are installed
 
-In order to use NicLink while it is in development, it is advised to use a virtual environment. I do not have a good enough understanding,
-but you have the internet. ( here is a start: https://python.land/virtual-environments/virtualenv ) Go ham. It is now at a point where it should be portable, if you are reeding this, and want to really help me out,
-it would be swell to hear how installing NicLink goes. requirements.txt should have the requirements.
+In order to use NicLink while it is in development, it is advised to use a virtual environment.
+I do not have a good enough understanding, but you have the internet.
+( here is a start: https://python.land/virtual-environments/virtualenv ) Go ham.
+
+It is now at a point where it should be portable, if you are reeding this, and want to really
+help me out, it would be swell to hear how installing NicLink goes. requirements.txt should
+have the python requirements. (see ## requirements for non-pip requirements)
 
 > what I did (bash):
 
-    python -m venv nicsoft  - This creates a python venv in nicsoft, and should be ran in the NicLink root dir
+    python -m venv nicsoft  - This creates a python venv in nicsoft, and should be ran in the
+                              NicLink root dir
+
     cd nicsoft              - enter nicsoft
-    . ./source_pyvenv.sh    - this uses a lille convenance script, but basically all you have to do is source ./bin/activate (other file extensions if not in bash (or zsh))
-    
+
+    . ./source_pyvenv.sh    - this uses a lille convenance script, but basically all you have to
+                              do is source ./bin/activate
+                                  (other file extensions if not in bash (or zsh))
+
 then:
 
-`python -m pip install -r requirements.txt` -- install python requirements, needed to compile and run NicLink
+## install python requirements, needed to compile and run NicLink
 
-> In order to setup your python path correctly, put a (adjusted for your system) niclink.pth file somewhere in your venv python path.
+`python -m pip install -r requirements.txt`
 
-for me I modified the niclink.pth file to be: 1. /home/nrv/NicLink
+> In order to setup your python path correctly,
+> put a (adjusted for your system) niclink.pth file somewhere in your venv python path.
 
-and modified: - nicsoft/lib/python3.12/site-packages/niclink.pth to add {whatever}/NicLink/nicsoft - to my pythonpath with:
+and modified: - nicsoft/lib/python3.12/site-packages/niclink.pth to add
+/home/nrv/dev/NicLink/nicsoft to my pythonpath with:
 
 ```
-import os; var = 'SETUPTOOLS_USE_DISTUTILS'; enabled = os.environ.get(var, 'local') == 'local'; enabled and __import__('_distutils_hack').add_shim();
 /home/nrv/dev/NicLink/nicsoft/
 ```
 
@@ -122,7 +134,7 @@ to find out your venv's python path:
 ```
 
     1. this will tell you your pythonpath
-    2. create a .pth file pointing to the .../NicLink/nicsoft dir in one of the listed dirs in your pythonpath
+    2. create a .pth file pointing to the .../NicLink/nicsoft dir in one of the listed dirs on your pythonpath
     3. profit
 
 to test that NicLink dir was added to your python path:
@@ -139,11 +151,17 @@ and it outputted:
 
 ## gotchas
 
-- if: ModuleNotFoundError: No module named 'niclink' make sure your venv is setup, with the .pth file configured.
+- if: ModuleNotFoundError: No module named 'niclink' make sure your venv is setup,
+  with the .pth file configured.
+
 - Make sure you are in said venv
-- make sure you can build the community fork of EasyLinkSDK because I use a basically unmodified version, just w python bindings
+
+- make sure you can build the community fork of EasyLinkSDK because I use this with slight
+  modification, just w python bindings
   Link: `https://github.com/miguno/EasyLinkSDK`
+
 - if you need, install python3.12 from "deadsnakes" google is your bud.
+
 - if cmake can not find your PYTHON_INCLUDE_DIR OR PYTHON_LIBRARIES:
   ````bash:
         cmake ../src \
