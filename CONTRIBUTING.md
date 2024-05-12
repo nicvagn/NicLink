@@ -1,6 +1,7 @@
 # how to contribute
 
-Third-party additions are welcome in NicLink, and I welcome them
+I welcome any contribution you are willing to make, and am greatful to you for helping make my
+project better.
 
 ## Getting started
 

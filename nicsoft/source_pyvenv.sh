@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 #echo "This script must be run . ./source_pyvenv.sh !!!"
 
