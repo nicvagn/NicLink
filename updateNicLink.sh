@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 
-SCRIPT_DIR=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
+THIS_DIR=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
 
 NUM_THREADS=$(grep -c ^processor /proc/cpuinfo)  # use all the cpu 
 
 
 # make a build dir if non exists
-mkdir -p $SCRIPT_DIR/build
+mkdir -p $THIS_DIR/build
 # enter build dir
- $SCRIPT_DIR/NicLink/build
+cd $THIS_DIR/build
 
 # clean
 ../clean.sh
@@ -20,6 +20,6 @@ cmake ../src
 make -j $NUM_THREADS
 
 # move into the niclink module
-cp -f _nic*.so ../nicsoft/niclink
+cp -f _nic*.so ${THIS_DIR}/NicLink/nicsoft}
 
-echo "Moved exacutable to ../nicsoft/niclink/_niclinkCPYNONSENSE.so"
+echo "Moved executable to ../nicsoft/niclink/_niclinkCPYNONSENSE.so"
