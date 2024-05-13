@@ -2,7 +2,7 @@
 # make a special test_NicLink dir
 echo "WARN - will fetch python requirements, but Not C++ ones"
 
-mkdir -p ~/test_Niclink
+mkdir -p ~/test_Niclink/NicLink/build
 
 cd ~/test_Niclink/
 echo "Cloning NicLink into your Home folder."
@@ -25,7 +25,7 @@ echo "ensuring the python package manager is installed"
 python -m ensurepip --upgrade
 
 
-cd ~/test_Niclink/NicLink
+cd ~/test_Niclink/NicLink/nicsoft/
 
 python -m pip install -r requirements.txt
 
