@@ -2,11 +2,9 @@
 # make a special test_NicLink dir
 echo "WARN - will fetch python requirements, but Not C++ ones"
 
-
 SCRIPT_DIR=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
 cd $SCRIPT_DIR/test_Niclink
 
-mkdir -p ${SCRIPT_DIR}/NicLink
 echo "Cloning NicLink into your Home folder."
 
 git clone https://github.com/nicvagn/NicLink 
@@ -36,7 +34,7 @@ python -m pip install ${SCRIPT_DIR}/berserk
 
 cd ${SCRIPT_DIR}/NicLink
 echo "installing python deps"
-python -m pip installing -r requirements.txt
+python -m pip install -r requirements.txt
 
 
 echo "building NicLink"

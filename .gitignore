@@ -1,5 +1,6 @@
 venv
 **/NicLink.log
+**/venv
 **/lichess_token/*
 build/*
 /src/pybind11
