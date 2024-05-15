@@ -345,8 +345,10 @@ a legal move on:\n{ str(self.game_board) }\n"
 
         if new_FEN is None:
             raise ValueError("No FEN from chessboard")
-
-        last_move = self.game_board.pop()
+        try:
+            last_move = self.game_board.pop()
+        except IndexError:
+            last_move = None  # if it is an empty list of moves
         # check if you just have not moved the opponent's piece
         if new_FEN == self.game_board.board_fen():
             self.logger.info(
