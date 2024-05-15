@@ -345,18 +345,22 @@ a legal move on:\n{ str(self.game_board) }\n"
 
         if new_FEN is None:
             raise ValueError("No FEN from chessboard")
+        try:
+            # will cause an index error if game_board has no moves
+            last_move = self.game_board.pop()
 
-        last_move = self.game_board.pop()
-        # check if you just have not moved the opponent's piece
-        if new_FEN == self.game_board.board_fen():
-            self.logger.info(
-                "board fen is the board fen before opponent move made on chessboard. Returning"
-            )
+            # check if you just have not moved the opponent's piece
+            if new_FEN == self.game_board.board_fen():
+                self.logger.info(
+                    "board fen is the board fen before opponent move made on chessboard. Returning"
+                )
+                self.game_board.push(last_move)
+                time.sleep(self.refresh_delay)
+                return False
+
             self.game_board.push(last_move)
-            time.sleep(self.refresh_delay)
-            return False
-
-        self.game_board.push(last_move)
+        except IndexError:
+            last_move = False  # if it is an empty list of moves
 
         if new_FEN != self.game_board.board_fen:
             # a change has occured on the chessboard
@@ -523,6 +527,17 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
         """show some fireworks"""
         self.nl_interface.gameover_lights()
 
+    def square_in_last_move(self, square: str) -> bool:
+        """is the square in the last move?
+        @param: square - a square in algabraic notation
+        @returns: bool - if the last move contains that square
+        """
+        if self.last_move:
+            if square in self.last_move:
+                return True
+
+        return False
+
     def show_board_diff(self, board1: chess.Board, board2: chess.Board) -> None:
         """show the differance between two boards and output differance on a chessboard
         @param: board1 - refrence board
@@ -539,18 +554,27 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
         # go through the squares and turn on the light for ones that are in error
         diff = False
         diff_squares = []  # what squares are the diff's on
+
         for n in range(0, 8):
             # handle diff's for a file
             for a in range(ord("a"), ord("h")):
                 # get the square in algabraic notation form
                 square = chr(a) + str(n + 1)  # real life is not 0 based
+
                 py_square = chess.parse_square(square)
-                if board1.piece_at(py_square) != board2.piece_at(py_square):
-                    # record the diff in diff array
+
+                if board1.piece_at(py_square) != board2.piece_at(
+                    py_square
+                ) or self.square_in_last_move(square):
+                    # record the diff in diff array, while keeping the last move lit up
                     self.logger.info(
                         "man.show_board_diff(...): Diff found at square %s", square
                     )
-                    diff = True
+
+                    # do not record diff's on the move squares, but light them up
+                    if not self.square_in_last_move(square):
+                        diff = True
+
                     # add square to list off diff squares
                     diff_squares.append(square)
                     # find the coordinate of the diff square
