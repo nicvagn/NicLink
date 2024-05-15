@@ -527,6 +527,17 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
         """show some fireworks"""
         self.nl_interface.gameover_lights()
 
+    def square_in_last_move(self, square: str) -> bool:
+        """is the square in the last move?
+        @param: square - a square in algabraic notation
+        @returns: bool - if the last move contains that square
+        """
+        if self.last_move:
+            if square in self.last_move:
+                return True
+
+        return False
+
     def show_board_diff(self, board1: chess.Board, board2: chess.Board) -> None:
         """show the differance between two boards and output differance on a chessboard
         @param: board1 - refrence board
@@ -543,18 +554,27 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
         # go through the squares and turn on the light for ones that are in error
         diff = False
         diff_squares = []  # what squares are the diff's on
+
         for n in range(0, 8):
             # handle diff's for a file
             for a in range(ord("a"), ord("h")):
                 # get the square in algabraic notation form
                 square = chr(a) + str(n + 1)  # real life is not 0 based
+
                 py_square = chess.parse_square(square)
-                if board1.piece_at(py_square) != board2.piece_at(py_square):
-                    # record the diff in diff array
+
+                if board1.piece_at(py_square) != board2.piece_at(
+                    py_square
+                ) or self.square_in_last_move(square):
+                    # record the diff in diff array, while keeping the last move lit up
                     self.logger.info(
                         "man.show_board_diff(...): Diff found at square %s", square
                     )
-                    diff = True
+
+                    # do not record diff's on the move squares, but light them up
+                    if not self.square_in_last_move(square):
+                        diff = True
+
                     # add square to list off diff squares
                     diff_squares.append(square)
                     # find the coordinate of the diff square
