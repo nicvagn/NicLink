@@ -346,19 +346,21 @@ a legal move on:\n{ str(self.game_board) }\n"
         if new_FEN is None:
             raise ValueError("No FEN from chessboard")
         try:
+            # will cause an index error if game_board has no moves
             last_move = self.game_board.pop()
-        except IndexError:
-            last_move = None  # if it is an empty list of moves
-        # check if you just have not moved the opponent's piece
-        if new_FEN == self.game_board.board_fen():
-            self.logger.info(
-                "board fen is the board fen before opponent move made on chessboard. Returning"
-            )
-            self.game_board.push(last_move)
-            time.sleep(self.refresh_delay)
-            return False
 
-        self.game_board.push(last_move)
+            # check if you just have not moved the opponent's piece
+            if new_FEN == self.game_board.board_fen():
+                self.logger.info(
+                    "board fen is the board fen before opponent move made on chessboard. Returning"
+                )
+                self.game_board.push(last_move)
+                time.sleep(self.refresh_delay)
+                return False
+
+            self.game_board.push(last_move)
+        except IndexError:
+            last_move = False  # if it is an empty list of moves
 
         if new_FEN != self.game_board.board_fen:
             # a change has occured on the chessboard
