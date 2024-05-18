@@ -689,6 +689,8 @@ def build_led_map_for_move(move: str) -> np.ndarray[np.str_]:
 
     # set 1st square
     led_map[s1_cords[1]] = zeros[: s1_cords[0]] + "1" + zeros[s1_cords[0] :]
+    logger.info("map after 1st move cord (cord): %s", s1_cords)
+    log_led_map(led_map)
     # set second square
     led_map[s2_cords[1]] = zeros[: s2_cords[0]] + "1" + zeros[s2_cords[0] :]
     logger.info("led map made for move: %s\n", move)
