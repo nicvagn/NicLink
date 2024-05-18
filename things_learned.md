@@ -4,8 +4,8 @@
     chessLink -> switchUploadMode();
     ```
 
-    - causes the LED's to blink
-    - is not required to turn on LED's or make beep
+    - is not required to turn on LED's or make beep. I think it is for uploading games to
+      the internal memory
 
 ## use with gnu/linux:
 
@@ -14,7 +14,9 @@
 ## contact me
 
     [nicolasvaagen@gmail.com](nicolasvaagen@gmail.com)
-# resources 
+
+# resources
+
 https://github.com/rmarabini/chessnutair
 
 > Big shoutout to rmarabini for doing the exccelent bluetoth work, a makeing it free as in freedom

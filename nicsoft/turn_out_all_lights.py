@@ -9,4 +9,4 @@ from niclink import NicLinkManager
 print("\nTURNING OUT ALL THE LIGHTS\n")
 
 man = NicLinkManager(2)
-man.turn_off_all_leds()
+man.turn_off_all_LEDs()

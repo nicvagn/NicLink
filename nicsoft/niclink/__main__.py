@@ -346,6 +346,22 @@ a legal move on:\n{ str(self.game_board) }\n"
 
         if new_FEN is None:
             raise ValueError("No FEN from chessboard")
+        try:
+            # will cause an index error if game_board has no moves
+            last_move = self.game_board.pop()
+
+            # check if you just have not moved the opponent's piece
+            if new_FEN == self.game_board.board_fen():
+                self.logger.info(
+                    "board fen is the board fen before opponent move made on chessboard. Returning"
+                )
+                self.game_board.push(last_move)
+                time.sleep(self.refresh_delay)
+                return False
+
+            self.game_board.push(last_move)
+        except IndexError:
+            last_move = False  # if it is an empty list of moves
 
         if new_FEN != self.game_board.board_fen:
             # a change has occured on the chessboard
@@ -464,10 +480,11 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
             )
             return
         self.logger.info("move made on gameboard. move %s", move)
+        # signal that a move was made
+        self.beep()
         self.game_board.push_uci(move)
         # update the last move
         self.last_move = move
-        # FIX: here
         self.set_move_LEDs(move)
         self.logger.info(
             "made move on internal board, BOARD POST MOVE:\n%s", self.game_board
@@ -511,6 +528,17 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
         """show some fireworks"""
         self.nl_interface.gameover_lights()
 
+    def square_in_last_move(self, square: str) -> bool:
+        """is the square in the last move?
+        @param: square - a square in algabraic notation
+        @returns: bool - if the last move contains that square
+        """
+        if self.last_move:
+            if square in self.last_move:
+                return True
+
+        return False
+
     def show_board_diff(self, board1: chess.Board, board2: chess.Board) -> None:
         """show the differance between two boards and output differance on a chessboard
         @param: board1 - refrence board
@@ -527,22 +555,30 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
         diff = False
         diff_squares = []  # what squares are the diff's on
         empty_rank = "00000000"  # for building the diff aray that work's for the way we set LED's
+
         for n in range(0, 8):
             # handle diff's for a file
             for a in range(ord("a"), ord("h")):
                 # get the square in algabraic notation form
                 square = chr(a) + str(n + 1)  # real life is not 0 based
+
                 py_square = chess.parse_square(square)
 
                 # find the coordinate of the diff square
                 diff_cords = square_cords(square)
 
-                if board1.piece_at(py_square) != board2.piece_at(py_square):
-                    # record the diff in diff array
+                if board1.piece_at(py_square) != board2.piece_at(
+                    py_square
+                ) or self.square_in_last_move(square):
+                    # record the diff in diff array, while keeping the last move lit up
                     self.logger.info(
                         "man.show_board_diff(...): Diff found at square %s", square
                     )
-                    diff = True
+
+                    # do not record diff's on the move squares, but light them up
+                    if not self.square_in_last_move(square):
+                        diff = True
+
                     # add square to list off diff squares
                     diff_squares.append(square)
 
@@ -661,6 +697,8 @@ def build_led_map_for_move(move: str) -> np.ndarray[np.str_]:
 
     # set 1st square
     led_map[s1_cords[1]] = zeros[: s1_cords[0]] + "1" + zeros[s1_cords[0] :]
+    logger.info("map after 1st move cord (cord): %s", s1_cords)
+    log_led_map(led_map)
     # set second square
     led_map[s2_cords[1]] = zeros[: s2_cords[0]] + "1" + zeros[s2_cords[0] :]
     logger.info("led map made for move: %s\n", move)

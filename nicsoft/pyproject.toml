@@ -4,63 +4,23 @@
 #
 #  you should have received a copy of the gnu general public license along with nic_soft. if not, see <https://www.gnu.org/licenses/>.
 
+[build-system]
+requires = [
+    "setuptools>=42",
+    "pybind11>=2.10.0",
+]
+build-backend = "setuptools.build_meta"
+
 [project]
 name="nicsoft"
-version="0.8.0"
-author="Nicolas Vaagen"
-author_email="nicolasvaagen@gmail.com"
-description='A package containing NicLink and associated software. NicLink is a "driver" for chessnut air boards.'
-install_requires=['chess', 'pybind11']
-dependencies=[
-    "pyfirmata",
-    "berserk==0.13.2",
-    "chess==1.10.0",
-    "prompt_toolkit==3.0.39",
-    "readchar==4.0.5",
-    "stockfish==3.28.0",
-    "async-timeout==4.0.2",
-    "asyncio==3.4.3",
-    "bleak",
-    "dbus-fast==1.83.1",
-    "pybind11",
-    "pyfirmata",
-    "Adafruit-PureIO==1.1.11",
-    "Adafruit_GPIO==1.0.3",
-    "async-timeout==4.0.2",
-    "asyncio==3.4.3",
-    "attrs==23.2.0",
-    "berserk @ file:///home/nrv/dev/berserk",
-    "bleak==0.21.1",
-    "certifi==2024.2.2",
-    "charset-normalizer==3.3.2",
-    "chess==1.10.0",
-    "dbus-fast==1.83.1",
-    "Deprecated==1.2.14",
-    "idna==3.6",
-    "jsonschema==4.21.1",
-    "jsonschema-specifications==2023.12.1",
-    "ndjson==0.3.1",
-    "prompt-toolkit==3.0.39",
-    "pybind11==2.11.1",
-    "pyproject-toml==0.0.10",
-    "pyserial==3.5",
-    "python-dateutil==2.9.0.post0",
-    "pyzmq==25.1.2",
-    "readchar==4.0.5",
-    "referencing==0.33.0",
-    "requests==2.31.0",
-    "rpds-py==0.18.0",
-    "setuptools==69.1.1",
-    "six==1.16.0",
-    "spidev==3.6",
-    "stockfish==3.28.0",
-    "toml==0.10.2",
-    "typing_extensions==4.10.0",
-    "urllib3==2.2.1",
-    "wcwidth==0.2.13",
-    "wheel==0.42.0",
-    "wrapt==1.16.0"
+version="0.9.0"
+authors=[
+    { name = "Nicolas Vaagen", email="nicolasvaagen@gmail.com" }
 ]
+maintaners= [
+    { name = "Nicolas Vaagen", email="nicolasvaagen@gmail.com" }
+]
+description='A package containing NicLink and associated software. NicLink is a "driver" for chessnut air boards.'
 keywords=["Chessnut", "Chessnut air", "e-board", "EasyLinkSDK", "chess", "lichess", "boardAPI"]
 classifiers= [
     "Development Status :: ongoing",
@@ -75,14 +35,12 @@ classifiers= [
 ]
 readme = "README.md"
 license = {file = "LICENSE"}
+requires-python = "==3.12.3"
 
 [project.urls]
 Repository = 'https://github.com/nicvagn/NicLink'
 issues = 'https://github.com/nicvagn/NicLink/issues'
 
-
 [tool.setuptools.packages]
 find = {} # defaults
 
-[build-system]
-requires = ["setuptools"]

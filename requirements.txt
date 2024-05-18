@@ -1,0 +1,11 @@
+berserk @ file:///home/nrv/dev/berserk
+pyproject-toml==0.0.10
+setuptools==69.1.1
+pybind11==2.11.1
+numpy==1.26.4
+chess==1.10.0
+readchar==4.0.5
+pyserial==3.5
+wheel==0.42.0
+stockfish==3.28.0
+bleak==0.21.1

@@ -84,8 +84,6 @@ void lightsOut()
         return;
     }
 
-    //chessLink -> switchUploadMode();
-
     //turn off all the lights
     chessLink -> setLed({
         bitset<8>("00000000"), //
@@ -97,7 +95,6 @@ void lightsOut()
         bitset<8>("00000000"), //
         bitset<8>("00000000"), //
     });
-    //chessLink -> switchRealTimeMode();
 }
 
 /**
@@ -140,22 +137,10 @@ void setLED(int x, int y, bool LEDsetting)
         cerr << "y must be 0 - 7, y is: " << y << endl;
         return;
     }
-    // chessLink -> switchUploadMode();
+
     chessLink -> setLed((uint8_t) x, (uint8_t) y, LEDsetting);
-    // set back to realTimeMode chessLink -> switchRealTimeMode();
 }
 
-/** TODO:
- * set all the led's given ...
- *
-void setAllLEDs(py::array_t<py::bool_> light_map)
-{
-    if(light_map[0][0])
-    {
-        cout << "f yea 77777777" << endl;
-    }
-}
- */
 /**
  * set all the led's given std::string's of all the rows
  */
@@ -199,7 +184,6 @@ void gameoverLights()
  */
 void beep()
 {
-    // chessLink -> switchUploadMode();
     //if we have not connected throw error and return
     if( chessLink == nullptr )
     {
@@ -208,7 +192,6 @@ void beep()
     }
     //do the thing
     chessLink -> beep();
-    // chessLink -> switchRealTimeMode();
 }
 
 int main()
