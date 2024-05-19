@@ -1,7 +1,7 @@
 # This workflow will install Python dependencies, it can not run test's bc pybind11 jank
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
 
-name: NicLink
+name: insall NicLink python deps
 
 on:
   push:
