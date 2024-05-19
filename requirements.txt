@@ -1,4 +1,4 @@
-berserk @ file:///home/nrv/dev/berserk
+berserk==0.13.2
 pyproject-toml==0.0.10
 setuptools==69.1.1
 pybind11==2.11.1
