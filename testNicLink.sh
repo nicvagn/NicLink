@@ -2,6 +2,6 @@
 
 # enter the python venv
 
-source ${pwd}/pyenv_up.sh
+source ./pyenv_up.sh
 
 python ./nicsoft/test/__main__.py
