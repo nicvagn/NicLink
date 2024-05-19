@@ -510,7 +510,7 @@ Will only try twice before calling game_done"
             )
             logger.info("game done detected, calling game_done(). winner: %s\n", winner)
             # stop the tread (this does some cleanup and throws an exception)
-            self.game_done(winner=winner)
+            self.game_done(game_state=game_state)
         # if there is a chess clock
         if self.chess_clock:
             # signal move
