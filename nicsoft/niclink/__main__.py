@@ -136,7 +136,9 @@ class NicLinkManager(threading.Thread):
         self.game_over.wait()
         # game is over, reset NicLink
         self.reset()
-        self.logger.info("_run_game(...): game_over event set, resetting NicLink")
+        self.logger.info(
+            "\n\n _run_game(...): game_over event set, resetting NicLink\n"
+        )
 
     def connect(self, bluetooth: bool = False):
         """connect to the chessboard
@@ -185,10 +187,11 @@ Is the board connected and turned on?"
 
         self.logger.info("NicLinkManager reset\n")
 
-    def set_led(self, square: str, status: bool):
+    def set_led(self, square: str, status: bool) -> None:
         """set an LED at a given square to a status
         @param: square (square: a1, e4 etc)
         @param: status: True | False
+        @side_effect: changes led on chessboard
         """
         global FILES
 
