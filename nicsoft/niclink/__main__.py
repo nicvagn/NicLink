@@ -147,7 +147,6 @@ class NicLinkManager(threading.Thread):
         # connect to the chessboard, this must be done first
         self.nl_interface.connect()
 
-        # because async programming is hard
         testFEN = self.nl_interface.get_FEN()
         time.sleep(self.thread_sleep_delay)
         # make sure get_FEN is working
