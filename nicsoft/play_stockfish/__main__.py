@@ -92,9 +92,12 @@ have a nice day."
         logger.info("\n--- human turn ---\n")
 
         try:
-            move = (
-                self.nl_inst.await_move()
-            )  # await move from e-board the move from niclink
+            # hack
+            move = None
+            while move is None:
+                move = self.nl_inst.await_move()
+                time.sleep(0.3)
+            # await move from e-board the move from niclink
             print(f"move from board: { move }")
         except KeyboardInterrupt:
             print("Bye!")
@@ -102,6 +105,8 @@ have a nice day."
 
         logger.info(f"move from chessboard { move }")
 
+        # make the move on the nl gameboard
+        self.nl_inst.make_move_game_board(move)
         # check if the game is done
         self.check_for_game_over()
 
@@ -140,10 +145,10 @@ have a nice day."
             if self.playing_white:
                 # if we go first, go first
                 self.handle_human_turn()
-
+            breakpoint()
             # do the fish turn
             self.handle_fish_turn()
-
+            breakpoint()
             if not self.playing_white:
                 # case we are black
                 self.handle_human_turn()
@@ -152,8 +157,6 @@ have a nice day."
 def main():
     # NicLinkManager
     nl_inst = NicLinkManager(refresh_delay=2, logger=logger)
-
-    nl_inst.connect()
 
     print("\n%%%%%% NicLink vs Stockfish %%%%%%\n")
 

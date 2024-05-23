@@ -55,9 +55,9 @@ ZEROS = np.array(
 
 FILES = np.array(["a", "b", "c", "d", "e", "f", "g", "h"])
 
-NO_MOVE_DELAY = 0.8
+NO_MOVE_DELAY = 0.5
 
-LIGHT_THREAD_DELAY = 1
+LIGHT_THREAD_DELAY = 0.8
 
 ### logger ###
 # HACK: this, find a better way to log
@@ -422,13 +422,13 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
                     return
                 if self.check_for_move():
                     move = self.get_last_move()
-
-                if move:
+                if move:  # if we got a move, return it and exit
                     self.logger.info(
                         "move %s made on external board. there where %s attempts to get",
                         move,
                         attempts,
                     )
+                    return move
                 else:
                     self.logger.info("no move")
                     # if move is false continue
@@ -452,8 +452,6 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
                 )
                 time.sleep(NO_MOVE_DELAY)
                 continue
-
-            return move
 
         # exit Niclink
         raise ExitNicLink(

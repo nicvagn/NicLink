@@ -550,7 +550,8 @@ Will only try twice before calling game_done"
 
 ### helper functions ###
 def show_FEN_on_board(FEN) -> None:
-    """show board FEN on an ascii chessboard"""
+    """show board FEN on an ascii chessboard
+    @param FEN - the fed to display on a board"""
     tmp_chessboard = chess.Board()
     tmp_chessboard.set_fen(FEN)
     print(tmp_chessboard)
