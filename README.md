@@ -240,8 +240,6 @@ but wheel usually has sudo access so they have that anyway with sudo
 
 In order to do so, you should read ./play_stockfish/README.md for further info
 
-> be warned, I have not touched this in a while.
-
 ## Connect w bluetooth
 
 not mature enough to doc, but exists (Is a broken mess, save yourself)

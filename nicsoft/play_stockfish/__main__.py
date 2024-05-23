@@ -4,31 +4,32 @@
 #
 #  You should have received a copy of the GNU General Public License along with NicLink. If not, see <https://www.gnu.org/licenses/>.
 
-# sys stuff
-import sys
-import time
+import argparse
+import importlib
 import logging
 import logging.handlers
 import os
-import sys
-import argparse
-import threading
-import importlib
-import readchar
 
 # debbuging
 import pdb
+
+# sys stuff
+import sys
+import threading
+import time
 import traceback
+
+import chess
 
 # chess stuff
 import chess.pgn
-import chess
-
-# NicLink shit
-from niclink import NicLinkManager
+import readchar
 
 # the fish
 from stockfish import Stockfish
+
+# NicLink shit
+from niclink import NicLinkManager
 
 logger = logging.getLogger("NL play Fish")
 logger.setLevel(logging.INFO)
@@ -111,7 +112,7 @@ have a nice day."
         self.fish.set_fen_position(self.nl_inst.get_game_FEN())
 
         # get stockfishes move
-        fish_move = chess.Move.from_uci(self.fish.get_best_move())
+        fish_move = self.fish.get_best_move()
         logger.info(f"Fish's move { fish_move }")
 
         # make move on the niclink internal board
@@ -127,7 +128,7 @@ have a nice day."
         """start playing the game"""
 
         # start by turning off all the lights
-        self.nl_inst.turn_off_all_leds()
+        self.nl_inst.turn_off_all_LEDs()
 
         self.run()
 
