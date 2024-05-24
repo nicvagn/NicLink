@@ -99,7 +99,7 @@ else:
     logger.info("DEBUG not set")
     # for dev
     logger.setLevel(logging.DEBUG)
-    consoleHandler.setLevel(logging.DEBUG)
+    consoleHandler.setLevel(logging.INFO)
     # logger.setLevel(logging.ERROR) for production
     # consoleHandler.setLevel(logging.ERROR)
 
