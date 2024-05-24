@@ -10,49 +10,60 @@
 
 # IMPORTANT: setting up for your system
 
-> you must edit the CMakeLists.txt file to work for your system
+    > you must edit the CMakeLists.txt file to work for your system
 
-    ```
-    TODO: set for your system:
-    NOTE: removed as not debbuging c++ code link_libraries(spdlog_header_only)
-    set(SPDLOG OFF) # Very fast, header-only/compiled, C++ logging library.
-    NOTE: not needed if using hidraw backend to libusb
-    set(LIBUSB OFF) # i am using th hidraw backend adjust if you are not ant need libusb
-    see https://github.com/libusb/libusb
-    see thirdparty/hidapi/README.md
-    option(HIDAPI_WITH_LIBUSB "Build LIBUSB-based implementation of HIDAPI" ON)
-    option(HIDAPI_WITH_LIBUSB "Build LIBUSB-based implementation of HIDAPI" OFF)
-    ```
+        ```
+        TODO: set for your system:
+        NOTE: removed as not debbuging c++ code link_libraries(spdlog_header_only)
+        set(SPDLOG OFF) # Very fast, header-only/compiled, C++ logging library.
+        NOTE: not needed if using hidraw backend to libusb
+        set(LIBUSB OFF) # i am using th hidraw backend adjust if you are not ant need libusb
+        see https://github.com/libusb/libusb
+        see thirdparty/hidapi/README.md
+        option(HIDAPI_WITH_LIBUSB "Build LIBUSB-based implementation of HIDAPI" ON)
+        option(HIDAPI_WITH_LIBUSB "Build LIBUSB-based implementation of HIDAPI" OFF)
+        ```
 
-Here is a snippet of said file. If on GNU/Linux you must creat a udev rule. More on that later
+    Here is a snippet of said file. If on GNU/Linux you must creat a udev rule. More on that later
 
-# overview
+# setup
 
-- see the python requirements.txt for external python requirements
-- see "## requirements" below for further C++ and system req's
-- get all the required submodules with
-  `$ git submodule update --init --recursive`
-- once you have the build environment ready, run updateNicLink.sh to compile and prepare the C++ EasyLinkSDK code.
-- only tested on gnu/linux with a chessnut air.
-- branches:
-  - master: behind the times. More likely to be solid
-  - dev: the wild west of new features
+    - there is a github action to help you with setup,
+      I am not framilular but give it a look if you are
 
-## requirements
+    - see the python requirements.txt for external python requirements
+
+    - see "## non pip requirements" below for further C++ and system req's
+
+    - get all the required submodules with
+      `$ git submodule update --init --recursive`
+    - once you have the build environment ready, run updateNicLink.sh to compile and prepare the C++ EasyLinkSDK code.
+    - only tested on gnu/linux with a chessnut air.
+    - branches:
+      - master: behind the times. More likely to be solid
+      - dev: the wild west of new features
+
+## non pip requirements
+
+these are system requirements, python requirements needed too
 
 on Fedora:
 
-```
-cmake
-gcc
-g++
-python-devel
-pybind11-devel
-libudev-devel
-hidapi-devel
-```
+    ```
+    cmake
+    gcc
+    g++
+    python-devel
+    pybind11-devel
+    libudev-devel
+    hidapi-devel
+    ```
 
-> detailed ramblings:
+if you get a dev environment set up, I would like to know about it.
+
+> The system packages required, and the system
+
+## detailed ramblings on packages:
 
 - hidraw and spdlog are internal in src/thirdparty
 - in order to compile them on Debian you need:
@@ -60,7 +71,9 @@ hidapi-devel
   - checkout the community fork of the EasylinkSDK and get that building first.
     You have to build that as a component of NicLink
     Link: `https://github.com/miguno/EasyLinkSDK`
+
   - libudev-dev or on fedora libudev-devel or equivalent on your distros
+
   - hidapi and hidapi-devel (or -dev)
 
     - requirements:
@@ -69,9 +82,13 @@ hidapi-devel
     - only needed if using the libusb backend:
       - libusb (https://github.com/libusb/libusb/releases) - this is included as a submodule
 
-- pip also obviously
+- pip configured for python 3.12
+
 - python 3.12 and python-dev (or python-devel, you need python.h anyway) and python modules listed in requirements.txt
-- cmake (3.4 ... 3.20) some distros are behind significantly, so I recommend "pip install cmake" after uninstalling the one from your distro
+
+- cmake (3.4 ... 3.20) some distros are behind significantly, so I recommend "pip install cmake"
+  after uninstalling the one from your distro. Or it will probably be fine ...
+
 - modern gcc (I used gcc 13.2) and gcc-c++
 
   > so you need gcc, cmake, gcc-c++, python-devel, pybind11, pybind11-devel and the kichen sink
@@ -102,7 +119,7 @@ have the python requirements. (see ## requirements for non-pip requirements)
                               do is source ./bin/activate
                                   (other file extensions if not in bash (or zsh))
 
-then:
+then I installed the python packages in the venv (bellow)
 
 ## install python requirements, needed to compile and run NicLink
 
@@ -222,8 +239,6 @@ but wheel usually has sudo access so they have that anyway with sudo
 > you can play with stockfish with NicLink!
 
 In order to do so, you should read ./play_stockfish/README.md for further info
-
-> be warned, I have not touched this in a while.
 
 ## Connect w bluetooth
 
