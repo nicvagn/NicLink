@@ -234,10 +234,10 @@ Is the board connected and turned on?"
         self.logger.info("move LED's on for move: %s", move)
         move_led_map = build_led_map_for_move(move)
         # log led map
-        self.logger.info(
+        self.logger.debug(
             "move led map created. Move: %s \n map: %s", move, move_led_map
         )
-        log_led_map(move_led_map)
+        log_led_map(move_led_map, self.logger)
 
         self.set_all_LEDs(move_led_map)
 
@@ -248,10 +248,10 @@ Is the board connected and turned on?"
                 for the led of that square
         """
         self.logger.info(
-            "set_all_LEDs(light_board: np.ndarray[np.str_]): called with \
-light_board %s",
-            light_board,
+            "set_all_LEDs(light_board: np.ndarray[np.str_]): called with following light_board:"
         )
+
+        log_led_map(light_board, self.logger)
 
         # the pybind11 use 8 str, because it is difficult
         # to use complex data structures between languages
@@ -437,7 +437,7 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
             except NoMove:
                 # no move made, wait refresh_delay and continue
                 attempts += 1
-                self.logger.info("NoMove from chessboard. Attempt: %s", attempts)
+                self.logger.debug("NoMove from chessboard. Attempt: %s", attempts)
                 time.sleep(NO_MOVE_DELAY)
 
                 continue
@@ -480,14 +480,14 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
                 "make_move_game_board(move) called w move == self.last_move. returning"
             )
             return
-        self.logger.info("move made on gameboard. move %s", move)
+        self.logger.debug("move made on gameboard. move %s", move)
         # signal that a move was made
         self.beep()
         self.game_board.push_uci(move)
         # update the last move
         self.last_move = move
         self.set_move_LEDs(move)
-        self.logger.info(
+        self.logger.debug(
             "made move on internal board, BOARD POST MOVE:\n%s", self.game_board
         )
 
@@ -546,7 +546,7 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
         @param: board2 - board to display diff from refrence board
         @side_effect: changes led's to show diff squares
         """
-        self.logger.info(
+        self.logger.debug(
             "man.show_board_diff entered w board's \n%s\nand\n%s", board1, board2
         )
         # cread a board for recording diff on
@@ -577,14 +577,14 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
                     if not self.square_in_last_move(square):
                         diff = True
 
-                    # add square to list off diff squares
-                    diff_squares.append(square)
-                    # find the coordinate of the diff square
-                    diff_cords = square_cords(square)
+                        # add square to list off diff squares
+                        diff_squares.append(square)
+                        # find the coordinate of the diff square
+                        diff_cords = square_cords(square)
 
-                    diff_map[diff_cords[1]] = (
-                        zeros[: diff_cords[0]] + "1" + zeros[diff_cords[0] :]
-                    )
+                        diff_map[diff_cords[1]] = (
+                            zeros[: diff_cords[0]] + "1" + zeros[diff_cords[0] :]
+                        )
 
         # if there is a diff, beep and show it
         if diff:
@@ -658,9 +658,9 @@ def square_cords(square) -> (int, int):
     return (file_num, rank)
 
 
-def log_led_map(led_map: np.ndarray[np.str_]) -> None:
+def log_led_map(led_map: np.ndarray[np.str_], logger) -> None:
     """log led map pretty 8th file to the top"""
-    logger.info("\nLED map:\n")
+    logger.info("\nLOG LED map:\n")
     logger.info(str(led_map[7]))
     logger.info(str(led_map[6]))
     logger.info(str(led_map[5]))
@@ -692,11 +692,11 @@ def build_led_map_for_move(move: str) -> np.ndarray[np.str_]:
     # set 1st square
     led_map[s1_cords[1]] = zeros[: s1_cords[0]] + "1" + zeros[s1_cords[0] :]
     logger.info("map after 1st move cord (cord): %s", s1_cords)
-    log_led_map(led_map)
+    log_led_map(led_map, logger)
     # set second square
     led_map[s2_cords[1]] = zeros[: s2_cords[0]] + "1" + zeros[s2_cords[0] :]
     logger.info("led map made for move: %s\n", move)
-    log_led_map(led_map)
+    log_led_map(led_map, logger)
 
     return led_map
 
@@ -726,9 +726,9 @@ def set_up_logger() -> None:
     else:
         logger.info("DEBUG not set")
         # for dev
-        logger.setLevel(logging.DEBUG)
-        consoleHandler.setLevel(logging.DEBUG)
-        fileHandler.setLevel(logging.DEBUG)
+        logger.setLevel(logging.INFO)
+        consoleHandler.setLevel(logging.INFO)
+        fileHandler.setLevel(logging.INFO)
         # logger.setLevel(logging.ERROR) for production
         # consoleHandler.setLevel(logging.ERROR)
 
