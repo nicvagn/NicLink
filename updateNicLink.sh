@@ -20,6 +20,6 @@ cmake ../src
 make -j $NUM_THREADS
 
 # move into the niclink module
-cp -f _nic*.so ${THIS_DIR}/nicsoft/niclink}
+cp -f _nic*.so ${THIS_DIR}/nicsoft/niclink
 
 echo "Moved executable to ../nicsoft/niclink/_niclinkCPYNONSENSE.so"
