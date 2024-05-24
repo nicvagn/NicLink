@@ -422,6 +422,7 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
                     return
                 if self.check_for_move():
                     move = self.get_last_move()
+
                 if move:  # if we got a move, return it and exit
                     self.logger.info(
                         "move %s made on external board. there where %s attempts to get",
@@ -488,6 +489,13 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
         self.logger.info(
             "made move on internal board, BOARD POST MOVE:\n%s", self.game_board
         )
+
+    def opponent_moved(self, move: str) -> None:
+        """the other player moved in a chess game. Just a helpful
+        alias to make_move_game_board
+        """
+        self.make_move_game_board(move)
+        breakpoint()
 
     def set_board_FEN(self, board: chess.Board, FEN: str) -> None:
         """set a board up according to a FEN"""
@@ -621,14 +629,6 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
 
         return False
 
-    def opponent_moved(self, move: str) -> None:
-        """the other player moved in a chess game.
-        Signal LEDS_changed and update last move
-        @param: move - the move in a uci str
-        """
-        self.last_move = move
-        self.set_move_LEDs(move)
-
 
 ### helper functions ###
 def square_cords(square) -> (int, int):
@@ -657,7 +657,9 @@ def square_cords(square) -> (int, int):
 
 
 def log_led_map(led_map: np.ndarray[np.str_]) -> None:
-    """log led map pretty 8th file to the top"""
+    """log led map pretty 8th file to the top
+    @param - led_map np array of the light state
+    """
     logger.info("\nLED map:\n")
     logger.info(str(led_map[7]))
     logger.info(str(led_map[6]))

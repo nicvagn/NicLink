@@ -93,6 +93,7 @@ have a nice day."
 
         try:
             # hack
+            self.nl_inst.set_game_board(chess.Board(self.fish.get_fen_position()))
             move = None
             while move is None:
                 move = self.nl_inst.await_move()
@@ -104,9 +105,8 @@ have a nice day."
             sys.exit(0)
 
         logger.info(f"move from chessboard { move }")
+        self.moves.append(move)
 
-        # make the move on the nl gameboard
-        self.nl_inst.make_move_game_board(move)
         # check if the game is done
         self.check_for_game_over()
 
@@ -114,17 +114,16 @@ have a nice day."
         """handle fish's turn"""
         global logger
         logger.info("Fish's turn")
-        self.fish.set_fen_position(self.nl_inst.get_game_FEN())
+        self.fish.set_position(self.moves)
+        breakpoint()
 
         # get stockfishes move
         fish_move = self.fish.get_best_move()
         logger.info(f"Fish's move { fish_move }")
 
-        # make move on the niclink internal board
-        self.nl_inst.make_move_game_board(fish_move)
-
-        print(f"board after fish turn:")
-        self.nl_inst.show_game_board()
+        # add it to list of moves
+        self.moves.append(fish_move)
+        self.nl_inst.opponent_moved(fish_move)
 
         # check for game over
         self.check_for_game_over()
@@ -145,10 +144,12 @@ have a nice day."
             if self.playing_white:
                 # if we go first, go first
                 self.handle_human_turn()
-            breakpoint()
             # do the fish turn
             self.handle_fish_turn()
-            breakpoint()
+
+            print("play the fishes move, then press a key.")
+            readchar.readchar()
+
             if not self.playing_white:
                 # case we are black
                 self.handle_human_turn()
