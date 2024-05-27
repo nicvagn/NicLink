@@ -37,4 +37,5 @@ def set_move_leds(move):
     nl.set_move_LEDs(move)
 
 
-set_move_leds("a4h4")
+test_led()
+# set_move_leds("a4h4")
