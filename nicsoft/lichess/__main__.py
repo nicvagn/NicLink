@@ -544,8 +544,12 @@ Will only try twice before calling game_done"
     def handle_chat_line(self, chat_line) -> None:
         """handle when the other person types something in gamechat"""
         global nl_inst
-        nl_inst.beep()
+        nl_inst.board_signal_lights(sig_num=1)
         print(chat_line)
+
+        nl_inst.beep()
+        sleep(0.6)
+        nl_inst.beep()
 
 
 ### helper functions ###

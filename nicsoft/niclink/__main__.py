@@ -60,7 +60,6 @@ NO_MOVE_DELAY = 0.5
 LIGHT_THREAD_DELAY = 0.8
 
 ### logger ###
-# HACK: this, find a better way to log
 logger = logging.getLogger("NicLink")
 
 
@@ -269,6 +268,67 @@ Is the board connected and turned on?"
     def turn_off_all_LEDs(self) -> None:
         """turn off all the leds"""
         self.nl_interface.lights_out()
+
+    def signal_lights(self, sig_num: int) -> None:
+        """signal the user via displaying a set of lights on the board
+        @parm: sig_num - the signal number coresponding to the signal to show
+                ie: 1 - ring of lights
+                    2 - left half lit up
+                    3 - right half lit up
+        @side effect - change the light's on the chess board
+        """
+        if sig_num == 1:
+            """signal 1 - ring of lights"""
+
+            sig = np.array(
+                [
+                    "11111111",
+                    "10000001",
+                    "10000001",
+                    "10000001",
+                    "10000001",
+                    "10000001",
+                    "10000001",
+                    "11111111",
+                ],
+                dtype=np.str_,
+            )
+            self.set_all_LEDs(sig)
+
+        elif sig_num == 2:
+            """signal 2 - left half lit up"""
+            sig = np.array(
+                [
+                    "00001111",
+                    "00001111",
+                    "00001111",
+                    "00001111",
+                    "00001111",
+                    "00001111",
+                    "00001111",
+                    "00001111",
+                ],
+                dtype=np.str_,
+            )
+
+            self.set_all_LEDs(sig)
+        elif sig_num == 3:
+            """signal 3 - right half lit up"""
+
+            sig = np.array(
+                [
+                    "11110000",
+                    "11110000",
+                    "11110000",
+                    "11110000",
+                    "11110000",
+                    "11110000",
+                    "11110000",
+                    "11110000",
+                ],
+                dtype=np.str_,
+            )
+            self.set_all_LEDs(sig)
 
     def get_FEN(self) -> str:
         """get the board FEN from chessboard"""
@@ -776,6 +836,8 @@ def test_usb():
     b2 = chess.Board()
     b2.push_uci("e2e4")
     nl_man = NicLinkManager(2, logger=logger)
+
+    nl_man.signal_lights(1)
 
     logger.info("TEST: show board diff: shold be e2e4 lit up.")
     nl_man.show_board_diff(b1, b2)
