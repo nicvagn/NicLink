@@ -683,18 +683,31 @@ def build_led_map_for_move(move: str) -> np.ndarray[np.str_]:
     # get the squars and the coordinates
     s1 = move[:2]
     s2 = move[2:]
-
     s1_cords = square_cords(s1)
     s2_cords = square_cords(s2)
 
-    # set 1st square
-    led_map[s1_cords[1]] = zeros[: s1_cords[0]] + "1" + zeros[s1_cords[0] :]
-    logger.info("map after 1st move cord (cord): %s", s1_cords)
-    log_led_map(led_map, logger)
-    # set second square
-    led_map[s2_cords[1]] = zeros[: s2_cords[0]] + "1" + zeros[s2_cords[0] :]
-    logger.info("led map made for move: %s\n", move)
-    log_led_map(led_map, logger)
+    # if they are not on the same rank
+    if s1_cords[1] != s2_cords[1]:
+        # set 1st square
+        led_map[s1_cords[1]] = zeros[: s1_cords[0]] + "1" + zeros[s1_cords[0] :]
+        logger.info("map after 1st move cord (cord): %s", s1_cords)
+        log_led_map(led_map, logger)
+        # set second square
+        led_map[s2_cords[1]] = zeros[: s2_cords[0]] + "1" + zeros[s2_cords[0] :]
+        logger.info("led map made for move: %s\n", move)
+        log_led_map(led_map, logger)
+    # if they are on the same rank
+    else:
+        rank = list(zeros)
+        rank[s1_cords[0]] = "1"
+        rank[s2_cords[0]] = "1"
+
+        print(rank)
+
+        rank_str = "".join(rank)
+
+        # insert into led_map as numpy string
+        led_map[s1_cords[1]] = np.str_(rank_str)
 
     return led_map
 
