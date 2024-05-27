@@ -22,4 +22,4 @@ make -j $NUM_THREADS
 # move into the niclink module
 cp -f _nic*.so ${THIS_DIR}/nicsoft/niclink
 
-echo "Moved executable to ../nicsoft/niclink/_niclinkCPYNONSENSE.so"
+echo "Moved executable to {git_root}/nicsoft/niclink/_niclinkCPYNONSENSE.so"
