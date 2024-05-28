@@ -4,10 +4,8 @@ echo "NicLink GO!"
 
 SCRIPT_DIR=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
 
-cd $SCRIPT_DIR/nicsoft
+. $SCRIPT_DIR/pyvenv_up.sh
 
-. ./source_pyvenv.sh
+python $SCRIPT_DIR/nicsoft/lichess
 
-python lichess
-
-echo "Thank you for using NicLink"
+echo "starting NicLink Lichess"

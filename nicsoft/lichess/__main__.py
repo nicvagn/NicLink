@@ -264,10 +264,13 @@ class Game(threading.Thread):
                 self.game_done()
             elif event["type"] == "opponentGone":
                 logger.info(">>> opponentGone <<< recived event: %s \n", event)
+                print(">>> opponentGone <<<")
                 for x in range(0, 2):
+                    nl_inst.signal_lights(3)
                     for x in range(0, 2):
                         nl_inst.beep()
                         sleep(0.2)
+                    nl_inst.signal_lights(2)
                     sleep(1)
             else:  # If it is not one of these options, kill the stream
                 logger.info("\n\nNew Event: %s", event)
@@ -544,9 +547,10 @@ Will only try twice before calling game_done"
     def handle_chat_line(self, chat_line) -> None:
         """handle when the other person types something in gamechat"""
         global nl_inst
-        nl_inst.board_signal_lights(sig_num=1)
+        nl_inst.signal_lights(sig_num=1)
         print(chat_line)
-
+        # signal_lights set's lights on the chess board
+        nl_inst.signal_lights(1)
         nl_inst.beep()
         sleep(0.6)
         nl_inst.beep()
