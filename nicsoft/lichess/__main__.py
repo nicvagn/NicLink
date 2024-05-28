@@ -72,6 +72,8 @@ if args.clock:
 else:
     CHESS_CLOCK = False
 
+# TODO: RM
+CHESS_CLOCK = True
 ### constants ###
 # refresh refresh delay for NicLink and Lichess
 REFRESH_DELAY = 0.1
@@ -103,7 +105,7 @@ else:
     # logger.setLevel(logging.ERROR) for production
     # consoleHandler.setLevel(logging.ERROR)
 
-formatter = logging.Formatter("%(asctime)s %(levelname)s %(module)s %(message)s")
+formatter = logging.Formatter("%(levelno)s %(pathname)s %(funcName)s %(message)s")
 
 consoleHandler.setFormatter(formatter)
 logger.addHandler(consoleHandler)
@@ -467,11 +469,11 @@ Will only try twice before calling game_done"
 
     def signal_game_state_change(self, game_state: GameState) -> None:
         """signal a state change, signal the external clock and set the last move"""
-
+        # beep to signal to the user we got a GameState
+        nl_inst.beep()
         logger.info(
-            "\nsignal_game_state_change(self, game_state) entered with GameState: %s of type %s",
+            "\nsignal_game_state_change(self, game_state) entered with GameState: %s",
             game_state,
-            type(game_state),
         )
         if game_state.has_moves():
             # update the last move
@@ -511,7 +513,11 @@ Will only try twice before calling game_done"
             print(
                 f"\n--- GAME OVER ---\nreason: {result.termination}\nwinner: {winner}"
             )
-            logger.info("game done detected, calling game_done(). winner: %s\n", winner)
+            logger.info(
+                "game done detected, calling game_done(). | result: %s | winner: %s\n",
+                result,
+                winner,
+            )
             # stop the tread (this does some cleanup and throws an exception)
             self.game_done(game_state=game_state)
         # if there is a chess clock
@@ -525,7 +531,7 @@ Will only try twice before calling game_done"
             move = self.get_move_from_chessboard(tmp_chessboard)
 
             # make the move
-            logger.info("calling self.make_move(%s)", move)
+            logger.info("calling make_move(%s)", move)
             self.make_move(move)
         else:
             # a move was made, signal it
@@ -612,7 +618,7 @@ def handle_game_start(
             playing_white,
             starting_fen=game_fen,
             chess_clock=chess_clock,
-        )  # ( game_data['color'] == "white" ) is used to set is_white bool
+        )
         game.daemon = True
 
         logger.info("|| starting Game thread for game with id: %s\n", game_data.id)
