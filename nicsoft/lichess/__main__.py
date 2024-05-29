@@ -234,10 +234,7 @@ class Game(threading.Thread):
                 # incapsulated in a conviniance class
                 self.game_state = GameState(event)
 
-                # signal new game state recived
-                self.signal_game_state_change(self.game_state)
-
-                logger.info("state_change_thread is: %s", state_change_thread)
+                logger.debug("state_change_thread is: %s", state_change_thread)
                 # if there is a state_change_thread
                 if state_change_thread is not None:
 
@@ -460,29 +457,21 @@ Will only try twice before calling game_done"
             for move in move_list:
                 # make the moves on a board
                 tmp_chessboard.push_uci(move)
-                last_move = move
-
-            logger.debug("The last move was found to be: %s", last_move)
-
-            # TODO: fing a better way
-            # set the nl_inst.last move
-            nl_inst.last_move = last_move
 
         return tmp_chessboard
 
-    def signal_game_state_change(self, game_state: GameState) -> None:
-        """signal a state change, signal the external clock and set the last move"""
-        # beep to signal to the user we got a GameState
+    def opponent_moved(self, game_state: GameState) -> None:
+        """signal that the opponent moved, signal the external clock and NicLink"""
         logger.info(
-            "\nsignal_game_state_change(self, game_state) entered with GameState: %s",
+            "\nopponent_moved(self, game_state) entered with GameState: %s",
             game_state,
         )
+        move = game_state.get_last_move()
+        # tell nl about the move
+        nl_inst.opponent_moved(move)
+        # tell the user about the move
         nl_inst.beep()
-        if game_state.has_moves():
-            # update the last move
-            self.last_move: str = game_state.get_last_move()
-            # tell nl about the move
-            nl_inst.opponent_moved(self.last_move)
+        logger.info("opponent moved: %s", move)
 
         # if chess_clock send new timestamp to clock
         if self.chess_clock:
@@ -523,6 +512,9 @@ Will only try twice before calling game_done"
             )
             # stop the tread (this does some cleanup and throws an exception)
             self.game_done(game_state=game_state)
+
+        # a move was made by the opponent
+        self.opponent_moved(game_state)
         # if there is a chess clock
         if self.chess_clock:
             # signal move
@@ -539,10 +531,6 @@ Will only try twice before calling game_done"
                 move,
             )
             self.make_move(move)
-        else:
-            # a move was made by the opponent
-            # self.signal_game_state_change(game_state) TODO: test
-            pass
 
     def check_for_game_over(self, game_state: GameState) -> None:
         """check a game state to see if the game is through if so raise an exception."""
@@ -606,7 +594,9 @@ def handle_game_start(
     game_data = LichessGame(game_start["game"])
     game_fen = game_data.fen
 
-    print(f"\ngame start received: { str(game_start) }\nyou play: ", game_data.colour)
+    msg = f"\ngame start received: { str(game_start) }\nyou play: %s" % game_data.colour
+    print(msg)
+    logger.debug(msg)
 
     if game_data.hasMoved:
         """handle ongoing game"""
@@ -770,9 +760,9 @@ def main():
                     # check for kill switch
                     if nl_inst.kill_switch.is_set():
                         sys.exit(0)
-                    # WARN: NOT PERMINENT
-                    sleep(2)  # berserk keep's the stream alive
-                    # :. if we don't sleep, computer will spin
+
+                logger.info("berserk stream exited")
+                sleep(POLL_DELAY)
 
             except KeyboardInterrupt:
                 logger.info("KeyboardInterrupt: bye")
@@ -791,9 +781,6 @@ def main():
                 logger.info("NicLinkGameOver excepted, good game?")
                 print("game over, you can play another. Waiting for lichess event...")
                 handle_resign()
-
-            logger.info("berserk stream exited")
-            sleep(POLL_DELAY)
 
     except ExitNicLink:
         print("Have a nice life")

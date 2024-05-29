@@ -22,7 +22,6 @@ class GameState:
     """A class used to contain all the information in a berserk board api game state."""
 
     def __init__(self, game_state: dict) -> None:
-        # TODO: FIND OUT HOW EXPENSIVE THIS IS
         self.logger = logging.getLogger("nl_lichess")
 
         self.logger.debug(
@@ -71,7 +70,7 @@ a game_state["type"] != "gameState"""
             return True
         return False
 
-    def is_white_to_move(self) -> bool:
+    def white_to_move(self) -> bool:
         """is white to move in this gamestate
         @returns: (bool) if it is whites move
         """

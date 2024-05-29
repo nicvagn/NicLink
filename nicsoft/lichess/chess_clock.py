@@ -90,7 +90,7 @@ class ChessClock:
         baudrate: int,
         timeout: float,
         logger=None,
-    ):  # , port="/dev/ttyACM0", baudrate=115200, timeout=100.0) -> None:
+    ):
         """initialize connection with ardino, and record start time"""
         # the refresh rate of the lcd
         self.TIME_REFRESH = 0.3
