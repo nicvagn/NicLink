@@ -30,7 +30,7 @@
 
     - there is a github action to help you with setup,
       I am not framilular but give it a look if you are
-
+    - there is also a shell script called setubNicLink.sh in the git root, that will clone NicLink and install python deps
     - see the python requirements.txt for external python requirements
 
     - see "## non pip requirements" below for further C++ and system req's
