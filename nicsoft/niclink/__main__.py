@@ -299,14 +299,14 @@ Is the board connected and turned on?"
             """signal 2 - left half lit up"""
             sig = np.array(
                 [
-                    "00001111",
-                    "00001111",
-                    "00001111",
-                    "00001111",
-                    "00001111",
-                    "00001111",
-                    "00001111",
-                    "00001111",
+                    "00000000",
+                    "00000000",
+                    "00000000",
+                    "00000000",
+                    "11111111",
+                    "11111111",
+                    "11111111",
+                    "11111111",
                 ],
                 dtype=np.str_,
             )
@@ -317,14 +317,14 @@ Is the board connected and turned on?"
 
             sig = np.array(
                 [
-                    "11110000",
-                    "11110000",
-                    "11110000",
-                    "11110000",
-                    "11110000",
-                    "11110000",
-                    "11110000",
-                    "11110000",
+                    "11111111",
+                    "11111111",
+                    "11111111",
+                    "11111111",
+                    "00000000",
+                    "00000000",
+                    "00000000",
+                    "00000000",
                 ],
                 dtype=np.str_,
             )
@@ -539,10 +539,8 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
             )
             return
         self.logger.debug("move made on gameboard. move %s", move)
-        # signal that a move was made
-        self.beep()
         self.game_board.push_uci(move)
-        # update the last move
+        # update the last move and last move time
         self.last_move = move
         self.set_move_LEDs(move)
         self.logger.debug(
@@ -598,11 +596,12 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
 
         return False
 
-    def show_board_diff(self, board1: chess.Board, board2: chess.Board) -> None:
+    def show_board_diff(self, board1: chess.Board, board2: chess.Board) -> bool:
         """show the differance between two boards and output differance on a chessboard
         @param: board1 - refrence board
         @param: board2 - board to display diff from refrence board
         @side_effect: changes led's to show diff squares
+        @returns: bool - if there is a diff
         """
         self.logger.debug(
             "man.show_board_diff entered w board's \n%s\nand\n%s", board1, board2
@@ -644,15 +643,15 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
                             zeros[: diff_cords[0]] + "1" + zeros[diff_cords[0] :]
                         )
 
-        # if there is a diff, beep and show it
         if diff:
-            self.beep()
             # set all the led's on the diff map
             self.set_all_LEDs(diff_map)
             self.logger.info(
                 "show_board_diff: diff found --> diff_squares: %s\n",
                 diff_squares,
             )
+
+        return diff
 
     def get_game_FEN(self) -> str:
         """get the game board FEN"""
@@ -736,7 +735,7 @@ def build_led_map_for_move(move: str) -> np.ndarray[np.str_]:
     """
     global logger, ZEROS
     zeros = "00000000"
-    logger.info("build_led_map_for_move(%s)", move)
+    logger.debug("build_led_map_for_move(%s)", move)
 
     led_map = np.copy(ZEROS)
 

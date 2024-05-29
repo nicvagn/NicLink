@@ -230,7 +230,7 @@ class Game(threading.Thread):
             logger.debug("event in self.stream: %s", event)
             if event["type"] == "gameState":
 
-                # update the game stata in this class with a stream game_state
+                # update the game state in this class with a stream game_state
                 # incapsulated in a conviniance class
                 self.game_state = GameState(event)
 
@@ -405,7 +405,7 @@ Will only try twice before calling game_done"
         global nl_inst, logger, REFRESH_DELAY
         logger.info("making the first move in the game")
         move = nl_inst.await_move()
-        # hack
+        # HACK:
         while move is None:
             move = nl_inst.await_move()
             sleep(REFRESH_DELAY)
@@ -470,11 +470,11 @@ Will only try twice before calling game_done"
     def signal_game_state_change(self, game_state: GameState) -> None:
         """signal a state change, signal the external clock and set the last move"""
         # beep to signal to the user we got a GameState
-        nl_inst.beep()
         logger.info(
             "\nsignal_game_state_change(self, game_state) entered with GameState: %s",
             game_state,
         )
+        nl_inst.beep()
         if game_state.has_moves():
             # update the last move
             self.last_move: str = game_state.get_last_move()
@@ -534,8 +534,9 @@ Will only try twice before calling game_done"
             logger.info("calling make_move(%s)", move)
             self.make_move(move)
         else:
-            # a move was made, signal it
-            self.signal_game_state_change(game_state)
+            # a move was made by the opponent
+            # self.signal_game_state_change(game_state) TODO: test
+            pass
 
     def check_for_game_over(self, game_state: GameState) -> None:
         """check a game state to see if the game is through if so raise an exception."""
@@ -589,6 +590,9 @@ def handle_game_start(
                 "skipping correspondence game w/ id: %s\n", game_start["game"]["id"]
             )
             return
+
+    # signal game start
+    nl_inst.signal_lights(3)
 
     logger.info(
         "\nhandle_game_start(GameStart) enterd w game_start: \n %s\n", str(game_start)
