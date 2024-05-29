@@ -233,9 +233,7 @@ Is the board connected and turned on?"
         self.logger.info("move LED's on for move: %s", move)
         move_led_map = build_led_map_for_move(move)
         # log led map
-        self.logger.debug(
-            "move led map created. Move: %s \n map: %s", move, move_led_map
-        )
+        self.logger.debug("move led map created. Move: %s \n map: ", move)
         log_led_map(move_led_map, self.logger)
 
         self.set_all_LEDs(move_led_map)
@@ -359,7 +357,7 @@ Is the board connected and turned on?"
         """
         old_FEN = self.game_board.board_fen()
         if new_FEN == old_FEN:
-            print("no fen differance")
+            self.logger.debug("no fen differance. FEN was %s", old_FEN)
             raise NoMove("No FEN differance")
 
         self.logger.debug("new_FEN" + new_FEN)
@@ -369,7 +367,7 @@ Is the board connected and turned on?"
         legal_moves = list(self.game_board.legal_moves)
 
         tmp_board = self.game_board.copy()
-        self.logger.info(
+        self.logger.debug(
             "+++ find_move_from_FEN_change(...) called +++\n\
 current board: \n%s\n board we are using to check legal moves: \n%s\n",
             self.put_board_FEN_on_board(self.get_FEN()),
@@ -383,7 +381,7 @@ current board: \n%s\n board we are using to check legal moves: \n%s\n",
             if (
                 tmp_board.board_fen() == new_FEN
             ):  # Check if the board's FEN matches the new FEN
-                self.logger.info(move)
+                self.logger.info("move was found to be: %s", move)
 
                 return move.uci()  # Return the last move
 
@@ -413,7 +411,7 @@ a legal move on:\n{ str(self.game_board) }\n"
 
             # check if you just have not moved the opponent's piece
             if new_FEN == self.game_board.board_fen():
-                self.logger.info(
+                self.logger.debug(
                     "board fen is the board fen before opponent move made on chessboard. Returning"
                 )
                 self.game_board.push(last_move)
@@ -455,7 +453,7 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
                 return self.last_move
 
         else:
-            self.logger.info("no change in FEN.")
+            self.logger.debug("no change in FEN.")
             self.turn_off_all_LEDs()
             # pause for a refresher
             time.sleep(self.refresh_delay)
@@ -470,7 +468,7 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
         # loop until we get a valid move
         attempts = 0
         while not self.kill_switch.is_set():
-            self.logger.info(
+            self.logger.debug(
                 "is game_over threading event set? %s", self.game_over.is_set()
             )
             # check for a move. If it move, return it else False
@@ -490,7 +488,7 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
                     )
                     return move
                 else:
-                    self.logger.info("no move")
+                    self.logger.debug("no move")
                     # if move is false continue
                     continue
 
@@ -685,6 +683,7 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
         Signal LEDS_changed and update last move
         @param: move - the move in a uci str
         """
+        self.logger.debug("opponent movet1d %s", move)
         self.last_move = move
         self.set_move_LEDs(move)
 
@@ -717,15 +716,15 @@ def square_cords(square) -> (int, int):
 
 def log_led_map(led_map: np.ndarray[np.str_], logger) -> None:
     """log led map pretty 8th file to the top"""
-    logger.info("\nLOG LED map:\n")
-    logger.info(str(led_map[7]))
-    logger.info(str(led_map[6]))
-    logger.info(str(led_map[5]))
-    logger.info(str(led_map[4]))
-    logger.info(str(led_map[3]))
-    logger.info(str(led_map[2]))
-    logger.info(str(led_map[1]))
-    logger.info(str(led_map[0]))
+    logger.debug("\nLOG LED map:\n")
+    logger.debug(str(led_map[7]))
+    logger.debug(str(led_map[6]))
+    logger.debug(str(led_map[5]))
+    logger.debug(str(led_map[4]))
+    logger.debug(str(led_map[3]))
+    logger.debug(str(led_map[2]))
+    logger.debug(str(led_map[1]))
+    logger.debug(str(led_map[0]))
 
 
 def build_led_map_for_move(move: str) -> np.ndarray[np.str_]:
@@ -749,11 +748,11 @@ def build_led_map_for_move(move: str) -> np.ndarray[np.str_]:
     if s1_cords[1] != s2_cords[1]:
         # set 1st square
         led_map[s1_cords[1]] = zeros[: s1_cords[0]] + "1" + zeros[s1_cords[0] :]
-        logger.info("map after 1st move cord (cord): %s", s1_cords)
+        logger.debug("map after 1st move cord (cord): %s", s1_cords)
         log_led_map(led_map, logger)
         # set second square
         led_map[s2_cords[1]] = zeros[: s2_cords[0]] + "1" + zeros[s2_cords[0] :]
-        logger.info("led map made for move: %s\n", move)
+        logger.debug("led map made for move: %s\n", move)
         log_led_map(led_map, logger)
     # if they are on the same rank
     else:

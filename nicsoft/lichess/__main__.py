@@ -100,12 +100,12 @@ if DEBUG:
 else:
     logger.info("DEBUG not set")
     # for dev
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)
     consoleHandler.setLevel(logging.INFO)
     # logger.setLevel(logging.ERROR) for production
     # consoleHandler.setLevel(logging.ERROR)
 
-formatter = logging.Formatter("%(levelno)s %(pathname)s %(funcName)s %(message)s")
+formatter = logging.Formatter("%(levelno)s %(funcName)s %(message)s @: %(pathname)s")
 
 consoleHandler.setFormatter(formatter)
 logger.addHandler(consoleHandler)
@@ -275,7 +275,7 @@ class Game(threading.Thread):
                     nl_inst.signal_lights(2)
                     sleep(1)
             else:  # If it is not one of these options, kill the stream
-                logger.info("\n\nNew Event: %s", event)
+                logger.warning("\n\nNew Event: %s", event)
                 for x in range(0, 3):
                     nl_inst.beep()
                     sleep(0.5)
@@ -322,10 +322,10 @@ class Game(threading.Thread):
         set it to index 0 on fetch_list in UCI. This function should be ran in it's own Thread.
         """
         global logger, nl_inst
-        logger.info("\nGame.await_move_thread(...) entered\n")
+        logger.debug("\nGame.await_move_thread(...) entered\n")
         try:
             move = nl_inst.await_move()  # await move from e-board the move from niclink
-            logger.info(
+            logger.debug(
                 "await_move_thread(...): move from chessboard %s. setting it to index 0 of the passed list, \
 and setting moved event",
                 move,
@@ -356,7 +356,7 @@ and setting moved event",
         logger.info("move made: %s", move)
 
         while not nl_inst.game_over.is_set():
-            logger.info(
+            logger.debug(
                 "make_move() attempt w move: %s nl_inst.game_over.is_set(): %s",
                 move,
                 str(nl_inst.game_over.is_set()),
@@ -366,6 +366,7 @@ and setting moved event",
                     raise IllegalMove("Move is None")
                 self.berserk_board_client.make_move(self.game_id, move)
                 nl_inst.make_move_game_board(move)
+                logger.debug("move sent to liches: %s", move)
 
                 # once move has been made set self.response_error_on_last_attempt to false and return
                 self.response_error_on_last_attempt = False
@@ -415,12 +416,14 @@ Will only try twice before calling game_done"
     def get_move_from_chessboard(self, tmp_chessboard: chess.Board) -> str:
         """get a move from the chessboard, and return it in UCI"""
         global nl_inst, logger, REFRESH_DELAY
-        logger.info("get_move_from_chessboard() entered. Our turn to move.\n")
+        logger.debug(
+            "get_move_from_chessboard() entered. Geting move from ext board.\n"
+        )
 
         # set this board as NicLink game board
         nl_inst.set_game_board(tmp_chessboard)
 
-        logger.info(
+        logger.debug(
             "NicLink set_game_board(tmp_chessboard) set. board prior to move FEN %s\n FEN I see external: %s\n",
             tmp_chessboard.fen(),
             nl_inst.get_FEN(),
@@ -459,7 +462,7 @@ Will only try twice before calling game_done"
                 tmp_chessboard.push_uci(move)
                 last_move = move
 
-            logger.info("The last move was found to be: %s", last_move)
+            logger.debug("The last move was found to be: %s", last_move)
 
             # TODO: fing a better way
             # set the nl_inst.last move
@@ -491,7 +494,7 @@ Will only try twice before calling game_done"
         """Handle a state change in the lichess game."""
         global nl_inst, logger
 
-        logger.info("\ngame_state: %s\n", game_state)
+        logger.debug("\ngame_state: %s\n", game_state)
 
         # get all the moves of the game
         moves = game_state.get_moves()
@@ -531,7 +534,10 @@ Will only try twice before calling game_done"
             move = self.get_move_from_chessboard(tmp_chessboard)
 
             # make the move
-            logger.info("calling make_move(%s)", move)
+            logger.debug(
+                "calling make_move(%s) to make the move from the chessboard in lila game",
+                move,
+            )
             self.make_move(move)
         else:
             # a move was made by the opponent
@@ -541,7 +547,7 @@ Will only try twice before calling game_done"
     def check_for_game_over(self, game_state: GameState) -> None:
         """check a game state to see if the game is through if so raise an exception."""
         global logger, nl_inst
-        logger.info(
+        logger.debug(
             "check_for_game_over(self, game_state) entered w/ gamestate: %s", game_state
         )
         if game_state.winner:
@@ -549,7 +555,7 @@ Will only try twice before calling game_done"
         elif nl_inst.game_over.is_set():
             self.game_done()
         else:
-            logger.info("game not found to be over.")
+            logger.debug("game not found to be over.")
 
     def handle_chat_line(self, chat_line) -> None:
         """handle when the other person types something in gamechat"""

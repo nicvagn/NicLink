@@ -25,8 +25,8 @@ class GameState:
         # TODO: FIND OUT HOW EXPENSIVE THIS IS
         self.logger = logging.getLogger("nl_lichess")
 
-        self.logger.info(
-            "GameState: gs created w game_state: dict -> %s \n -gamestate bellow- \n",
+        self.logger.debug(
+            "GameState created w game_state: dict -> %s \n -gamestate bellow- \n",
             game_state,
         )
         if game_state["type"] != "gameState":
