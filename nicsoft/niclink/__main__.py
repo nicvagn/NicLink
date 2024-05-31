@@ -60,7 +60,6 @@ NO_MOVE_DELAY = 0.5
 LIGHT_THREAD_DELAY = 0.8
 
 ### logger ###
-# HACK: this, find a better way to log
 logger = logging.getLogger("NicLink")
 
 
@@ -234,9 +233,7 @@ Is the board connected and turned on?"
         self.logger.info("move LED's on for move: %s", move)
         move_led_map = build_led_map_for_move(move)
         # log led map
-        self.logger.debug(
-            "move led map created. Move: %s \n map: %s", move, move_led_map
-        )
+        self.logger.debug("move led map created. Move: %s \n map: ", move)
         log_led_map(move_led_map, self.logger)
 
         self.set_all_LEDs(move_led_map)
@@ -247,7 +244,7 @@ Is the board connected and turned on?"
                 str of len 8 with the 1 for 0 off
                 for the led of that square
         """
-        self.logger.info(
+        self.logger.debug(
             "set_all_LEDs(light_board: np.ndarray[np.str_]): called with following light_board:"
         )
 
@@ -269,6 +266,67 @@ Is the board connected and turned on?"
     def turn_off_all_LEDs(self) -> None:
         """turn off all the leds"""
         self.nl_interface.lights_out()
+
+    def signal_lights(self, sig_num: int) -> None:
+        """signal the user via displaying a set of lights on the board
+        @parm: sig_num - the signal number coresponding to the signal to show
+                ie: 1 - ring of lights
+                    2 - left half lit up
+                    3 - right half lit up
+        @side effect - change the light's on the chess board
+        """
+        if sig_num == 1:
+            """signal 1 - ring of lights"""
+
+            sig = np.array(
+                [
+                    "11111111",
+                    "10000001",
+                    "10000001",
+                    "10000001",
+                    "10000001",
+                    "10000001",
+                    "10000001",
+                    "11111111",
+                ],
+                dtype=np.str_,
+            )
+            self.set_all_LEDs(sig)
+
+        elif sig_num == 2:
+            """signal 2 - left half lit up"""
+            sig = np.array(
+                [
+                    "00000000",
+                    "00000000",
+                    "00000000",
+                    "00000000",
+                    "11111111",
+                    "11111111",
+                    "11111111",
+                    "11111111",
+                ],
+                dtype=np.str_,
+            )
+
+            self.set_all_LEDs(sig)
+        elif sig_num == 3:
+            """signal 3 - right half lit up"""
+
+            sig = np.array(
+                [
+                    "11111111",
+                    "11111111",
+                    "11111111",
+                    "11111111",
+                    "00000000",
+                    "00000000",
+                    "00000000",
+                    "00000000",
+                ],
+                dtype=np.str_,
+            )
+            self.set_all_LEDs(sig)
 
     def get_FEN(self) -> str:
         """get the board FEN from chessboard"""
@@ -299,7 +357,7 @@ Is the board connected and turned on?"
         """
         old_FEN = self.game_board.board_fen()
         if new_FEN == old_FEN:
-            print("no fen differance")
+            self.logger.debug("no fen differance. FEN was %s", old_FEN)
             raise NoMove("No FEN differance")
 
         self.logger.debug("new_FEN" + new_FEN)
@@ -309,7 +367,7 @@ Is the board connected and turned on?"
         legal_moves = list(self.game_board.legal_moves)
 
         tmp_board = self.game_board.copy()
-        self.logger.info(
+        self.logger.debug(
             "+++ find_move_from_FEN_change(...) called +++\n\
 current board: \n%s\n board we are using to check legal moves: \n%s\n",
             self.put_board_FEN_on_board(self.get_FEN()),
@@ -323,7 +381,7 @@ current board: \n%s\n board we are using to check legal moves: \n%s\n",
             if (
                 tmp_board.board_fen() == new_FEN
             ):  # Check if the board's FEN matches the new FEN
-                self.logger.info(move)
+                self.logger.info("move was found to be: %s", move)
 
                 return move.uci()  # Return the last move
 
@@ -353,7 +411,7 @@ a legal move on:\n{ str(self.game_board) }\n"
 
             # check if you just have not moved the opponent's piece
             if new_FEN == self.game_board.board_fen():
-                self.logger.info(
+                self.logger.debug(
                     "board fen is the board fen before opponent move made on chessboard. Returning"
                 )
                 self.game_board.push(last_move)
@@ -395,7 +453,7 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
                 return self.last_move
 
         else:
-            self.logger.info("no change in FEN.")
+            self.logger.debug("no change in FEN.")
             self.turn_off_all_LEDs()
             # pause for a refresher
             time.sleep(self.refresh_delay)
@@ -410,7 +468,7 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
         # loop until we get a valid move
         attempts = 0
         while not self.kill_switch.is_set():
-            self.logger.info(
+            self.logger.debug(
                 "is game_over threading event set? %s", self.game_over.is_set()
             )
             # check for a move. If it move, return it else False
@@ -430,7 +488,7 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
                     )
                     return move
                 else:
-                    self.logger.info("no move")
+                    self.logger.debug("no move")
                     # if move is false continue
                     continue
 
@@ -479,10 +537,8 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
             )
             return
         self.logger.debug("move made on gameboard. move %s", move)
-        # signal that a move was made
-        self.beep()
         self.game_board.push_uci(move)
-        # update the last move
+        # update the last move and last move time
         self.last_move = move
         self.set_move_LEDs(move)
         self.logger.debug(
@@ -538,11 +594,12 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
 
         return False
 
-    def show_board_diff(self, board1: chess.Board, board2: chess.Board) -> None:
+    def show_board_diff(self, board1: chess.Board, board2: chess.Board) -> bool:
         """show the differance between two boards and output differance on a chessboard
         @param: board1 - refrence board
         @param: board2 - board to display diff from refrence board
         @side_effect: changes led's to show diff squares
+        @returns: bool - if there is a diff
         """
         self.logger.debug(
             "man.show_board_diff entered w board's \n%s\nand\n%s", board1, board2
@@ -584,15 +641,15 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
                             zeros[: diff_cords[0]] + "1" + zeros[diff_cords[0] :]
                         )
 
-        # if there is a diff, beep and show it
         if diff:
-            self.beep()
             # set all the led's on the diff map
             self.set_all_LEDs(diff_map)
             self.logger.info(
                 "show_board_diff: diff found --> diff_squares: %s\n",
                 diff_squares,
             )
+
+        return diff
 
     def get_game_FEN(self) -> str:
         """get the game board FEN"""
@@ -626,6 +683,7 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
         Signal LEDS_changed and update last move
         @param: move - the move in a uci str
         """
+        self.logger.debug("opponent movet1d %s", move)
         self.last_move = move
         self.set_move_LEDs(move)
 
@@ -658,15 +716,15 @@ def square_cords(square) -> (int, int):
 
 def log_led_map(led_map: np.ndarray[np.str_], logger) -> None:
     """log led map pretty 8th file to the top"""
-    logger.info("\nLOG LED map:\n")
-    logger.info(str(led_map[7]))
-    logger.info(str(led_map[6]))
-    logger.info(str(led_map[5]))
-    logger.info(str(led_map[4]))
-    logger.info(str(led_map[3]))
-    logger.info(str(led_map[2]))
-    logger.info(str(led_map[1]))
-    logger.info(str(led_map[0]))
+    logger.debug("\nLOG LED map:\n")
+    logger.debug(str(led_map[7]))
+    logger.debug(str(led_map[6]))
+    logger.debug(str(led_map[5]))
+    logger.debug(str(led_map[4]))
+    logger.debug(str(led_map[3]))
+    logger.debug(str(led_map[2]))
+    logger.debug(str(led_map[1]))
+    logger.debug(str(led_map[0]))
 
 
 def build_led_map_for_move(move: str) -> np.ndarray[np.str_]:
@@ -676,7 +734,7 @@ def build_led_map_for_move(move: str) -> np.ndarray[np.str_]:
     """
     global logger, ZEROS
     zeros = "00000000"
-    logger.info("build_led_map_for_move(%s)", move)
+    logger.debug("build_led_map_for_move(%s)", move)
 
     led_map = np.copy(ZEROS)
 
@@ -690,11 +748,11 @@ def build_led_map_for_move(move: str) -> np.ndarray[np.str_]:
     if s1_cords[1] != s2_cords[1]:
         # set 1st square
         led_map[s1_cords[1]] = zeros[: s1_cords[0]] + "1" + zeros[s1_cords[0] :]
-        logger.info("map after 1st move cord (cord): %s", s1_cords)
+        logger.debug("map after 1st move cord (cord): %s", s1_cords)
         log_led_map(led_map, logger)
         # set second square
         led_map[s2_cords[1]] = zeros[: s2_cords[0]] + "1" + zeros[s2_cords[0] :]
-        logger.info("led map made for move: %s\n", move)
+        logger.debug("led map made for move: %s\n", move)
         log_led_map(led_map, logger)
     # if they are on the same rank
     else:
@@ -776,6 +834,8 @@ def test_usb():
     b2 = chess.Board()
     b2.push_uci("e2e4")
     nl_man = NicLinkManager(2, logger=logger)
+
+    nl_man.signal_lights(1)
 
     logger.info("TEST: show board diff: shold be e2e4 lit up.")
     nl_man.show_board_diff(b1, b2)

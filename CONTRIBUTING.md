@@ -11,6 +11,10 @@ project better.
 - impliment feature
 - make a pr
 
+## NEEDED
+
+- folks to test and port NicLink to other operating systems.
+
 ## if you would like to work closely with me (I am not lonely, swear haha)
 
 Send me an email at: nicolasvaagen@gmail.com

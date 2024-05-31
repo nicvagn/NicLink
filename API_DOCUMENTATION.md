@@ -30,6 +30,7 @@ class NicLinkManager:
 
     def get_FEN(self) -> str:
         """get the FEN from chessboard"""
+
     def find_move_from_FEN_change(
         self, new_FEN
     ) -> str:  # a move in quardinate notation

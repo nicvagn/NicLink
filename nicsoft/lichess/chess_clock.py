@@ -90,7 +90,7 @@ class ChessClock:
         baudrate: int,
         timeout: float,
         logger=None,
-    ):  # , port="/dev/ttyACM0", baudrate=115200, timeout=100.0) -> None:
+    ):
         """initialize connection with ardino, and record start time"""
         # the refresh rate of the lcd
         self.TIME_REFRESH = 0.3
@@ -109,6 +109,8 @@ class ChessClock:
         # the countdown thread var
         self.countdown: None | Thread = None
         self.move_time: None | datetime = None
+        # has the countdown been started?
+        self.countdown_started = Event()
         # is the lcd handling a game?
         self.handling_game = Event()
         # event to signal white to move
@@ -198,6 +200,7 @@ class ChessClock:
         )
 
         # start the chess clock for this game
+
         if not self.handling_game.is_set():
             # creat new coundown thread if not handling game
             self.countdown.start()
@@ -235,12 +238,6 @@ class ChessClock:
             if game_state is not None:
                 self.displayed_wtime: timedelta = game_state.wtime
                 self.displayed_btime: timedelta = game_state.btime
-                # make sure countown thread is running if both players have moved
-                if not game_state.first_move():
-                    if not self.countdown.is_alive():
-                        self.logger.info("countdown thread started")
-                        self.countdown.start()
-
             else:
                 # TODO: add incriment
                 pass
@@ -369,7 +366,7 @@ chess_clock.countdown_kill.is_set()"""
                 )
                 # check for flag for white
                 if chess_clock.did_flag(new_wtime):
-                    chess_clock.white_won()
+                    chess_clock.black_won()
                     # kill the thread
                     raise NicLinkGameOver("white flaged")
                 # update the clock
@@ -389,7 +386,7 @@ chess_clock.countdown_kill.is_set()"""
 
                 # check if black has flaged
                 if chess_clock.did_flag(chess_clock.displayed_btime):
-                    chess_clock.black_won()
+                    chess_clock.white_won()
                     # kill the thread
                     raise NicLinkGameOver("black flaged")
                 # update the clock, updates displayed time
@@ -457,15 +454,14 @@ def test_display_options(cc: ChessClock) -> None:
 def main() -> None:
     """test ChessClock"""
     global logger
-
     PORT = "/dev/ttyACM0"
     BR = 115200  # baudrate for Serial connection
     REFRESH_DELAY = 100.0  # refresh delay for chess_clock
     SCRIPT_DIR = os.path.dirname(__file__)
     TOKEN_FILE = os.path.join(SCRIPT_DIR, "lichess_token/token")
 
-    test_display_opts = True
-    test_countdown = True
+    test_display_opts = False
+    test_countdown = False
 
     RAW_GAME = {
         "fullId": "4lmop23qqa8S",
