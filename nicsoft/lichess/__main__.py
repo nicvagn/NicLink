@@ -466,12 +466,15 @@ Will only try twice before calling game_done"
             "\nopponent_moved(self, game_state) entered with GameState: %s",
             game_state,
         )
-        move = game_state.get_last_move()
-        # tell nl about the move
-        nl_inst.opponent_moved(move)
-        # tell the user about the move
-        nl_inst.beep()
-        logger.info("opponent moved: %s", move)
+
+        # check to make sure the game state has moves befor trying to access them
+        if game_state.has_moves():
+            move = game_state.get_last_move()
+            # tell nl about the move
+            nl_inst.opponent_moved(move)
+            # tell the user about the move
+            nl_inst.beep()
+            logger.info("opponent moved: %s", move)
 
         # if chess_clock send new timestamp to clock
         if self.chess_clock:

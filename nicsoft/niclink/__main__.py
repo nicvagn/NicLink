@@ -244,7 +244,7 @@ Is the board connected and turned on?"
                 str of len 8 with the 1 for 0 off
                 for the led of that square
         """
-        self.logger.info(
+        self.logger.debug(
             "set_all_LEDs(light_board: np.ndarray[np.str_]): called with following light_board:"
         )
 
