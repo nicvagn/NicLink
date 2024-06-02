@@ -286,25 +286,43 @@ class Game(threading.Thread):
         return self.game_state
 
     def game_done(self, game_state: GameState = None) -> None:
-        """stop the thread, game should be over, or maybe a rage quit"""
+        """stop the thread, game should be over, or maybe a rage quit
+        @param - (GameState) a gamestate telling us how the game ended
+        @side-effect - changes the external board led's
+
+        info on signals:
+         1 - ring of lights
+         2 - left half lit up
+         3 - right half lit up
+         4 - central line
+         5 - cross in center
+        """
         global logger, nl_inst
         logger.info("\nGame.game_done(GameState) entered.\n GameState %s", game_state)
+        # signal the side that won on the board by lighting up that side
         # if there is an external clock, display gameover message
-        if self.chess_clock:
-            if game_state is not None:
-                if game_state.winner:
-                    if game_state.winner == "white":
+        if game_state is not None:
+            if game_state.winner:
+                if game_state.winner == "white":
+                    if self.chess_clock:
                         self.chess_clock.white_won()
-                    elif game_state.winner == "black":  # must be black
+                    nl_inst.signal_lights(2)
+                elif game_state.winner == "black":
+                    if self.chess_clock:
                         self.chess_clock.black_won()
-                    else:
-                        # if no winner
-                        self.chess_clock.game_over()
-            else:
-                # if no game state was given
+                    nl_inst.signal_lights(3)
+                else:
+                    # if no winner
+                    self.chess_clock.game_over()
+                    nl_inst.signal_lights(4)
+        else:
+            # if no game state was given
+            if self.chess_clock:
                 self.chess_clock.game_over()
+            # signal we dont know wtf with a cross
+            self.signal_lights(5)
 
-        print("\n    %%%%% GOOD GAME %%%%%\n")
+        print("\n[--- %%%%% GAME DONE %%%%% ---]\n")
         # tell the user and NicLink the game is through
         nl_inst.game_over.set()
         nl_inst.beep()
@@ -347,8 +365,11 @@ and setting moved event",
                 "exiting Game.await_move_thread thread, everything is good."
             )
 
-    def make_move(self, move) -> None:
-        """make a move in a lichess game"""
+    def make_move(self, move: str) -> None:
+        """make a move in a lichess game with self.gameId
+        @param - move: UCI move string ie: e4e5
+        @side_effect: talkes to lichess, sending the move
+        """
         global logger, nl_inst
         logger.info("move made: %s", move)
 
@@ -548,8 +569,11 @@ Will only try twice before calling game_done"
         else:
             logger.debug("game not found to be over.")
 
-    def handle_chat_line(self, chat_line) -> None:
-        """handle when the other person types something in gamechat"""
+    def handle_chat_line(self, chat_line: str) -> None:
+        """handle when the other person types something in gamechat
+        @param: chat_line - the chat line got from lila
+        @side_effect: changes lights and beep's chess board
+        """
         global nl_inst
         nl_inst.signal_lights(sig_num=1)
         print(chat_line)

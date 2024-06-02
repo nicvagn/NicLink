@@ -183,7 +183,7 @@ Is the board connected and turned on?"
         self.kill_switch = threading.Event()
         self.start_game = threading.Event()
 
-        self.logger.info("NicLinkManager reset\n")
+        self.logger.debug("NicLinkManager reset\n")
 
     def set_led(self, square: str, status: bool) -> None:
         """set an LED at a given square to a status
@@ -273,6 +273,8 @@ Is the board connected and turned on?"
                 ie: 1 - ring of lights
                     2 - left half lit up
                     3 - right half lit up
+                    4 - central line
+                    5 - cross in center
         @side effect - change the light's on the chess board
         """
         if sig_num == 1:
@@ -312,7 +314,6 @@ Is the board connected and turned on?"
             self.set_all_LEDs(sig)
         elif sig_num == 3:
             """signal 3 - right half lit up"""
-
             sig = np.array(
                 [
                     "11111111",
@@ -327,6 +328,36 @@ Is the board connected and turned on?"
                 dtype=np.str_,
             )
             self.set_all_LEDs(sig)
+        elif sig_num == 4:
+            """Signal 4 - center line"""
+            sig = np.array(
+                [
+                    "00000000",
+                    "00000000",
+                    "00000000",
+                    "11111111",
+                    "11111111",
+                    "00000000",
+                    "00000000",
+                    "00000000",
+                ],
+                dtype=np.str_,
+            )
+        elif sig_num == 5:
+            """Signal 5 - center cross"""
+            sig = np.array(
+                [
+                    "00011000",
+                    "00011000",
+                    "00011000",
+                    "11111111",
+                    "11111111",
+                    "00011000",
+                    "00011000",
+                    "00011000",
+                ],
+                dtype=np.str_,
+            )
 
     def get_FEN(self) -> str:
         """get the board FEN from chessboard"""
