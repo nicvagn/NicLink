@@ -5,17 +5,25 @@
 #  You should have received a copy of the GNU General Public License along with NicLink. If not, see <https://www.gnu.org/licenses/>.
 
 
-from niclink import NicLinkManager
-
 import readchar
 
-nl_inst = NicLinkManager(1)
+from niclink import NicLinkManager
 
-print("\n+++++ niclink test: FEN reading ++++\n")
 
-exit = "n"
-while exit == "n":
-    currentFEN = nl_inst.get_FEN()
-    nl_inst.show_FEN_on_board(currentFEN)
-    print("do you want to exit? 'n' for no \n")
-    exit = readchar.readchar()
+def test():
+    print("\n+++++ niclink test: FEN reading ++++\n")
+
+    exit = "n"
+    while exit == "n":
+        currentFEN = nl_inst.get_FEN()
+        nl.show_FEN_on_board(currentFEN)
+        print("do you want to exit? 'n' for no \n")
+        exit = readchar.readchar()
+
+
+if __name__ == "__main__":
+
+    # connect to the board
+    nl = NicLinkManager(1)
+    test()
+    # set_move_leds("a4h4")

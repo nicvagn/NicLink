@@ -2,6 +2,6 @@
 
 # enter the python venv
 
-source ./pyvenv_up.sh
+source ./activate
 
 python ./nicsoft/test/__main__.py

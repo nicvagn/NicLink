@@ -7,24 +7,31 @@ import chess
 
 import niclink
 
-print("test niclink board compaire")
 
-b1 = chess.Board()
-b2 = chess.Board()
+def test():
+    print("test niclink board compaire")
+    b1 = chess.Board()
+    b2 = chess.Board()
 
-nl = niclink.NicLinkManager(1)
+    nl = niclink.NicLinkManager(1)
 
-print("test identical boards(should be no diff)")
-nl.show_board_diff(b1, b2)
+    print("test identical boards(should be no diff)")
+    nl.show_board_diff(b1, b2)
 
-print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+    print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
 
-print("should be a diff on e2 e4")
-b1.push_uci("e2e4")
-nl.show_board_diff(b1, b2)
+    print("should be a diff on e2 e4")
+    b1.push_uci("e2e4")
+    nl.show_board_diff(b1, b2)
 
-print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+    print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
 
-print("should be a lot of diffs")
-b2.set_fen("r1bqkb1r/pppp1Qpp/2n2n2/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 4")
-nl.show_board_diff(b1, b2)
+    print("should be a lot of diffs")
+    b2.set_fen("r1bqkb1r/pppp1Qpp/2n2n2/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 4")
+    nl.show_board_diff(b1, b2)
+
+
+if __name__ == "__main__":
+
+    nl = NicLinkManager(2)
+    test()

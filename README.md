@@ -1,6 +1,6 @@
 # NicLink - A python interface for the Chessnut Air
 
-> version 0.9
+> version 0.95
 
 # Notice
 
@@ -8,25 +8,7 @@
 
     https://chromewebstore.google.com/detail/chessconnect/dmkkcjpbclkkhbdnjgcciohfbnpoaiam?hl=en-GB
 
-# IMPORTANT: setting up for your system
-
-    > you must edit the CMakeLists.txt file to work for your system
-
-        ```
-        TODO: set for your system:
-        NOTE: removed as not debbuging c++ code link_libraries(spdlog_header_only)
-        set(SPDLOG OFF) # Very fast, header-only/compiled, C++ logging library.
-        NOTE: not needed if using hidraw backend to libusb
-        set(LIBUSB OFF) # i am using th hidraw backend adjust if you are not ant need libusb
-        see https://github.com/libusb/libusb
-        see thirdparty/hidapi/README.md
-        option(HIDAPI_WITH_LIBUSB "Build LIBUSB-based implementation of HIDAPI" ON)
-        option(HIDAPI_WITH_LIBUSB "Build LIBUSB-based implementation of HIDAPI" OFF)
-        ```
-
-    Here is a snippet of said file. If on GNU/Linux you must creat a udev rule. More on that later
-
-# setup
+# SETUP:
 
     - there is a github action to help you with setup,
       I am not framilular but give it a look if you are
@@ -59,69 +41,88 @@ on Fedora:
     hidapi-devel
     ```
 
-if you get a dev environment set up, I would like to know about it.
+#### detailed ramblings on packages:
+    > requirements:
+    - hidraw and spdlog are internal in src/thirdparty
+    - in order to compile them on Debian you need:
 
-> The system packages required, and the system
+      - checkout the community fork of the EasylinkSDK and get that building first.
+        You have to build that as a component of NicLink
+        Link: `https://github.com/miguno/EasyLinkSDK`
 
-## detailed ramblings on packages:
+      - libudev-dev or on fedora libudev-devel or equivalent on your distros
 
-- hidraw and spdlog are internal in src/thirdparty
-- in order to compile them on Debian you need:
+      - hidapi and hidapi-devel (or -dev)
 
-  - checkout the community fork of the EasylinkSDK and get that building first.
-    You have to build that as a component of NicLink
-    Link: `https://github.com/miguno/EasyLinkSDK`
+        - requirements:
+        - pybind11-devel in order to compile the code
+        - python-dev or python-devel or whatever it is on your distro needed to build pybind code
+        - only needed if using the libusb backend:
+          - libusb (https://github.com/libusb/libusb/releases) - this is included as a submodule
 
-  - libudev-dev or on fedora libudev-devel or equivalent on your distros
+    - pip configured for python 3.12
 
-  - hidapi and hidapi-devel (or -dev)
+    - python 3.12 and python-dev (or python-devel, you need python.h anyway) and python modules listed in requirements.txt
 
-    - requirements:
-    - pybind11-devel in order to compile the code
-    - python-dev or python-devel or whatever it is on your distro needed to build pybind code
-    - only needed if using the libusb backend:
-      - libusb (https://github.com/libusb/libusb/releases) - this is included as a submodule
+    - cmake (3.4 ... 3.20) some distros are behind significantly, so I recommend "pip install cmake"
+      after uninstalling the one from your distro. Or it will probably be fine ...
 
-- pip configured for python 3.12
+    - modern gcc (I used gcc 13.2) and gcc-c++
 
-- python 3.12 and python-dev (or python-devel, you need python.h anyway) and python modules listed in requirements.txt
+      > so you need gcc, cmake, gcc-c++, python-devel, pybind11, pybind11-devel and the kichen sink
+      > I satisfied the requirement via: sudo dnf install gcc cmake g++ python-devel pybind11-devel
 
-- cmake (3.4 ... 3.20) some distros are behind significantly, so I recommend "pip install cmake"
-  after uninstalling the one from your distro. Or it will probably be fine ...
+    - if cmake can not find python packages (probably) see setting up a python environment and run cmake from the venv
 
-- modern gcc (I used gcc 13.2) and gcc-c++
+    - If you attempt getting nl set up on your system, I will give you a hand if you need it. I would be interested in reading a log, too!
 
-  > so you need gcc, cmake, gcc-c++, python-devel, pybind11, pybind11-devel and the kichen sink
-  > I satisfied the requirement via: sudo dnf install gcc cmake g++ python-devel pybind11-devel
+    if you get a dev environment set up, I would like to know about it.
 
-- if cmake can not find python packages (probably) see setting up a python environment and run cmake from the venv
+    > The system packages required, and the system
 
-- If you attempt getting nl set up on your system, I will give you a hand if you need it. I would be interested in reading a log, too!
+## IMPORTANT: setting up for your system
+
+    > you must edit the CMakeLists.txt file to work for your system
+
+        ```
+        TODO: set for your system:
+        NOTE: removed as not debbuging c++ code link_libraries(spdlog_header_only)
+        set(SPDLOG OFF) # Very fast, header-only/compiled, C++ logging library.
+        NOTE: not needed if using hidraw backend to libusb
+        set(LIBUSB OFF) # i am using th hidraw backend adjust if you are not ant need libusb
+        see https://github.com/libusb/libusb
+        see thirdparty/hidapi/README.md
+        option(HIDAPI_WITH_LIBUSB "Build LIBUSB-based implementation of HIDAPI" ON)
+        option(HIDAPI_WITH_LIBUSB "Build LIBUSB-based implementation of HIDAPI" OFF)
+        ```
+
+    Here is a snippet of said file. If on GNU/Linux you must creat a udev rule. More on that later
+
 
 ## Setting up python venv
 
-In order to use NicLink while it is in development, it is advised to use a virtual environment.
-I do not have a good enough understanding, but you have the internet.
-( here is a start: https://python.land/virtual-environments/virtualenv ) Go ham.
+    In order to use NicLink while it is in development, it is advised to use a virtual environment.
+    I do not have a good enough understanding, but you have the internet.
+    ( here is a start: https://python.land/virtual-environments/virtualenv ) Go ham.
 
-It is now at a point where it should be portable, if you are reeding this, and want to really
-help me out, it would be swell to hear how installing NicLink goes. requirements.txt should
-have the python requirements. (see ## requirements for non-pip requirements)
+    It is now at a point where it should be portable, if you are reeding this, and want to really
+    help me out, it would be swell to hear how installing NicLink goes. requirements.txt should
+    have the python requirements. (see ## requirements for non-pip requirements)
 
-> what I did (bash):
+# what I did (bash):
+
+I created the venv for niclink to live in. 
+    
+    cd ~/NicLink/
 
     python -m venv nicsoft  - This creates a python venv in nicsoft, and should be ran in the
                               NicLink root dir
 
-    cd nicsoft              - enter nicsoft
-
-    . ./source_pyvenv.sh    - this uses a lille convenance script, but basically all you have to
+    . ./activate    - this uses a lille convenance script, but basically all you have to
                               do is source ./bin/activate
                                   (other file extensions if not in bash (or zsh))
 
-then I installed the python packages in the venv (bellow)
-
-## install python requirements, needed to compile and run NicLink
+then I installed the python packages in the venv. So within the venv:
 
 `python -m pip install -r requirements.txt`
 
@@ -162,28 +163,7 @@ and it outputted:
 
 **_ jazz hands _**
 
-## gotchas
-
-- if: ModuleNotFoundError: No module named 'niclink' make sure your venv is setup,
-  with the .pth file configured.
-
-- Make sure you are in said venv
-
-- make sure you can build the community fork of EasyLinkSDK because I use this with slight
-  modification, just w python bindings
-  Link: `https://github.com/miguno/EasyLinkSDK`
-
-- if you need, install python3.12 from "deadsnakes" google is your bud.
-
-- if cmake can not find your PYTHON_INCLUDE_DIR OR PYTHON_LIBRARIES:
-  ````bash:
-        cmake ../src \
-        > -DPYTHON_INCLUDE_DIR=$(python3.12 -c "import sysconfig; print(sysconfig.get_path("include"))") \
-        > -DPYTHON_LIBRARY=$(python3.12 -c "import sysconfig.get_config_var('LIBDIR'))")
-        ```
-  ````
-
-## compiling C++ Easylink and pybind11 module code
+# COMPILIING C++ Easylink and pybind11 module code
 
 > after you set up the python environment and C++ dependancies, and are in the python environment:
 
@@ -193,7 +173,7 @@ and it outputted:
 
     - I do not develop under any other os, so figure it out I guess. Or, install gentoo.
 
-## Using the board on lichess with the board api
+# Using the board on lichess with the board api
 
 In the ROOT/nicsoft/lichess dir create a dir called lichess_token.
 in this dir create a file called token. This will be a plain text file containing
@@ -209,7 +189,7 @@ It can play games that can be played w board API ( only tested rapid and classic
 
 The board will beep at you when an incorrect position is on the board.
 
-## Use with gnu/linux:
+# Use with gnu/linux:
 
 In order to use NicLink as a user in the wheel group
 ( group can be arbitrary )

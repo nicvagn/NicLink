@@ -4,35 +4,42 @@
 #
 #  You should have received a copy of the GNU General Public License along with NicLink. If not, see <https://www.gnu.org/licenses/>.
 
-from niclink import NicLinkManager
-
-import readchar
 import sys
-import chess
 import time
 
-nl_inst = NicLinkManager(2)
+import chess
+import readchar
+
+from niclink import NicLinkManager
 
 
-print("\n=====================\n Test Move Parsing \n=====================\n")
+def test():
 
-leave = "n"
+    print("\n=====================\n Test Move Parsing \n=====================\n")
 
-while leave == "n":
-    print("make a legal move:\n")
+    leave = "n"
 
-    # wait for a move
-    try:
-        move = nl_inst.await_move()
-    except ValueError:
-        print("No move, pausing for 3 seconds and trying again")
+    while leave == "n":
+        print("make a legal move:\n")
 
-        time.sleep(3)
-        continue
+        # wait for a move
+        try:
+            move = nl.await_move()
+        except ValueError:
+            print("No move, pausing for 3 seconds and trying again")
 
-    # show the internal board state
-    # nl_inst.show_game_board()
+            time.sleep(3)
+            continue
 
-    print(f"\n==== { move } ====\n")
-    print("leave? 'n' for no, != 'n' yes: ")
-    leave = readchar.readkey()
+        # show the internal board state
+        # nl_inst.show_game_board()
+
+        print(f"\n==== { move } ====\n")
+        print("leave? 'n' for no, != 'n' yes: ")
+        leave = readchar.readkey()
+
+
+if __name__ == "__main__":
+
+    nl = NicLinkManager(2)
+    test()

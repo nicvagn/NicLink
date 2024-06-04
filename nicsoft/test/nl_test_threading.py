@@ -4,21 +4,15 @@
 #
 #  you should have received a copy of the gnu general public license along with niclink. if not, see <https://www.gnu.org/licenses/>.
 
-import threading
 import logging
+import threading
+
 import readchar
+
 from niclink import NicLinkManager
 
-logger = logging.getLogger()
 
-logger.setLevel(logging.DEBUG)
-
-nl_thread = NicLinkManager(2, logger)
-
-nl_thread.start()
-
-
-def test_threading():
+def test():
     """test usb connection"""
 
     print("set up the board and press enter.")
@@ -39,4 +33,12 @@ def test_threading():
     nl_thread.kill_switch.set()
 
 
-test_threading()
+if __name__ == "__main__":
+    logger = logging.getLogger()
+
+    logger.setLevel(logging.DEBUG)
+
+    nl_thread = NicLinkManager(2, logger)
+
+    nl_thread.start()
+    test()

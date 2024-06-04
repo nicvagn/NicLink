@@ -7,38 +7,53 @@
 
 # a basic test of NicLink through python interface
 
+import test
+
 import readchar
 
 import niclink
 
-nl_instance = niclink.NicLinkManager(2)
+
+def tests() -> None:
+    """Run the tests"""
+    print("runing tests.")
+
+
+print("run tests? (y,n)")
+t = readchar.readchar()
+
+if t != "n":
+    
+
+
+nl = niclink.NicLinkManager(2)
 print("press enter when a move is on a board")
 readchar.readkey()
 
 leave = "n"
 while leave == "n":
-    if nl_instance.check_for_move():
+    if nl.check_for_move():
         # beep to indicate a move was made
-        nl_instance.beep()
+        nl.beep()
 
         # get the new board FEN
-        post_move_FEN = nl_instance.get_FEN()
+        post_move_FEN = nl.get_FEN()
 
         try:
             # find move from the FEN change
-            move = nl_instance.get_last_move()
+            move = nl.get_last_move()
         except RuntimeError as re:
             print(
                 f" Invalid move: {re} \nreset the board to the previous position an try again\n"
             )
-            print(f"previous position: \n{nl_instance.game_board}\n")
+            print(f"previous position: \n{nl.game_board}\n")
             print("leave? ('n' for no, != 'n' yes: ")
             leave = readchar.readkey()
 
             continue  # as move will not be defined
 
         # make the move on the game board
-        nl_instance.make_move_game_board(move)
+        nl.make_move_game_board(move)
         print(f"MOVE: {move}")
         print("=========================================")
 

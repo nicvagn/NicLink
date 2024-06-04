@@ -12,10 +12,9 @@ print("\n\n====== NicLink test lights ====== \n")
 
 
 # connect to the board
-nl = NicLinkManager(1)
+def test():
 
-
-def test_led():
+    nl = NicLinkManager(1)
     print("all the lights should come on, starting with a1 finishing with h8")
     for x in range(1, 9):
         nl.beep()
@@ -37,5 +36,9 @@ def set_move_leds(move):
     nl.set_move_LEDs(move)
 
 
-test_led()
-# set_move_leds("a4h4")
+if __name__ == "__main__":
+
+    # connect to the board
+    nl = NicLinkManager(1)
+    test()
+    # set_move_leds("a4h4")

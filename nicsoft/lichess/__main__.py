@@ -602,7 +602,7 @@ def handle_game_start(
     @global berserk_client: client made for ous session with lila
     @global game: the Game class object, global bc has to be accessed everywhere
     """
-    global berserk_client, logger, game
+    global berserk_client, logger, game, nl_inst
 
     # check if game speed is correspondence, skip those if --correspondence argument is not set
     if not correspondence:
@@ -662,7 +662,6 @@ def handle_game_start(
 
 def handle_ongoing_game(game: LichessGame) -> None:
     """handle joining a game that is alredy underway"""
-
     print("\n$$$ joining game in progress $$$\n")
     logger.info("joining game in proggress, game: \n %s", game)
     if game.isMyTurn:
