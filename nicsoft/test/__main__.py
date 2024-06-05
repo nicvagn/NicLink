@@ -6,6 +6,9 @@
 #  You should have received a copy of the GNU General Public License along with NicLink. If not, see <https://www.gnu.org/licenses/>.
 
 print("NicLink: Running all tests")
+import logging
+
+import chess
 import readchar
 import test_niclink_board_compairison as nlbc
 import test_niclink_FEN as nlf
@@ -13,6 +16,10 @@ import test_niclink_lights as nll
 import test_niclink_move_parsing as nlmv
 
 from niclink import NicLinkManager
+
+global logger
+
+logger = logging.getLogger("test_all")
 
 
 def test_usb():
@@ -29,14 +36,13 @@ def test_usb():
     logger.info("TEST: show board diff: shold be e2e4 lit up.")
     nl_man.show_board_diff(b1, b2)
     readchar.readchar()
-    sys.exit()
 
     print("TEST: set_move_led w map")
     print("e2e4")
     nl_man.set_move_LEDs("e2e4")
     readchar.readchar()
     print("BOARD CLEAR, press a key")
-    nl_man.set_all_LEDs(ZEROS)
+    nl_man.set_all_LEDs(nl_man.ZEROS)
 
     readchar.readchar()
 
@@ -47,11 +53,11 @@ def test_usb():
     print("(test usb connection) testing  set_all_LEDs.")
     # create a np.array of all true
 
-    nl_man.set_all_LEDs(ONES)
+    nl_man.set_all_LEDs(nl_man.ONES)
     print("all the lights should be on, confirm and press enter")
     readchar.readchar()
 
-    nl_man.set_all_LEDs(ZEROS)
+    nl_man.set_all_LEDs(nl_man.ZEROS)
     print("all the lights should be off, confirm and press enter")
     readchar.readchar()
 

@@ -72,8 +72,6 @@ if args.clock:
 else:
     CHESS_CLOCK = False
 
-# TODO: RM
-CHESS_CLOCK = True
 ### constants ###
 # refresh refresh delay for NicLink and Lichess
 REFRESH_DELAY = 0.1
@@ -81,7 +79,9 @@ REFRESH_DELAY = 0.1
 POLL_DELAY = 10
 
 ### lichess token parsing ###
-TOKEN_FILE = os.path.join(script_dir, "lichess_token/token")
+TOKEN_FILE = os.path.join(script_dir, "lichess_token/nrv773_token")
+# TOKEN_FILE = os.path.join(script_dir, "lichess_token/nrv_learning_token")
+# TOKEN_FILE = os.path.join(script_dir, "lichess_token/dev_token")
 if args.tokenfile is not None:
     TOKEN_FILE = args.tokenfile
 
@@ -320,7 +320,7 @@ class Game(threading.Thread):
             if self.chess_clock:
                 self.chess_clock.game_over()
             # signal we dont know wtf with a cross
-            self.signal_lights(5)
+            nl_inst.signal_lights(5)
 
         print("\n[--- %%%%% GAME DONE %%%%% ---]\n")
         # tell the user and NicLink the game is through
