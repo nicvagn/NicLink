@@ -10,6 +10,7 @@
 import test
 
 import readchar
+import tests
 
 import niclink
 
@@ -19,43 +20,51 @@ def tests() -> None:
     print("runing tests.")
 
 
-print("run tests? (y,n)")
+print("create NicLinkManager? (y,n)")
 t = readchar.readchar()
 
-if t != "n":
-    
+
+if t != n:
+    nl = niclink.NicLinkManager(2)
+    tests.__main__()
 
 
-nl = niclink.NicLinkManager(2)
-print("press enter when a move is on a board")
-readchar.readkey()
+def test() -> None:
+    """test"""
 
-leave = "n"
-while leave == "n":
-    if nl.check_for_move():
-        # beep to indicate a move was made
-        nl.beep()
+    print("press enter when a move is on a board")
+    readchar.readkey()
 
-        # get the new board FEN
-        post_move_FEN = nl.get_FEN()
+    leave = "n"
+    while leave == "n":
+        if nl.check_for_move():
+            # beep to indicate a move was made
+            nl.beep()
 
-        try:
-            # find move from the FEN change
-            move = nl.get_last_move()
-        except RuntimeError as re:
-            print(
-                f" Invalid move: {re} \nreset the board to the previous position an try again\n"
-            )
-            print(f"previous position: \n{nl.game_board}\n")
-            print("leave? ('n' for no, != 'n' yes: ")
-            leave = readchar.readkey()
+            # get the new board FEN
+            post_move_FEN = nl.get_FEN()
 
-            continue  # as move will not be defined
+            try:
+                # find move from the FEN change
+                move = nl.get_last_move()
+            except RuntimeError as re:
+                print(
+                    f" Invalid move: {re} \nreset the board to the previous position an try again\n"
+                )
+                print(f"previous position: \n{nl.game_board}\n")
+                print("leave? ('n' for no, != 'n' yes: ")
+                leave = readchar.readkey()
 
-        # make the move on the game board
-        nl.make_move_game_board(move)
-        print(f"MOVE: {move}")
-        print("=========================================")
+                continue  # as move will not be defined
 
-    print("leave? ('n for no, != 'n' yes: ")
-    leave = readchar.readkey()
+            # make the move on the game board
+            nl.make_move_game_board(move)
+            print(f"MOVE: {move}")
+            print("=========================================")
+
+        print("leave? ('n for no, != 'n' yes: ")
+        leave = readchar.readkey()
+
+
+if __name__ == "__main__":
+    test()

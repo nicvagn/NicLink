@@ -13,7 +13,6 @@ print("\n\n====== NicLink test lights ====== \n")
 
 # connect to the board
 def test():
-
     nl = NicLinkManager(1)
     print("all the lights should come on, starting with a1 finishing with h8")
     for x in range(1, 9):
