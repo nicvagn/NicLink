@@ -14,6 +14,7 @@ import time
 
 # type hints
 from numbers import Number
+from typing import List
 
 # pip libraries
 import chess
@@ -427,6 +428,15 @@ current board: \n%s\n board we are using to check legal moves: \n%s\n",
 a legal move on:\n{ str(self.game_board) }\n"
         raise IllegalMove(message)
 
+    def check_game_board_against_external(self) -> bool:
+        """check if the external board is a given board FEN
+        @param FEN: str: the FEN the ext board should be
+        @returns: if the external board FEN is == the FEN
+        """
+        nl_FEN = self.nl_interface.get_FEN()
+
+        return self.game_board.board_fen() == nl_FEN
+
     def check_for_move(self) -> bool | str:
         """check if there has been a move on the chessboard, and see if it is valid.
         If so update self.last_move
@@ -559,23 +569,16 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
 
     def make_move_game_board(self, move: str) -> None:
         """make a move on the internal rep. of the game_board.
-        update the last move made. and update the move LED's on ext board.
+        do not update the last move made, or the move LED's on ext board.
         This is not done automatically so external program's can have more control.
         @param: move - move in uci str
-        @side_effect: set's move led's
         """
-        if self.last_move == move:
-            self.logger.error(
-                "make_move_game_board(move) called w move == self.last_move. returning"
-            )
-            return
         self.logger.debug("move made on gameboard. move %s", move)
         self.game_board.push_uci(move)
-        # update the last move and last move time
-        self.last_move = move
         self.set_move_LEDs(move)
         self.logger.debug(
-            "made move on internal board, BOARD POST MOVE:\n%s", self.game_board
+            "made move on internal  nl game board, BOARD POST MOVE:\n%s",
+            self.game_board,
         )
 
     def set_board_FEN(self, board: chess.Board, FEN: str) -> None:
@@ -637,22 +640,20 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
         self.logger.debug(
             "man.show_board_diff entered w board's \n%s\nand\n%s", board1, board2
         )
-        # cread a board for recording diff on
-        diff_map = np.copy(ZEROS)
-        zeros = "00000000"  # for building the diff aray that work's for the way we set LED's
 
         # go through the squares and turn on the light for ones that are in error
         diff = False
         diff_squares = []  # what squares are the diff's on
+
+        # tun off the LED's on
+        self.turn_off_all_LEDs()
 
         for n in range(0, 8):
             # handle diff's for a file
             for a in range(ord("a"), ord("h")):
                 # get the square in algabraic notation form
                 square = chr(a) + str(n + 1)  # real life is not 0 based
-
                 py_square = chess.parse_square(square)
-
                 if board1.piece_at(py_square) != board2.piece_at(
                     py_square
                 ) or self.square_in_last_move(square):
@@ -660,27 +661,32 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
                     self.logger.info(
                         "man.show_board_diff(...): Diff found at square %s", square
                     )
-
                     # do not record diff's on the move squares, but light them up
                     if not self.square_in_last_move(square):
                         diff = True
-
                     # add square to list off diff squares
                     diff_squares.append(square)
-                    # find the coordinate of the diff square
-                    diff_cords = square_cords(square)
 
-                    diff_map[diff_cords[1]] = (
-                        zeros[: diff_cords[0]] + "1" + zeros[diff_cords[0] :]
-                    )
+                    print(a, n)
 
         if diff:
-            # set all the led's on the diff map
+            # set all the led's that differ
+            diff_map = build_diff_map(diff_squares)
             self.set_all_LEDs(diff_map)
             self.logger.info(
                 "show_board_diff: diff found --> diff_squares: %s\n",
                 diff_squares,
             )
+
+            self.logger.debug(
+                "diff boards: \nBoard 1:\n" + str(board1) + "Board2:\n" + str(board2)
+            )
+            self.logger.debug("diff map made:")
+            log_led_map(diff_map, self.logger)
+
+        else:
+            # set the last move lights
+            self.set_move_LEDs(self.last_move)
 
         return diff
 
@@ -715,8 +721,9 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
         """the other player moved in a chess game.
         Signal LEDS_changed and update last move
         @param: move - the move in a uci str
+        @side_effect: set's move led's
         """
-        self.logger.debug("opponent movet1d %s", move)
+        self.logger.debug("opponent moved %s", move)
         self.last_move = move
         self.set_move_LEDs(move)
 

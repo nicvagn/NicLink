@@ -32,11 +32,11 @@ from stockfish import Stockfish
 from niclink import NicLinkManager
 
 logger = logging.getLogger("NL play Fish")
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 # create console handler and set level to debug
 ch = logging.StreamHandler()
-ch.setLevel(logging.INFO)
+ch.setLevel(logging.DEBUG)
 
 # create formatter
 formatter = logging.Formatter("%(name)s - %(levelname)s | %(message)s")
@@ -106,7 +106,7 @@ have a nice day."
         logger.info(f"move from chessboard { move }")
 
         # make the move on the nl gameboard
-        self.nl_inst.make_move_game_board(move)
+        self.nl_inst.opponent_moved(move)
         # check if the game is done
         self.check_for_game_over()
 
@@ -129,6 +129,12 @@ have a nice day."
         # check for game over
         self.check_for_game_over()
 
+    def ensure_updated_board(self) -> None:
+        """enrsre the external board is fully updated"""
+        while not self.nl_inst.check_game_board_against_external():
+            logger.debug("board not updated correctly")
+            time.sleep(0.3)
+
     def start(self) -> None:
         """start playing the game"""
 
@@ -145,10 +151,12 @@ have a nice day."
             if self.playing_white:
                 # if we go first, go first
                 self.handle_human_turn()
-            breakpoint()
+            # breakpoint()
             # do the fish turn
             self.handle_fish_turn()
-            breakpoint()
+            # make sure board is valid
+            self.ensure_updated_board()
+            # breakpoint()
             if not self.playing_white:
                 # case we are black
                 self.handle_human_turn()
@@ -209,8 +217,12 @@ credit: https://chess.stackexchange.com/users/25998/eric\n"""
             )
             continue
 
-        if int(sf_lvl) > 0 and int(sf_lvl) <= 33:
-            break
+        try:
+            if int(sf_lvl) > 0 and int(sf_lvl) <= 33:
+                break
+        except ValueError:
+            print("invalid entry. Try again.")
+            continue
 
         else:
             print("invalid. Try again")
