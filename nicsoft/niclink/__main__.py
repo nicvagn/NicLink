@@ -665,14 +665,14 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
                     if not self.square_in_last_move(square):
                         diff = True
 
-                        # add square to list off diff squares
-                        diff_squares.append(square)
-                        # find the coordinate of the diff square
-                        diff_cords = square_cords(square)
+                    # add square to list off diff squares
+                    diff_squares.append(square)
+                    # find the coordinate of the diff square
+                    diff_cords = square_cords(square)
 
-                        diff_map[diff_cords[1]] = (
-                            zeros[: diff_cords[0]] + "1" + zeros[diff_cords[0] :]
-                        )
+                    diff_map[diff_cords[1]] = (
+                        zeros[: diff_cords[0]] + "1" + zeros[diff_cords[0] :]
+                    )
 
         if diff:
             # set all the led's on the diff map
@@ -761,7 +761,7 @@ def log_led_map(led_map: np.ndarray[np.str_], logger) -> None:
 
 
 def build_led_map_for_move(move: str) -> np.ndarray[np.str_]:
-    """builmd the led_map for a given uci move
+    """build the led_map for a given uci move
     @param: move - move in uci
     @return: constructed led_map
     """

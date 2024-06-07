@@ -5,7 +5,7 @@
 #  You should have received a copy of the GNU General Public License along with NicLink. If not, see <https://www.gnu.org/licenses/>.to use the len() function
 import chess
 
-import niclink
+from niclink import NicLinkManager
 
 
 def test():
@@ -13,7 +13,7 @@ def test():
     b1 = chess.Board()
     b2 = chess.Board()
 
-    nl = niclink.NicLinkManager(1)
+    nl = NicLinkManager(1)
 
     print("test identical boards(should be no diff)")
     nl.show_board_diff(b1, b2)
