@@ -643,10 +643,10 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
 
         # go through the squares and turn on the light for ones that are in error
         diff = False
+        zeros = "00000000"  # for building the diff aray that work's for the way we set LED's
         diff_squares = []  # what squares are the diff's on
 
-        # tun off the LED's on
-        self.turn_off_all_LEDs()
+        diff_map = np.copy(ZEROS)
 
         for n in range(0, 8):
             # handle diff's for a file
@@ -664,14 +664,16 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
                     # do not record diff's on the move squares, but light them up
                     if not self.square_in_last_move(square):
                         diff = True
-                    # add square to list off diff squares
-                    diff_squares.append(square)
+                        # add square to list off diff squares
+                        diff_cords = square_cords(square)
+                        diff_squares.append(square)
 
-                    print(a, n)
+                        diff_map[diff_cords[1]] = (
+                            zeros[: diff_cords[0]] + "1" + zeros[diff_cords[0] :]
+                        )
 
         if diff:
             # set all the led's that differ
-            diff_map = build_diff_map(diff_squares)
             self.set_all_LEDs(diff_map)
             self.logger.info(
                 "show_board_diff: diff found --> diff_squares: %s\n",
