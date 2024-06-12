@@ -292,8 +292,8 @@ class Game(threading.Thread):
 
         info on signals:
          1 - ring of lights
-         2 - left half lit up
-         3 - right half lit up
+         2 - files 5 to 8 lit up
+         3 - files 1 to 4 lit up
          4 - central line
          5 - cross in center
         """
@@ -306,11 +306,11 @@ class Game(threading.Thread):
                 if game_state.winner == "white":
                     if self.chess_clock:
                         self.chess_clock.white_won()
-                    nl_inst.signal_lights(2)
+                    nl_inst.signal_lights(3)
                 elif game_state.winner == "black":
                     if self.chess_clock:
                         self.chess_clock.black_won()
-                    nl_inst.signal_lights(3)
+                    nl_inst.signal_lights(2)
                 else:
                     # if no winner
                     self.chess_clock.game_over()
