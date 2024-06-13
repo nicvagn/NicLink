@@ -458,6 +458,7 @@ a legal move on:\n{ str(self.game_board) }\n"
     def check_for_move(self) -> bool | str:
         """check if there has been a move on the chessboard, and see if it is valid.
         If so update self.last_move
+        @returns: self.last_move - the move got from the chessboard
         """
         # ensure the move was valid
 
@@ -705,7 +706,7 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
             log_led_map(diff_map, self.logger)
 
         else:
-            # set the last move lights
+            # set the last move lights for last move
             self.set_move_LEDs(self.last_move)
 
         return diff
