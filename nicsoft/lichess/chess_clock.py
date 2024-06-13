@@ -252,6 +252,9 @@ class ChessClock:
                 # set white_to move
                 self.white_to_move.set()
 
+            # HACK: NO COUNTOWN MODE
+            self.update_lcd(self.displayed_wtime, self.displayed_btime)
+
     def update_lcd(self, wtime: timedelta, btime: timedelta) -> None:
         """display wtime and btime on lcd. creates a timestamp from given times
         The time stamp shuld be formated with both w and b timestamp set up to display
@@ -460,7 +463,7 @@ def main() -> None:
     SCRIPT_DIR = os.path.dirname(__file__)
     TOKEN_FILE = os.path.join(SCRIPT_DIR, "lichess_token/token")
 
-    test_display_opts = False
+    test_display_opts = True
     test_countdown = False
 
     RAW_GAME = {

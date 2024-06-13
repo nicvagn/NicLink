@@ -199,7 +199,7 @@ class Game(threading.Thread):
             self.chess_clock = False
 
         self.playing_white = playing_white
-        if starting_fen and False:  # HACK: make 960 work
+        if starting_fen and False:  # HACK: TODO: make 960 work
             nl_inst.reset()
             self.game_board = chess.Board(starting_fen)
             nl_inst.set_game_board(self.game_board)
@@ -481,10 +481,10 @@ Will only try twice before calling game_done"
 
         return tmp_chessboard
 
-    def opponent_moved(self, game_state: GameState) -> None:
+    def move_made(self, game_state: GameState) -> None:
         """signal that the opponent moved, signal the external clock and NicLink"""
         logger.info(
-            "\nopponent_moved(self, game_state) entered with GameState: %s",
+            "\nmove_made(self, game_state) entered with GameState: %s",
             game_state,
         )
 
@@ -495,7 +495,7 @@ Will only try twice before calling game_done"
             nl_inst.opponent_moved(move)
             # tell the user about the move
             nl_inst.beep()
-            logger.info("opponent moved: %s", move)
+            logger.info("move made: %s", move)
 
         # if chess_clock send new timestamp to clock
         if self.chess_clock:
@@ -504,7 +504,9 @@ Will only try twice before calling game_done"
                 self.chess_clock.move_made(game_state)
 
     def handle_state_change(self, game_state: GameState) -> None:
-        """Handle a state change in the lichess game."""
+        """Handle a state change in the lichess game.
+        @param: GameState - The lichess game state we are handlinng wrapped in a conviniance class
+        """
         global nl_inst, logger
 
         logger.debug("\ngame_state: %s\n", game_state)
@@ -537,8 +539,8 @@ Will only try twice before calling game_done"
             # stop the tread (this does some cleanup and throws an exception)
             self.game_done(game_state=game_state)
 
-        # a move was made by the opponent
-        self.opponent_moved(game_state)
+        # a move was made
+        self.move_made(game_state)
         # if there is a chess clock
         if self.chess_clock:
             # signal move
@@ -644,7 +646,8 @@ def handle_game_start(
             game_data.id,
             playing_white,
             starting_fen=game_fen,
-            chess_clock=chess_clock,
+            chess_clock=CHESS_CLOCK,
+            # chess_clock=chess_clock,
         )
         game.daemon = True
 
