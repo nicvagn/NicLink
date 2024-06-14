@@ -615,7 +615,7 @@ def handle_game_start(
             return
 
     # signal game start
-    nl_inst.signal_lights(3)
+    nl_inst.signal_lights(6)
 
     logger.info(
         "\nhandle_game_start(GameStart) enterd w game_start: \n %s\n", str(game_start)
