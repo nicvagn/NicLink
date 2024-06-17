@@ -42,6 +42,7 @@ on Fedora:
     ```
 
 #### detailed ramblings on packages:
+
     > requirements:
     - hidraw and spdlog are internal in src/thirdparty
     - in order to compile them on Debian you need:
@@ -80,25 +81,6 @@ on Fedora:
 
     > The system packages required, and the system
 
-## IMPORTANT: setting up for your system
-
-    > you must edit the CMakeLists.txt file to work for your system
-
-        ```
-        TODO: set for your system:
-        NOTE: removed as not debbuging c++ code link_libraries(spdlog_header_only)
-        set(SPDLOG OFF) # Very fast, header-only/compiled, C++ logging library.
-        NOTE: not needed if using hidraw backend to libusb
-        set(LIBUSB OFF) # i am using th hidraw backend adjust if you are not ant need libusb
-        see https://github.com/libusb/libusb
-        see thirdparty/hidapi/README.md
-        option(HIDAPI_WITH_LIBUSB "Build LIBUSB-based implementation of HIDAPI" ON)
-        option(HIDAPI_WITH_LIBUSB "Build LIBUSB-based implementation of HIDAPI" OFF)
-        ```
-
-    Here is a snippet of said file. If on GNU/Linux you must creat a udev rule. More on that later
-
-
 ## Setting up python venv
 
     In order to use NicLink while it is in development, it is advised to use a virtual environment.
@@ -111,8 +93,8 @@ on Fedora:
 
 # what I did (bash):
 
-I created the venv for niclink to live in. 
-    
+I created the venv for niclink to live in.
+
     cd ~/NicLink/
 
     python -m venv nicsoft  - This creates a python venv in nicsoft, and should be ran in the
