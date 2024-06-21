@@ -1,4 +1,4 @@
-# NicLink-lichess is a part of NicLink
+#  NicLink-lichess is a part of NicLink
 #
 #  NicLink is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or ( at your option ) any later version.
 #
@@ -48,6 +48,7 @@ parser.add_argument("--correspondence", action="store_true")
 parser.add_argument("--clock", action="store_true")  # TODO: MAKE WORK
 parser.add_argument("--quiet", action="store_true")
 parser.add_argument("--debug", action="store_true")
+parser.add_argument("--learning", action="store_true")
 args = parser.parse_args()
 
 ### globals ###
@@ -61,6 +62,8 @@ if args.correspondence:
 
 # the script dir, used to import the lila token file
 script_dir = os.path.dirname(__file__)
+
+LEARNING = False
 
 DEBUG = False
 # DEBUG = True
@@ -80,13 +83,17 @@ POLL_DELAY = 10
 
 ### lichess token parsing ###
 TOKEN_FILE = os.path.join(script_dir, "lichess_token/nrv773_token")
-# TOKEN_FILE = os.path.join(script_dir, "lichess_token/nrv_learning_token")
 # TOKEN_FILE = os.path.join(script_dir, "lichess_token/dev_token")
-if args.tokenfile is not None:
-    TOKEN_FILE = args.tokenfile
+
 
 if DEBUG:
     TOKEN_FILE = os.path.join(script_dir, "lichess_token/dev_token")
+
+if args.learning or LEARNING:
+    TOKEN_FILE = os.path.join(script_dir, "lichess_token/nrv_learning_token")
+
+if args.tokenfile is not None:
+    TOKEN_FILE = args.tokenfile
 
 ### logger stuff ###
 logger = logging.getLogger("nl_lichess")
