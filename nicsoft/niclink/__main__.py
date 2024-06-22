@@ -274,10 +274,11 @@ Is the board connected and turned on?"
         """signal the user via displaying a set of lights on the board
         @parm: sig_num - the signal number coresponding to the signal to show
                 ie: 1 - ring of lights
-                    2 - left half lit up
-                    3 - right half lit up
+                    2 - black half lit up
+                    3 - white half lit up
                     4 - central line
                     5 - cross in center
+                    6 - random stuff
         @side effect - change the light's on the chess board
         """
         if sig_num == 1:
@@ -297,9 +298,8 @@ Is the board connected and turned on?"
                 dtype=np.str_,
             )
             self.set_all_LEDs(sig)
-
         elif sig_num == 2:
-            """signal 2 - left half lit up"""
+            """signal 2 - black half lit up"""
             sig = np.array(
                 [
                     "00000000",
@@ -316,7 +316,7 @@ Is the board connected and turned on?"
 
             self.set_all_LEDs(sig)
         elif sig_num == 3:
-            """signal 3 - right half lit up"""
+            """signal 3 - white half lit up"""
             sig = np.array(
                 [
                     "11111111",
@@ -346,6 +346,7 @@ Is the board connected and turned on?"
                 ],
                 dtype=np.str_,
             )
+            self.set_all_LEDs(sig)
         elif sig_num == 5:
             """Signal 5 - center cross"""
             sig = np.array(
@@ -361,6 +362,23 @@ Is the board connected and turned on?"
                 ],
                 dtype=np.str_,
             )
+            self.set_all_LEDs(sig)
+        elif sig_num == 6:
+            """Signal 6 - crazy lights"""
+            sig = np.array(
+                [
+                    "00000000",
+                    "00011000",
+                    "00011000",
+                    "01100110",
+                    "01100110",
+                    "00011000",
+                    "00011000",
+                    "00000000",
+                ],
+                dtype=np.str_,
+            )
+            self.set_all_LEDs(sig)
 
     def get_FEN(self) -> str:
         """get the board FEN from chessboard"""
@@ -440,6 +458,7 @@ a legal move on:\n{ str(self.game_board) }\n"
     def check_for_move(self) -> bool | str:
         """check if there has been a move on the chessboard, and see if it is valid.
         If so update self.last_move
+        @returns: self.last_move - the move got from the chessboard
         """
         # ensure the move was valid
 
@@ -687,7 +706,7 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
             log_led_map(diff_map, self.logger)
 
         else:
-            # set the last move lights
+            # set the last move lights for last move
             self.set_move_LEDs(self.last_move)
 
         return diff

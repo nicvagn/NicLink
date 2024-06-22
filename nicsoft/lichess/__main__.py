@@ -1,4 +1,4 @@
-# NicLink-lichess is a part of NicLink
+#  NicLink-lichess is a part of NicLink
 #
 #  NicLink is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or ( at your option ) any later version.
 #
@@ -48,6 +48,7 @@ parser.add_argument("--correspondence", action="store_true")
 parser.add_argument("--clock", action="store_true")  # TODO: MAKE WORK
 parser.add_argument("--quiet", action="store_true")
 parser.add_argument("--debug", action="store_true")
+parser.add_argument("--learning", action="store_true")
 args = parser.parse_args()
 
 ### globals ###
@@ -61,6 +62,8 @@ if args.correspondence:
 
 # the script dir, used to import the lila token file
 script_dir = os.path.dirname(__file__)
+
+LEARNING = False
 
 DEBUG = False
 # DEBUG = True
@@ -80,13 +83,17 @@ POLL_DELAY = 10
 
 ### lichess token parsing ###
 TOKEN_FILE = os.path.join(script_dir, "lichess_token/nrv773_token")
-# TOKEN_FILE = os.path.join(script_dir, "lichess_token/nrv_learning_token")
 # TOKEN_FILE = os.path.join(script_dir, "lichess_token/dev_token")
-if args.tokenfile is not None:
-    TOKEN_FILE = args.tokenfile
+
 
 if DEBUG:
     TOKEN_FILE = os.path.join(script_dir, "lichess_token/dev_token")
+
+if args.learning or LEARNING:
+    TOKEN_FILE = os.path.join(script_dir, "lichess_token/nrv_learning_token")
+
+if args.tokenfile is not None:
+    TOKEN_FILE = args.tokenfile
 
 ### logger stuff ###
 logger = logging.getLogger("nl_lichess")
@@ -199,7 +206,7 @@ class Game(threading.Thread):
             self.chess_clock = False
 
         self.playing_white = playing_white
-        if starting_fen and False:  # HACK: make 960 work
+        if starting_fen and False:  # HACK: TODO: make 960 work
             nl_inst.reset()
             self.game_board = chess.Board(starting_fen)
             nl_inst.set_game_board(self.game_board)
@@ -292,8 +299,8 @@ class Game(threading.Thread):
 
         info on signals:
          1 - ring of lights
-         2 - left half lit up
-         3 - right half lit up
+         2 - files 5 to 8 lit up
+         3 - files 1 to 4 lit up
          4 - central line
          5 - cross in center
         """
@@ -306,11 +313,11 @@ class Game(threading.Thread):
                 if game_state.winner == "white":
                     if self.chess_clock:
                         self.chess_clock.white_won()
-                    nl_inst.signal_lights(2)
+                    nl_inst.signal_lights(3)
                 elif game_state.winner == "black":
                     if self.chess_clock:
                         self.chess_clock.black_won()
-                    nl_inst.signal_lights(3)
+                    nl_inst.signal_lights(2)
                 else:
                     # if no winner
                     self.chess_clock.game_over()
@@ -481,10 +488,10 @@ Will only try twice before calling game_done"
 
         return tmp_chessboard
 
-    def opponent_moved(self, game_state: GameState) -> None:
+    def move_made(self, game_state: GameState) -> None:
         """signal that the opponent moved, signal the external clock and NicLink"""
         logger.info(
-            "\nopponent_moved(self, game_state) entered with GameState: %s",
+            "\nmove_made(self, game_state) entered with GameState: %s",
             game_state,
         )
 
@@ -495,7 +502,7 @@ Will only try twice before calling game_done"
             nl_inst.opponent_moved(move)
             # tell the user about the move
             nl_inst.beep()
-            logger.info("opponent moved: %s", move)
+            logger.info("move made: %s", move)
 
         # if chess_clock send new timestamp to clock
         if self.chess_clock:
@@ -504,7 +511,9 @@ Will only try twice before calling game_done"
                 self.chess_clock.move_made(game_state)
 
     def handle_state_change(self, game_state: GameState) -> None:
-        """Handle a state change in the lichess game."""
+        """Handle a state change in the lichess game.
+        @param: GameState - The lichess game state we are handlinng wrapped in a conviniance class
+        """
         global nl_inst, logger
 
         logger.debug("\ngame_state: %s\n", game_state)
@@ -537,8 +546,8 @@ Will only try twice before calling game_done"
             # stop the tread (this does some cleanup and throws an exception)
             self.game_done(game_state=game_state)
 
-        # a move was made by the opponent
-        self.opponent_moved(game_state)
+        # a move was made
+        self.move_made(game_state)
         # if there is a chess clock
         if self.chess_clock:
             # signal move
@@ -613,7 +622,7 @@ def handle_game_start(
             return
 
     # signal game start
-    nl_inst.signal_lights(3)
+    nl_inst.signal_lights(6)
 
     logger.info(
         "\nhandle_game_start(GameStart) enterd w game_start: \n %s\n", str(game_start)
@@ -644,7 +653,8 @@ def handle_game_start(
             game_data.id,
             playing_white,
             starting_fen=game_fen,
-            chess_clock=chess_clock,
+            chess_clock=CHESS_CLOCK,
+            # chess_clock=chess_clock,
         )
         game.daemon = True
 
