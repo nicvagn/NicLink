@@ -27,7 +27,7 @@
 
 ## non pip requirements
 
-these are system requirements, python requirements needed too
+these are system requirements, python requirements are needed too
 
 on Fedora:
 
@@ -111,8 +111,8 @@ then I installed the python packages in the venv. So within the venv:
 > In order to setup your python path correctly,
 > put a (adjusted for your system) niclink.pth file somewhere in your venv python path.
 
-and modified: - nicsoft/lib/python3.12/site-packages/niclink.pth to add
-/home/nrv/dev/NicLink/nicsoft to my pythonpath with:
+and modified: - venv/lib/python3.12/site-packages/niclink.pth to add
+/home/nrv/dev/NicLink/nicsoft to my pythonpath by adding a file with:
 
 ```
 /home/nrv/dev/NicLink/nicsoft/
