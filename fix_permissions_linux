@@ -1,4 +1,6 @@
-see README.md
+A udev rule has to be written for the USB
+
+device see README.md
 
 also see:
 https://github.com/libusb/hidapi
