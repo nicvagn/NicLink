@@ -250,6 +250,9 @@ class Game(threading.Thread):
                     # while checking for game over
                     while state_change_thread.is_alive():
                         if state_change_thread.is_alive():
+                            logger.debug(
+                                "trying to join state_change_thread, it is alive."
+                            )
                             # check that the game is not over.
                             # Will call game_done if so.
                             self.check_for_game_over(self.game_state)
@@ -286,6 +289,7 @@ class Game(threading.Thread):
 
                 break
 
+        logger.error("outside run loop in class Game(threading.Thread):")
         self.game_done()
 
     def get_game_state(self) -> GameState:
@@ -654,7 +658,6 @@ def handle_game_start(
             playing_white,
             starting_fen=game_fen,
             chess_clock=CHESS_CLOCK,
-            # chess_clock=chess_clock,
         )
         game.daemon = True
 

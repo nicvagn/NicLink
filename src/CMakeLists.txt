@@ -15,11 +15,11 @@ project(niclink LANGUAGES CXX)
 # NOTE: removed as not debbuging c++ code link_libraries(spdlog_header_only)
 set(SPDLOG OFF) # Very fast, header-only/compiled, C++ logging library.
 # NOTE: not needed if using hidraw backend to libusb
-set(LIBUSB ON) 
+set(LIBUSB OFF) 
 # NOTE: adjust if using HIDRAW
 # see https://github.com/libusb/libusb
 # see thirdparty/hidapi/README.md
-set(HIDRAW OFF)
+set(HIDRAW ON)
 # NOTE: This is a linux kernal usb backend
 # see thirdparty/hidapi/README.md
 # WARNING: only tested w 3.12
