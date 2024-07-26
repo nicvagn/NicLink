@@ -855,12 +855,9 @@ def set_up_logger() -> None:
         consoleHandler.setLevel(logging.DEBUG)
     else:
         logger.info("DEBUG not set")
-        # for dev
-        logger.setLevel(logging.INFO)
-        consoleHandler.setLevel(logging.INFO)
         fileHandler.setLevel(logging.INFO)
-        # logger.setLevel(logging.ERROR) for production
-        # consoleHandler.setLevel(logging.ERROR)
+        logger.setLevel(logging.ERROR)
+        consoleHandler.setLevel(logging.ERROR)
 
 
 #  === exception logging ===
@@ -873,7 +870,7 @@ def log_except_hook(excType, excValue, traceback):
 def log_handled_exeption(exception: Exception) -> None:
     """log a handled exception"""
     global logger
-    logger.error("Exception handled: %s", exception)
+    logger.debug("Exception handled: %s", exception)
 
 
 # setup except hook
