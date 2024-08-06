@@ -374,14 +374,14 @@ Is the board connected and turned on?"
             """Signal 6 - crazy lights"""
             sig = np.array(
                 [
-                    "00000000",
-                    "00011000",
+                    "11000011",
+                    "11011011",
                     "00011000",
                     "01100110",
                     "01100110",
                     "00011000",
-                    "00011000",
-                    "00000000",
+                    "11011011",
+                    "11000011",
                 ],
                 dtype=np.str_,
             )
@@ -509,7 +509,7 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
                     self.game_board,
                 )
                 # show the board diff from what we are checking for legal moves
-                print(f"diff from board we are checking legal moves on:\n")
+                logger.info("diff from board we are checking legal moves on:\n")
                 current_board = chess.Board(new_FEN)
                 self.show_board_diff(current_board, self.game_board)
                 # pause for the refresh_delay and allow other threads to run
@@ -706,11 +706,13 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
                 diff_squares,
             )
 
-            self.logger.debug(
-                "diff boards: \nBoard 1:\n" + str(board1) + "Board2:\n" + str(board2)
+            self.logger.warning(
+                "diff boards: \nBoard 1:\n" + str(board1) + "\nBoard2:\n" + str(board2)
             )
             self.logger.debug("diff map made:")
             log_led_map(diff_map, self.logger)
+
+            print("diff from game board --> diff_squares: %s\n" % diff_squares)
 
         else:
             # set the last move lights for last move

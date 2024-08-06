@@ -106,13 +106,14 @@ if DEBUG:
     consoleHandler.setLevel(logging.DEBUG)
 else:
     logger.info("DEBUG not set")
-    # for dev
-    # logger.setLevel(logging.INFO)
-    # consoleHandler.setLevel(logging.INFO)
-    logger.setLevel(logging.ERROR)
-    consoleHandler.setLevel(logging.ERROR)
+    logger.setLevel(logging.INFO)
+    consoleHandler.setLevel(logging.WARNING)
+# logger.setLevel(logging.ERROR)
+# consoleHandler.setLevel(logging.ERROR)
 
-formatter = logging.Formatter("%(levelno)s %(funcName)s %(message)s @: %(pathname)s")
+formatter = logging.Formatter(
+    "%(levelno)s %(funcName)s %(lineno)d  %(message)s @: %(pathname)s"
+)
 
 consoleHandler.setFormatter(formatter)
 logger.addHandler(consoleHandler)
@@ -599,7 +600,7 @@ def show_FEN_on_board(FEN) -> None:
     @param FEN - the fed to display on a board"""
     tmp_chessboard = chess.Board()
     tmp_chessboard.set_fen(FEN)
-    print(tmp_chessboard)
+    print(f"show_FEN_on_board: \n{tmp_chessboard}")
 
 
 def handle_game_start(
