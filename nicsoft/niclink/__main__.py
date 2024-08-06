@@ -707,7 +707,11 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
             )
 
             self.logger.warning(
-                "diff boards: \nBoard 1:\n" + str(board1) + "\nBoard2:\n" + str(board2)
+                "diff boards:\nInternal Board:\n"
+                + str(board2)
+                + "\nExternal board:\n"
+                + str(board1)
+                + "\n"
             )
             self.logger.debug("diff map made:")
             log_led_map(diff_map, self.logger)
