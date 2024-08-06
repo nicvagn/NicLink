@@ -43,6 +43,8 @@ on Fedora:
 
 #### detailed ramblings on packages:
 
+    On arch, libusb backend was giving me some trouble. hidraw seems to be working
+
     > requirements:
     - hidraw and spdlog are internal in src/thirdparty
     - in order to compile them on Debian you need:

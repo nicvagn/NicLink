@@ -98,7 +98,14 @@ class NicLinkManager(threading.Thread):
 
         self.refresh_delay = refresh_delay
 
-        self.connect()
+        try:
+            self.connect()
+        except:
+            print(
+                "Error: Can not connect to the chess board. Is it connected and turrened on?"
+            )
+            sys.exit("Boad connection error.")
+
         # set NicLink values to defaults
         self.reset()
         """
@@ -821,7 +828,7 @@ def build_led_map_for_move(move: str) -> np.ndarray[np.str_]:
         rank[s1_cords[0]] = "1"
         rank[s2_cords[0]] = "1"
 
-        print(rank)
+        logger.debug("led rank computed", rank)
 
         rank_str = "".join(rank)
 
@@ -855,12 +862,9 @@ def set_up_logger() -> None:
         consoleHandler.setLevel(logging.DEBUG)
     else:
         logger.info("DEBUG not set")
-        # for dev
-        logger.setLevel(logging.INFO)
-        consoleHandler.setLevel(logging.INFO)
         fileHandler.setLevel(logging.INFO)
-        # logger.setLevel(logging.ERROR) for production
-        # consoleHandler.setLevel(logging.ERROR)
+        logger.setLevel(logging.ERROR)
+        consoleHandler.setLevel(logging.ERROR)
 
 
 #  === exception logging ===
@@ -873,7 +877,7 @@ def log_except_hook(excType, excValue, traceback):
 def log_handled_exeption(exception: Exception) -> None:
     """log a handled exception"""
     global logger
-    logger.error("Exception handled: %s", exception)
+    logger.debug("Exception handled: %s", exception)
 
 
 # setup except hook
