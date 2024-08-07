@@ -684,19 +684,19 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
                     py_square
                 ) or self.square_in_last_move(square):
                     # record the diff in diff array, while keeping the last move lit up
-                    self.logger.info(
-                        "man.show_board_diff(...): Diff found at square %s", square
-                    )
-                    # do not record diff's on the move squares, but light them up
                     if not self.square_in_last_move(square):
                         diff = True
-                        # add square to list off diff squares
-                        diff_cords = square_cords(square)
-                        diff_squares.append(square)
-
-                        diff_map[diff_cords[1]] = (
-                            zeros[: diff_cords[0]] + "1" + zeros[diff_cords[0] :]
+                        self.logger.info(
+                            "man.show_board_diff(...): Diff found at square %s", square
                         )
+
+                    # add square to list off diff squares
+                    diff_cords = square_cords(square)
+                    diff_squares.append(square)
+
+                    diff_map[diff_cords[1]] = (
+                        zeros[: diff_cords[0]] + "1" + zeros[diff_cords[0] :]
+                    )
 
         if diff:
             # set all the led's that differ
