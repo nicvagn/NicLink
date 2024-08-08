@@ -274,11 +274,7 @@ class Game(threading.Thread):
                 print(">>> opponentGone <<<")
                 for x in range(0, 2):
                     nl_inst.signal_lights(3)
-                    for x in range(0, 2):
-                        nl_inst.beep()
-                        sleep(0.01)
                     nl_inst.signal_lights(2)
-                    sleep(1)
             else:  # If it is not one of these options, kill the stream
                 logger.warning("\n\nNew Event: %s", event)
                 for x in range(0, 3):
