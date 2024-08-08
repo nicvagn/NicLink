@@ -276,7 +276,7 @@ class Game(threading.Thread):
                     nl_inst.signal_lights(3)
                     for x in range(0, 2):
                         nl_inst.beep()
-                        sleep(0.2)
+                        sleep(0.01)
                     nl_inst.signal_lights(2)
                     sleep(1)
             else:  # If it is not one of these options, kill the stream
@@ -585,12 +585,10 @@ Will only try twice before calling game_done"
         @side_effect: changes lights and beep's chess board
         """
         global nl_inst
-        nl_inst.signal_lights(sig_num=1)
         print(chat_line)
         # signal_lights set's lights on the chess board
-        nl_inst.signal_lights(1)
+        nl_inst.signal_lights(5)
         nl_inst.beep()
-        sleep(0.6)
         nl_inst.beep()
 
 

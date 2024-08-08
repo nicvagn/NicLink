@@ -388,7 +388,7 @@ Is the board connected and turned on?"
             self.set_all_LEDs(sig)
 
         if self.last_move is not None:
-            time.sleep(0.3)
+            time.sleep(0.4)
             self.set_move_LEDs(self.last_move)
 
     def get_FEN(self) -> str:
@@ -603,9 +603,8 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
         This is not done automatically so external program's can have more control.
         @param: move - move in uci str
         """
-        self.logger.debug("move made on gameboard. move %s", move)
+        self.logger.info("move made on gameboard. move %s", move)
         self.game_board.push_uci(move)
-        self.set_move_LEDs(move)
         self.logger.debug(
             "made move on internal  nl game board, BOARD POST MOVE:\n%s",
             self.game_board,
