@@ -295,10 +295,10 @@ Is the board connected and turned on?"
                 [
                     "11111111",
                     "10000001",
-                    "10000001",
-                    "10000001",
-                    "10000001",
-                    "10000001",
+                    "10111101",
+                    "10100101",
+                    "10100101",
+                    "10111101",
                     "10000001",
                     "11111111",
                 ],
@@ -342,14 +342,14 @@ Is the board connected and turned on?"
             """Signal 4 - center line"""
             sig = np.array(
                 [
-                    "00000000",
+                    "11111111",
                     "00000000",
                     "00000000",
                     "11111111",
                     "11111111",
                     "00000000",
                     "00000000",
-                    "00000000",
+                    "11111111",
                 ],
                 dtype=np.str_,
             )
@@ -359,12 +359,12 @@ Is the board connected and turned on?"
             sig = np.array(
                 [
                     "00011000",
-                    "00011000",
+                    "01011010",
                     "00011000",
                     "11111111",
                     "11111111",
                     "00011000",
-                    "00011000",
+                    "01011010",
                     "00011000",
                 ],
                 dtype=np.str_,
@@ -386,6 +386,10 @@ Is the board connected and turned on?"
                 dtype=np.str_,
             )
             self.set_all_LEDs(sig)
+
+        if self.last_move is not None:
+            time.sleep(0.3)
+            self.set_move_LEDs(self.last_move)
 
     def get_FEN(self) -> str:
         """get the board FEN from chessboard"""

@@ -8,8 +8,10 @@
 
 print("NicLink: Running all tests")
 import logging
+import time
 
 import chess
+import numpy as np
 import readchar
 import test_niclink_board_compairison as nlbc
 import test_niclink_FEN as nlf
@@ -18,6 +20,32 @@ import test_niclink_move_parsing as nlmv
 
 from niclink import NicLinkManager
 
+ONES = np.array(
+    [
+        "11111111",
+        "11111111",
+        "11111111",
+        "11111111",
+        "11111111",
+        "11111111",
+        "11111111",
+        "11111111",
+    ],
+    dtype=np.str_,
+)
+ZEROS = np.array(
+    [
+        "00000000",
+        "00000000",
+        "00000000",
+        "00000000",
+        "00000000",
+        "00000000",
+        "00000000",
+        "00000000",
+    ],
+    dtype=np.str_,
+)
 global logger
 
 logger = logging.getLogger("test_all")
@@ -43,7 +71,7 @@ def test_usb():
     nl_man.set_move_LEDs("e2e4")
     readchar.readchar()
     print("BOARD CLEAR, press a key")
-    nl_man.set_all_LEDs(nl_man.ZEROS)
+    nl_man.set_all_LEDs(ZEROS)
 
     readchar.readchar()
 
@@ -52,19 +80,25 @@ def test_usb():
 
     readchar.readchar()
     print("(test usb connection) testing  set_all_LEDs.")
-    # create a np.array of all true
 
-    nl_man.set_all_LEDs(nl_man.ONES)
+    nl_man.set_all_LEDs(ONES)
     print("all the lights should be on, confirm and press enter")
     readchar.readchar()
 
-    nl_man.set_all_LEDs(nl_man.ZEROS)
+    nl_man.set_all_LEDs(ZEROS)
     print("all the lights should be off, confirm and press enter")
     readchar.readchar()
 
+    print(
+        "testing  man.signal_lights(). lights should flash on and return to showing last move"
+    )
+    nl_man.signal_lights(1)
+
     print("(test usb connection) set up the board and press enter.")
     nl_man.show_game_board()
-    print("= set up cb, and test move parsing and set_move_LEDs(move) ")
+    print(
+        "Now, make a move on the board and test move geting. Press return when ready. This is the last test."
+    )
     readchar.readkey()
 
     while True:
@@ -73,6 +107,11 @@ def test_usb():
         nl_man.make_move_game_board(move)
         print(move)
         time.sleep(2)
+
+        print(
+            "testing  man.signal_lights(). lights should flash on and return to showing last move"
+        )
+        nl_man.signal_lights(1)
 
 
 if __name__ == "__main__":
