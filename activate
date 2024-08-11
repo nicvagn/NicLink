@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 
-SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+cd $(dirname -- "$( readlink -f -- "$0"; )";);
 
-echo activating venv in $SCRIPT_DIR
-
-. $SCRIPT_DIR/venv/bin/activate
+. ./venv/bin/activate
 
