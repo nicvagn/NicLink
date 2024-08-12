@@ -106,13 +106,14 @@ if DEBUG:
     consoleHandler.setLevel(logging.DEBUG)
 else:
     logger.info("DEBUG not set")
-    # for dev
-    # logger.setLevel(logging.INFO)
-    # consoleHandler.setLevel(logging.INFO)
-    logger.setLevel(logging.ERROR)
-    consoleHandler.setLevel(logging.ERROR)
+    logger.setLevel(logging.INFO)
+    consoleHandler.setLevel(logging.WARNING)
+# logger.setLevel(logging.ERROR)
+# consoleHandler.setLevel(logging.ERROR)
 
-formatter = logging.Formatter("%(levelno)s %(funcName)s %(message)s @: %(pathname)s")
+formatter = logging.Formatter(
+    "%(levelno)s %(funcName)s %(lineno)d  %(message)s @: %(pathname)s"
+)
 
 consoleHandler.setFormatter(formatter)
 logger.addHandler(consoleHandler)
@@ -276,11 +277,7 @@ class Game(threading.Thread):
                 print(">>> opponentGone <<<")
                 for x in range(0, 2):
                     nl_inst.signal_lights(3)
-                    for x in range(0, 2):
-                        nl_inst.beep()
-                        sleep(0.2)
                     nl_inst.signal_lights(2)
-                    sleep(1)
             else:  # If it is not one of these options, kill the stream
                 logger.warning("\n\nNew Event: %s", event)
                 for x in range(0, 3):
@@ -588,12 +585,10 @@ Will only try twice before calling game_done"
         @side_effect: changes lights and beep's chess board
         """
         global nl_inst
-        nl_inst.signal_lights(sig_num=1)
         print(chat_line)
         # signal_lights set's lights on the chess board
-        nl_inst.signal_lights(1)
+        nl_inst.signal_lights(5)
         nl_inst.beep()
-        sleep(0.6)
         nl_inst.beep()
 
 
@@ -603,7 +598,7 @@ def show_FEN_on_board(FEN) -> None:
     @param FEN - the fed to display on a board"""
     tmp_chessboard = chess.Board()
     tmp_chessboard.set_fen(FEN)
-    print(tmp_chessboard)
+    print(f"show_FEN_on_board: \n{tmp_chessboard}")
 
 
 def handle_game_start(

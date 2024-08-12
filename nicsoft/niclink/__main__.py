@@ -295,10 +295,10 @@ Is the board connected and turned on?"
                 [
                     "11111111",
                     "10000001",
-                    "10000001",
-                    "10000001",
-                    "10000001",
-                    "10000001",
+                    "10111101",
+                    "10100101",
+                    "10100101",
+                    "10111101",
                     "10000001",
                     "11111111",
                 ],
@@ -342,14 +342,14 @@ Is the board connected and turned on?"
             """Signal 4 - center line"""
             sig = np.array(
                 [
-                    "00000000",
+                    "11111111",
                     "00000000",
                     "00000000",
                     "11111111",
                     "11111111",
                     "00000000",
                     "00000000",
-                    "00000000",
+                    "11111111",
                 ],
                 dtype=np.str_,
             )
@@ -359,12 +359,12 @@ Is the board connected and turned on?"
             sig = np.array(
                 [
                     "00011000",
-                    "00011000",
+                    "01011010",
                     "00011000",
                     "11111111",
                     "11111111",
                     "00011000",
-                    "00011000",
+                    "01011010",
                     "00011000",
                 ],
                 dtype=np.str_,
@@ -374,18 +374,22 @@ Is the board connected and turned on?"
             """Signal 6 - crazy lights"""
             sig = np.array(
                 [
-                    "00000000",
-                    "00011000",
+                    "11000011",
+                    "11011011",
                     "00011000",
                     "01100110",
                     "01100110",
                     "00011000",
-                    "00011000",
-                    "00000000",
+                    "11011011",
+                    "11000011",
                 ],
                 dtype=np.str_,
             )
             self.set_all_LEDs(sig)
+
+        if self.last_move is not None:
+            time.sleep(0.4)
+            self.set_move_LEDs(self.last_move)
 
     def get_FEN(self) -> str:
         """get the board FEN from chessboard"""
@@ -509,7 +513,7 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
                     self.game_board,
                 )
                 # show the board diff from what we are checking for legal moves
-                print(f"diff from board we are checking legal moves on:\n")
+                logger.info("diff from board we are checking legal moves on:\n")
                 current_board = chess.Board(new_FEN)
                 self.show_board_diff(current_board, self.game_board)
                 # pause for the refresh_delay and allow other threads to run
@@ -599,9 +603,8 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
         This is not done automatically so external program's can have more control.
         @param: move - move in uci str
         """
-        self.logger.debug("move made on gameboard. move %s", move)
+        self.logger.info("move made on gameboard. move %s", move)
         self.game_board.push_uci(move)
-        self.set_move_LEDs(move)
         self.logger.debug(
             "made move on internal  nl game board, BOARD POST MOVE:\n%s",
             self.game_board,
@@ -684,19 +687,19 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
                     py_square
                 ) or self.square_in_last_move(square):
                     # record the diff in diff array, while keeping the last move lit up
-                    self.logger.info(
-                        "man.show_board_diff(...): Diff found at square %s", square
-                    )
-                    # do not record diff's on the move squares, but light them up
                     if not self.square_in_last_move(square):
                         diff = True
-                        # add square to list off diff squares
-                        diff_cords = square_cords(square)
-                        diff_squares.append(square)
-
-                        diff_map[diff_cords[1]] = (
-                            zeros[: diff_cords[0]] + "1" + zeros[diff_cords[0] :]
+                        self.logger.info(
+                            "man.show_board_diff(...): Diff found at square %s", square
                         )
+
+                    # add square to list off diff squares
+                    diff_cords = square_cords(square)
+                    diff_squares.append(square)
+
+                    diff_map[diff_cords[1]] = (
+                        zeros[: diff_cords[0]] + "1" + zeros[diff_cords[0] :]
+                    )
 
         if diff:
             # set all the led's that differ
@@ -706,11 +709,17 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
                 diff_squares,
             )
 
-            self.logger.debug(
-                "diff boards: \nBoard 1:\n" + str(board1) + "Board2:\n" + str(board2)
+            self.logger.warning(
+                "diff boards:\nInternal Board:\n"
+                + str(board2)
+                + "\nExternal board:\n"
+                + str(board1)
+                + "\n"
             )
             self.logger.debug("diff map made:")
             log_led_map(diff_map, self.logger)
+
+            print("diff from game board --> diff_squares: %s\n" % diff_squares)
 
         else:
             # set the last move lights for last move
