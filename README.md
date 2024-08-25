@@ -1,6 +1,12 @@
 # NicLink - A python interface for the Chessnut Air
 
-> version 0.95
+> version 1.10
+
+# working:
+
+    1.) Playing with the board API on lichess.com while connected via USB under gnu/linux
+
+    2.) API for all chessnut EasyLinkSDK functionality in python.
 
 # Notice
 
