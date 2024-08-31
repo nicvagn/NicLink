@@ -13,12 +13,12 @@ import threading
 import time
 
 # type hints
-from numbers import Number
 from typing import List
 
 # pip libraries
 import chess
 import numpy as np
+import numpy.typing as npt
 import readchar
 
 # mine
@@ -69,9 +69,9 @@ class NicLinkManager(threading.Thread):
 
     def __init__(
         self,
-        refresh_delay: Number,
+        refresh_delay: float,
+        logger: logging.Logger | None,
         thread_sleep_delay=1,
-        logger: logging.Logger = None,
         bluetooth: bool = False,
     ):
         """initialize the link to the chessboard, and set up NicLink"""
@@ -82,12 +82,11 @@ class NicLinkManager(threading.Thread):
         # HACK: delay for how long threads should sleep, alowing other threads to work
         self.thread_sleep_delay = thread_sleep_delay
 
-        if logger != None:
-            self.logger = logger
+        # ensure we have a logger
+        if logger is None:
+            self.logger = logging.getLogger(__name__)
         else:
-            self.logger = logging.getLogger("niclink")
-            self.logger.setLevel(logging.ERROR)
-            self.logger.error("niclink made it's own logger with logging level ERROR")
+            self.logger = logger
 
         if bluetooth:
             # connect the board w bluetooth
@@ -123,8 +122,11 @@ class NicLinkManager(threading.Thread):
         # and such
         self.lock = threading.Lock()
 
-    def run(self):
-        """run and wait for a game to begin"""
+    def run(self) -> None:
+        """run and wait for a game to begin
+        Raises:
+            ExitNicLink: to exit the NicLinkManager thread
+        """
         # run while kill_switch is not set
         while not self.kill_switch.is_set():
             if self.start_game.is_set():
@@ -137,7 +139,7 @@ class NicLinkManager(threading.Thread):
 
         raise ExitNicLink("Thank you for using NicLink (raised in NicLinkManager.run()")
 
-    def _run_game(self):
+    def _run_game(self) -> None:
         """handle a chessgame over NicLink"""
         # run a game, ie wait for GemeOver event
         self.game_over.wait()
@@ -147,10 +149,14 @@ class NicLinkManager(threading.Thread):
             "\n\n _run_game(...): game_over event set, resetting NicLink\n"
         )
 
-    def connect(self, bluetooth: bool = False):
+    def connect(self, bluetooth: bool = False) -> None:
         """connect to the chessboard
         @param: bluetooth - should we use bluetooth
         """
+
+        if bluetooth:
+            raise NotImplemented
+
         # connect to the chessboard, this must be done first
         self.nl_interface.connect()
 
@@ -229,18 +235,7 @@ Is the board connected and turned on?"
         @side_effect: changes board led's. Shut's off all led's, and display's  the move
         """
         self.logger.info("man.set_move_LEDs( %s ) called\n", move)
-        # make sure move is of type str
-        if type(move) != str:
-            try:
-                self.logger.error(
-                    "\n\n set_move_LEDs entered with a move of type chess.Move\n\n"
-                )
-                move = move.uci()
-            except Exception as err:
-                message = f"{err} was raised exception on trying to convert move { move } to uci."
-                self.logger.error(message)
 
-        self.logger.info("move LED's on for move: %s", move)
         move_led_map = build_led_map_for_move(move)
         # log led map
         self.logger.debug("move led map created. Move: %s \n map: ", move)
@@ -248,7 +243,7 @@ Is the board connected and turned on?"
 
         self.set_all_LEDs(move_led_map)
 
-    def set_all_LEDs(self, light_board: np.ndarray[np.str_]) -> None:
+    def set_all_LEDs(self, light_board: npt.NDArray[np.str_]) -> None:
         """set all led's on ext. chess board
         @param: light_board - a list of len 8 made up of
                 str of len 8 with the 1 for 0 off
@@ -722,8 +717,9 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
             print("diff from game board --> diff_squares: %s\n" % diff_squares)
 
         else:
-            # set the last move lights for last move
-            self.set_move_LEDs(self.last_move)
+            if self.last_move is not None:
+                # set the last move lights for last move
+                self.set_move_LEDs(self.last_move)
 
         return diff
 
@@ -766,7 +762,7 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
 
 
 ### helper functions ###
-def square_cords(square) -> (int, int):
+def square_cords(square) -> tuple[int, int]:
     """find cordinates for a given square on the chess board. (0, 0)
     is a1.
     @params: square - std algebraic square, ie b3, a8
@@ -791,7 +787,7 @@ def square_cords(square) -> (int, int):
     return (file_num, rank)
 
 
-def log_led_map(led_map: np.ndarray[np.str_], logger) -> None:
+def log_led_map(led_map: npt.NDArray[np.str_], logger) -> None:
     """log led map pretty 8th file to the top"""
     logger.debug("\nLOG LED map:\n")
     logger.debug(str(led_map[7]))
@@ -804,7 +800,7 @@ def log_led_map(led_map: np.ndarray[np.str_], logger) -> None:
     logger.debug(str(led_map[0]))
 
 
-def build_led_map_for_move(move: str) -> np.ndarray[np.str_]:
+def build_led_map_for_move(move: str) -> npt.NDArray[np.str_]:
     """build the led_map for a given uci move
     @param: move - move in uci
     @return: constructed led_map

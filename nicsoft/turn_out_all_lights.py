@@ -8,5 +8,6 @@ from niclink import NicLinkManager
 
 print("\nTURNING OUT ALL THE LIGHTS\n")
 
-man = NicLinkManager(2)
+log = logging.getLogger()
+man = NicLinkManager(2, None)
 man.turn_off_all_LEDs()

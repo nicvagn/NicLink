@@ -4,17 +4,19 @@
 #
 #  You should have received a copy of the GNU General Public License along with NicLink. If not, see <https://www.gnu.org/licenses/>.
 
-from .discovery import GetChessnutAirDevices
 import asyncio
+
 from bleak import BleakClient
+
 from .constants import (
     INITIALIZASION_CODE,
-    WRITECHARACTERISTICS,
+    MASKLOW,
     READCONFIRMATION,
     READDATA,
+    WRITECHARACTERISTICS,
     convertDict,
-    MASKLOW,
 )
+from .discovery import GetChessnutAirDevices
 
 """ A api for getting the FEN etc. from the board with bluetooth """
 currentFEN = None
@@ -46,7 +48,7 @@ def beep():
     print("BEEP")
 
 
-def getFEN() -> str | None:
+def get_FEN() -> str | None:
     """get the FEN from the chessboard over bluetooth"""
     print("BLUETOOTH get fen")
     return currentFEN
@@ -60,11 +62,15 @@ def lightsOut():
     CLIENT.write_gatt_char(WRITECHARACTERISTICS, led)
 
 
-def setLED(x, y, status) -> None:
+def set_LED(x, y, status) -> None:
     """set a led on the chessboard"""
     set_bit(led, y, status)
 
     CLIENT.write_gatt_char(WRITECHARACTERISTICS, led)
+
+
+def set_all_LEDs(ln1, ln2, ln3, ln4, ln5, ln6, ln7, ln8):
+    raise NotImplemented
 
 
 def updateFEN(data):
@@ -227,8 +233,8 @@ def gameover_lights() -> None:
 
 
 if __name__ == "__main__":
-    connect = GetChessnutAirDevices()
+    c = GetChessnutAirDevices()
     # get device
-    asyncio.run(connect.discover())
+    asyncio.run(c.discover())
     # connect to device
-    asyncio.run(run(connect))
+    asyncio.run(run(c))

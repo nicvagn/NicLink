@@ -1,3 +1,2 @@
-from . import _niclink
-from . import __main__
-from .__main__ import NicLinkManager
+from . import _niclink, driver
+from .driver import NicLinkManager
