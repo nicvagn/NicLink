@@ -24,7 +24,12 @@ import readchar
 # mine
 import niclink._niclink as _niclink
 import niclink.nl_bluetooth
-from niclink.nl_exceptions import *
+from niclink.nl_exceptions import (
+    ExitNicLink,
+    IllegalMove,
+    NoMove,
+    NoNicLinkFEN,
+)
 
 ### CONSTANTS ###
 ONES = np.array(
@@ -56,11 +61,11 @@ ZEROS = np.array(
 
 FILES = np.array(["a", "b", "c", "d", "e", "f", "g", "h"])
 
-NO_MOVE_DELAY = 0.5
+NO_MOVE_DELAY = 0.1  # I think having a logger delay makes bord unresponsive
 
 LIGHT_THREAD_DELAY = 0.8
 
-### logger ###
+# ## logger ###
 logger = logging.getLogger("NicLink")
 
 
@@ -79,7 +84,7 @@ class NicLinkManager(threading.Thread):
         # initialize the thread, as a daemon
         threading.Thread.__init__(self, daemon=True)
 
-        # HACK: delay for how long threads should sleep, alowing other threads to work
+        # HACK: delay for how long threads should sleep, letting threads work
         self.thread_sleep_delay = thread_sleep_delay
 
         # ensure we have a logger
@@ -99,7 +104,7 @@ class NicLinkManager(threading.Thread):
 
         try:
             self.connect()
-        except:
+        except Exception:
             print(
                 "Error: Can not connect to the chess board. Is it connected and turrened on?"
             )
@@ -137,7 +142,9 @@ class NicLinkManager(threading.Thread):
         # disconnect from board
         self.disconnect()
 
-        raise ExitNicLink("Thank you for using NicLink (raised in NicLinkManager.run()")
+        raise ExitNicLink(
+            "Thank you for using NicLink (raised in NicLinkManager.run()"
+        )
 
     def _run_game(self) -> None:
         """handle a chessgame over NicLink"""
@@ -155,7 +162,7 @@ class NicLinkManager(threading.Thread):
         """
 
         if bluetooth:
-            raise NotImplemented
+            raise NotImplementedError
 
         # connect to the chessboard, this must be done first
         self.nl_interface.connect()
@@ -192,7 +199,7 @@ Is the board connected and turned on?"
         # turn off all the lights
         self.turn_off_all_LEDs()
 
-        ### Treading Events ###
+        # ## Treading Events ###
         # a way to kill the program from outside
         self.game_over = threading.Event()
         self.has_moved = threading.Event()
@@ -226,7 +233,7 @@ Is the board connected and turned on?"
         if not found:
             raise ValueError(f"{ square[1] } is not a valid file")
 
-        # this is supper fucked, but the chessboard interaly starts counting at h8
+        # this is supper fd, but the chessboard interaly starts counting at h8
         self.nl_interface.set_LED(7 - num, 7 - file_num, status)
 
     def set_move_LEDs(self, move: str) -> None:
@@ -462,8 +469,8 @@ a legal move on:\n{ str(self.game_board) }\n"
         return self.game_board.board_fen() == nl_FEN
 
     def check_for_move(self) -> bool | str:
-        """check if there has been a move on the chessboard, and see if it is valid.
-        If so update self.last_move
+        """check if there has been a move on the chessboard, and see if
+        is is valid. If so update self.last_move
         @returns: self.last_move - the move got from the chessboard
         """
         # ensure the move was valid
@@ -502,13 +509,15 @@ a legal move on:\n{ str(self.game_board) }\n"
             except IllegalMove as err:
                 log_handled_exeption(err)
                 self.logger.warning(
-                    "\n===== move not valid, undue it and try again. it is white's \
-turn? %s =====\n board we are using to check for moves:\n%s\n",
+                    "\n===== move not valid, undue it and try again.  \
+it is white's turn? %s =====\n board we are using to check for moves:\n%s\n",
                     self.game_board.turn,
                     self.game_board,
                 )
                 # show the board diff from what we are checking for legal moves
-                logger.info("diff from board we are checking legal moves on:\n")
+                logger.info(
+                    "diff from board we are checking legal moves on:\n"
+                )
                 current_board = chess.Board(new_FEN)
                 self.show_board_diff(current_board, self.game_board)
                 # pause for the refresh_delay and allow other threads to run
@@ -563,7 +572,9 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
             except NoMove:
                 # no move made, wait refresh_delay and continue
                 attempts += 1
-                self.logger.debug("NoMove from chessboard. Attempt: %s", attempts)
+                self.logger.debug(
+                    "NoMove from chessboard. Attempt: %s", attempts
+                )
                 time.sleep(NO_MOVE_DELAY)
 
                 continue
@@ -581,7 +592,8 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
 
         # exit Niclink
         raise ExitNicLink(
-            "in await_move():\nkill_switch.is_set: %s" % (self.kill_switch.is_set(),)
+            "in await_move():\nkill_switch.is_set: %s"
+            % (self.kill_switch.is_set(),)
         )
 
     def get_last_move(self) -> str:
@@ -654,7 +666,9 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
 
         return False
 
-    def show_board_diff(self, board1: chess.Board, board2: chess.Board) -> bool:
+    def show_board_diff(
+        self, board1: chess.Board, board2: chess.Board
+    ) -> bool:
         """show the differance between two boards and output differance on a chessboard
         @param: board1 - refrence board
         @param: board2 - board to display diff from refrence board
@@ -662,7 +676,9 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
         @returns: bool - if there is a diff
         """
         self.logger.debug(
-            "man.show_board_diff entered w board's \n%s\nand\n%s", board1, board2
+            "man.show_board_diff entered w board's \n%s\nand\n%s",
+            board1,
+            board2,
         )
 
         # go through the squares and turn on the light for ones that are in error
@@ -685,7 +701,8 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
                     if not self.square_in_last_move(square):
                         diff = True
                         self.logger.info(
-                            "man.show_board_diff(...): Diff found at square %s", square
+                            "man.show_board_diff(...): Diff found at square %s",
+                            square,
                         )
 
                     # add square to list off diff squares
@@ -732,13 +749,25 @@ turn? %s =====\n board we are using to check for moves:\n%s\n",
     ) -> dict | bool:
         """is the internal game over?"""
         if self.game_board.is_checkmate():
-            return {"over": True, "winner": self.game_board.turn, "reason": "checkmate"}
+            return {
+                "over": True,
+                "winner": self.game_board.turn,
+                "reason": "checkmate",
+            }
         if self.game_board.is_stalemate():
             return {"over": True, "winner": False, "reason": "Is a stalemate"}
         if self.game_board.is_insufficient_material():
-            return {"over": True, "winner": False, "reason": "Is insufficient material"}
+            return {
+                "over": True,
+                "winner": False,
+                "reason": "Is insufficient material",
+            }
         if self.game_board.is_fivefold_repetition():
-            return {"over": True, "winner": False, "reason": "Is fivefold repetition."}
+            return {
+                "over": True,
+                "winner": False,
+                "reason": "Is fivefold repetition.",
+            }
         if self.game_board.is_seventyfive_moves():
             return {
                 "over": True,
@@ -820,11 +849,15 @@ def build_led_map_for_move(move: str) -> npt.NDArray[np.str_]:
     # if they are not on the same rank
     if s1_cords[1] != s2_cords[1]:
         # set 1st square
-        led_map[s1_cords[1]] = zeros[: s1_cords[0]] + "1" + zeros[s1_cords[0] :]
+        led_map[s1_cords[1]] = (
+            zeros[: s1_cords[0]] + "1" + zeros[s1_cords[0] :]
+        )
         logger.debug("map after 1st move cord (cord): %s", s1_cords)
         log_led_map(led_map, logger)
         # set second square
-        led_map[s2_cords[1]] = zeros[: s2_cords[0]] + "1" + zeros[s2_cords[0] :]
+        led_map[s2_cords[1]] = (
+            zeros[: s2_cords[0]] + "1" + zeros[s2_cords[0] :]
+        )
         logger.debug("led map made for move: %s\n", move)
         log_led_map(led_map, logger)
     # if they are on the same rank
@@ -848,7 +881,9 @@ def set_up_logger() -> None:
     """Only run when this module is run as __main__"""
     global logger
 
-    formatter = logging.Formatter("%(asctime)s %(levelname)s %(module)s %(message)s")
+    formatter = logging.Formatter(
+        "%(asctime)s %(levelname)s %(module)s %(message)s"
+    )
 
     consoleHandler = logging.StreamHandler(sys.stdout)
     consoleHandler.setFormatter(formatter)
