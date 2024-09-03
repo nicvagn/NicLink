@@ -30,8 +30,7 @@ class GameState:
         )
         if game_state["type"] != "gameState":
             raise ValueError(
-                """GameState instantiated with 
-a game_state["type"] != "gameState"""
+                '"GameState instantiated with a game_state["type"] != "gameState"'
             )
 
         self.moves: List[str] = game_state["moves"].split(" ")
@@ -102,5 +101,5 @@ a game_state["type"] != "gameState"""
         return self.status
 
     def __str__(self) -> str:
-        return f"GameState, Moves: { self.moves }, status: {self.status},\n \
-                wtime: { self.wtime } btime: { self.btime }"
+        return f"GameState, Moves: { self.moves }, status: {self.status
+        },\n wtime: { self.wtime } btime: { self.btime }"

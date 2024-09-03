@@ -55,7 +55,7 @@ class Game:
         self.opponent: dict = game_event["opponent"]
         self.isMyTurn: bool = game_event["isMyTurn"]
         if "secondsLeft" in game_event:
-            self.secondsLeft: number = game_event["secondsLeft"]
+            self.secondsLeft: float = game_event["secondsLeft"]
         else:
             self.secondsLeft = None
         if "hasMoved" in game_event:

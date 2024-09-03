@@ -189,7 +189,7 @@ class Game(threading.Thread):
         SERIAL_PORT = "/dev/ttyACM0"
         BAUDRATE = 115200
         TIMEOUT = 100.0
-        """if there is an external_clock try to connect to the clock, 
+        """if there is an external_clock try to connect to the clock,
         but do not fail if you dont
         """
         if chess_clock:
@@ -306,7 +306,9 @@ class Game(threading.Thread):
          5 - cross in center
         """
         global logger, nl_inst
-        logger.info("\nGame.game_done(GameState) entered.\n GameState %s", game_state)
+        logger.info(
+            "\nGame.game_done(GameState) entered.\n GameState %s", game_state
+        )
         # signal the side that won on the board by lighting up that side
         # if there is an external clock, display gameover message
         if game_state is not None:
@@ -347,7 +349,9 @@ class Game(threading.Thread):
         global logger, nl_inst
         logger.debug("\nGame.await_move_thread(...) entered\n")
         try:
-            move = nl_inst.await_move()  # await move from e-board the move from niclink
+            move = (
+                nl_inst.await_move()
+            )  # await move from e-board the move from niclink
             logger.debug(
                 "await_move_thread(...): move from chessboard %s. setting it to index 0 of the passed list, \
 and setting moved event",
@@ -368,7 +372,9 @@ and setting moved event",
             log_handled_exception(err)
             raise NoMove("ResponseError in Game.await_move_thread thread.")
         else:
-            logger.info("Game.await_move_thread(...) Thread got move: %s", move)
+            logger.info(
+                "Game.await_move_thread(...) Thread got move: %s", move
+            )
             raise SystemExit(
                 "exiting Game.await_move_thread thread, everything is good."
             )
@@ -463,7 +469,9 @@ Will only try twice before calling game_done"
         get_move_thread.start()
         # wait for a move on chessboard
         while not nl_inst.game_over.is_set() or self.check_for_game_over(
-            GameState(self.current_state["state"])  # TODO: FIND MORE EFFICIENT WAY
+            GameState(
+                self.current_state["state"]
+            )  # TODO: FIND MORE EFFICIENT WAY
         ):
             if self.has_moved.is_set():
                 move = move_fetch_list[0]
@@ -508,7 +516,9 @@ Will only try twice before calling game_done"
         # if chess_clock send new timestamp to clock
         if self.chess_clock:
             if not game_state.first_move():
-                logger.info("\n\nGameState sent to ChessClock: %s \n", game_state)
+                logger.info(
+                    "\n\nGameState sent to ChessClock: %s \n", game_state
+                )
                 self.chess_clock.move_made(game_state)
 
     def handle_state_change(self, game_state: GameState) -> None:
@@ -570,7 +580,8 @@ Will only try twice before calling game_done"
         """check a game state to see if the game is through if so raise an exception."""
         global logger, nl_inst
         logger.debug(
-            "check_for_game_over(self, game_state) entered w/ gamestate: %s", game_state
+            "check_for_game_over(self, game_state) entered w/ gamestate: %s",
+            game_state,
         )
         if game_state.winner:
             self.game_done(game_state=game_state)
@@ -616,7 +627,8 @@ def handle_game_start(
     if not correspondence:
         if game_start["game"]["speed"] == "correspondence":
             logger.info(
-                "skipping correspondence game w/ id: %s\n", game_start["game"]["id"]
+                "skipping correspondence game w/ id: %s\n",
+                game_start["game"]["id"],
             )
             return
 
@@ -624,12 +636,16 @@ def handle_game_start(
     nl_inst.signal_lights(6)
 
     logger.info(
-        "\nhandle_game_start(GameStart) enterd w game_start: \n %s\n", str(game_start)
+        "\nhandle_game_start(GameStart) enterd w game_start: \n %s\n",
+        str(game_start),
     )
     game_data = LichessGame(game_start["game"])
     game_fen = game_data.fen
 
-    msg = f"\ngame start received: { str(game_start) }\nyou play: %s" % game_data.colour
+    msg = (
+        f"\ngame start received: { str(game_start) }\nyou play: %s"
+        % game_data.colour
+    )
     print(msg)
     logger.debug(msg)
 
@@ -656,7 +672,9 @@ def handle_game_start(
         )
         game.daemon = True
 
-        logger.info("|| starting Game thread for game with id: %s\n", game_data.id)
+        logger.info(
+            "|| starting Game thread for game with id: %s\n", game_data.id
+        )
         game.start()  # start the game thread
 
     except ResponseError as e:
@@ -743,7 +761,9 @@ def main():
 
     try:
         if DEBUG:
-            berserk_client = berserk.Client(session, base_url="https://lichess.dev")
+            berserk_client = berserk.Client(
+                session, base_url="https://lichess.dev"
+            )
         else:
             berserk_client = berserk.Client(session)
     except KeyboardInterrupt as err:
@@ -813,7 +833,9 @@ def main():
 
             except NicLinkGameOver:
                 logger.info("NicLinkGameOver excepted, good game?")
-                print("game over, you can play another. Waiting for lichess event...")
+                print(
+                    "game over, you can play another. Waiting for lichess event..."
+                )
                 handle_resign()
 
     except ExitNicLink:
