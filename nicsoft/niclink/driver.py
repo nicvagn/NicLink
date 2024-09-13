@@ -4,14 +4,11 @@
 #
 #  you should have received a copy of the gnu general public license along with NicLink. if not, see <https://www.gnu.org/licenses/>.
 
-
 import logging
-
 # system
 import sys
 import threading
 import time
-
 # type hints
 from typing import List
 
@@ -24,12 +21,8 @@ import readchar
 # mine
 import niclink._niclink as _niclink
 import niclink.nl_bluetooth
-from niclink.nl_exceptions import (
-    ExitNicLink,
-    IllegalMove,
-    NoMove,
-    NoNicLinkFEN,
-)
+from niclink.nl_exceptions import (ExitNicLink, IllegalMove, NoMove,
+                                   NoNicLinkFEN)
 
 ### CONSTANTS ###
 ONES = np.array(
@@ -143,8 +136,7 @@ class NicLinkManager(threading.Thread):
         self.disconnect()
 
         raise ExitNicLink(
-            "Thank you for using NicLink (raised in NicLinkManager.run()"
-        )
+            "Thank you for using NicLink (raised in NicLinkManager.run()")
 
     def _run_game(self) -> None:
         """handle a chessgame over NicLink"""
@@ -153,8 +145,7 @@ class NicLinkManager(threading.Thread):
         # game is over, reset NicLink
         self.reset()
         self.logger.info(
-            "\n\n _run_game(...): game_over event set, resetting NicLink\n"
-        )
+            "\n\n _run_game(...): game_over event set, resetting NicLink\n")
 
     def connect(self, bluetooth: bool = False) -> None:
         """connect to the chessboard
@@ -177,6 +168,7 @@ class NicLinkManager(threading.Thread):
         if testFEN == "" or None:
             exceptionMessage = "Board initialization error. '' or None for FEN.  \
 Is the board connected and turned on?"
+
             raise RuntimeError(exceptionMessage)
 
         self.logger.info(f"Board initialized: initial fen: { testFEN }\n")
@@ -414,9 +406,8 @@ Is the board connected and turned on?"
         return tmp_board
 
     def find_move_from_FEN_change(
-        self, new_FEN: str
-    ) -> str:  # a move in quardinate notation
-        """get the move that occured to change the game_board fen into a given FEN.
+            self, new_FEN: str) -> str:  # a move in quardinate notation
+        """get the move that occurred to change the game_board fen into a given FEN.
         @param: new_FEN a board fen of the pos. of external board to parse move from
         return: the move in coordinate notation
         """
@@ -443,9 +434,8 @@ current board: \n%s\n board we are using to check legal moves: \n%s\n",
             # self.logger.info(move)
             tmp_board.push(move)  # Make the move on the board
 
-            if (
-                tmp_board.board_fen() == new_FEN
-            ):  # Check if the board's FEN matches the new FEN
+            if (tmp_board.board_fen() == new_FEN
+                ):  # Check if the board's FEN matches the new FEN
                 self.logger.info("move was found to be: %s", move)
 
                 return move.uci()  # Return the last move
@@ -457,6 +447,7 @@ current board: \n%s\n board we are using to check legal moves: \n%s\n",
         self.show_board_diff(error_board, self.game_board)
         message = f"Board we see:\n{ str(error_board) }\nis not a possible result from \
 a legal move on:\n{ str(self.game_board) }\n"
+
         raise IllegalMove(message)
 
     def check_game_board_against_external(self) -> bool:
@@ -507,7 +498,7 @@ a legal move on:\n{ str(self.game_board) }\n"
             try:
                 self.last_move = self.find_move_from_FEN_change(new_FEN)
             except IllegalMove as err:
-                log_handled_exeption(err)
+                log_handled_exception(err)
                 self.logger.warning(
                     "\n===== move not valid, undue it and try again.  \
 it is white's turn? %s =====\n board we are using to check for moves:\n%s\n",
@@ -516,8 +507,7 @@ it is white's turn? %s =====\n board we are using to check for moves:\n%s\n",
                 )
                 # show the board diff from what we are checking for legal moves
                 logger.info(
-                    "diff from board we are checking legal moves on:\n"
-                )
+                    "diff from board we are checking legal moves on:\n")
                 current_board = chess.Board(new_FEN)
                 self.show_board_diff(current_board, self.game_board)
                 # pause for the refresh_delay and allow other threads to run
@@ -545,9 +535,8 @@ it is white's turn? %s =====\n board we are using to check for moves:\n%s\n",
         # loop until we get a valid move
         attempts = 0
         while not self.kill_switch.is_set():
-            self.logger.debug(
-                "is game_over threading event set? %s", self.game_over.is_set()
-            )
+            self.logger.debug("is game_over threading event set? %s",
+                              self.game_over.is_set())
             # check for a move. If it move, return it else False
             try:
                 move = False
@@ -572,9 +561,8 @@ it is white's turn? %s =====\n board we are using to check for moves:\n%s\n",
             except NoMove:
                 # no move made, wait refresh_delay and continue
                 attempts += 1
-                self.logger.debug(
-                    "NoMove from chessboard. Attempt: %s", attempts
-                )
+                self.logger.debug("NoMove from chessboard. Attempt: %s",
+                                  attempts)
                 time.sleep(NO_MOVE_DELAY)
 
                 continue
@@ -591,10 +579,8 @@ it is white's turn? %s =====\n board we are using to check for moves:\n%s\n",
                 continue
 
         # exit Niclink
-        raise ExitNicLink(
-            "in await_move():\nkill_switch.is_set: %s"
-            % (self.kill_switch.is_set(),)
-        )
+        raise ExitNicLink("in await_move():\nkill_switch.is_set: %s" %
+                          (self.kill_switch.is_set(), ))
 
     def get_last_move(self) -> str:
         """get the last move played on the chessboard"""
@@ -666,9 +652,8 @@ it is white's turn? %s =====\n board we are using to check for moves:\n%s\n",
 
         return False
 
-    def show_board_diff(
-        self, board1: chess.Board, board2: chess.Board
-    ) -> bool:
+    def show_board_diff(self, board1: chess.Board,
+                        board2: chess.Board) -> bool:
         """show the differance between two boards and output differance on a chessboard
         @param: board1 - refrence board
         @param: board2 - board to display diff from refrence board
@@ -695,8 +680,7 @@ it is white's turn? %s =====\n board we are using to check for moves:\n%s\n",
                 square = chr(a) + str(n + 1)  # real life is not 0 based
                 py_square = chess.parse_square(square)
                 if board1.piece_at(py_square) != board2.piece_at(
-                    py_square
-                ) or self.square_in_last_move(square):
+                        py_square) or self.square_in_last_move(square):
                     # record the diff in diff array, while keeping the last move lit up
                     if not self.square_in_last_move(square):
                         diff = True
@@ -709,9 +693,8 @@ it is white's turn? %s =====\n board we are using to check for moves:\n%s\n",
                     diff_cords = square_cords(square)
                     diff_squares.append(square)
 
-                    diff_map[diff_cords[1]] = (
-                        zeros[: diff_cords[0]] + "1" + zeros[diff_cords[0] :]
-                    )
+                    diff_map[diff_cords[1]] = (zeros[:diff_cords[0]] + "1" +
+                                               zeros[diff_cords[0]:])
 
         if diff:
             # set all the led's that differ
@@ -721,13 +704,9 @@ it is white's turn? %s =====\n board we are using to check for moves:\n%s\n",
                 diff_squares,
             )
 
-            self.logger.warning(
-                "diff boards:\nInternal Board:\n"
-                + str(board2)
-                + "\nExternal board:\n"
-                + str(board1)
-                + "\n"
-            )
+            self.logger.warning("diff boards:\nInternal Board:\n" +
+                                str(board2) + "\nExternal board:\n" +
+                                str(board1) + "\n")
             self.logger.debug("diff map made:")
             log_led_map(diff_map, self.logger)
 
@@ -744,9 +723,7 @@ it is white's turn? %s =====\n board we are using to check for moves:\n%s\n",
         """get the game board FEN"""
         return self.game_board.fen()
 
-    def is_game_over(
-        self,
-    ) -> dict | bool:
+    def is_game_over(self, ) -> dict | bool:
         """is the internal game over?"""
         if self.game_board.is_checkmate():
             return {
@@ -770,9 +747,12 @@ it is white's turn? %s =====\n board we are using to check for moves:\n%s\n",
             }
         if self.game_board.is_seventyfive_moves():
             return {
-                "over": True,
-                "winner": False,
-                "reason": "A game is automatically \
+                "over":
+                True,
+                "winner":
+                False,
+                "reason":
+                "A game is automatically \
     drawn if the half-move clock since a capture or pawn move is equal to or greater \
     than 150. Other means to end a game take precedence.",
             }
@@ -792,10 +772,10 @@ it is white's turn? %s =====\n board we are using to check for moves:\n%s\n",
 
 ### helper functions ###
 def square_cords(square) -> tuple[int, int]:
-    """find cordinates for a given square on the chess board. (0, 0)
+    """find coordinates for a given square on the chess board. (0, 0)
     is a1.
     @params: square - std algebraic square, ie b3, a8
-    @returns: touple of the (x, y) coordinate of the square (0 based) (file, rank)
+    @returns: tuple of the (x, y) coord of the square (0 based) (file, rank)
     """
     global FILES
     rank = int(square[1]) - 1  # it's 0 based
@@ -811,7 +791,7 @@ def square_cords(square) -> tuple[int, int]:
         file_num += 1
 
     if not found:
-        raise ValueError(f"{ square[0] } is not a valid file")
+        raise ValueError(f"{square[0]} is not a valid file")
 
     return (file_num, rank)
 
@@ -840,7 +820,7 @@ def build_led_map_for_move(move: str) -> npt.NDArray[np.str_]:
 
     led_map = np.copy(ZEROS)
 
-    # get the squars and the coordinates
+    # get the square cords and the coordinates
     s1 = move[:2]
     s2 = move[2:]
     s1_cords = square_cords(s1)
@@ -849,15 +829,13 @@ def build_led_map_for_move(move: str) -> npt.NDArray[np.str_]:
     # if they are not on the same rank
     if s1_cords[1] != s2_cords[1]:
         # set 1st square
-        led_map[s1_cords[1]] = (
-            zeros[: s1_cords[0]] + "1" + zeros[s1_cords[0] :]
-        )
+        led_map[s1_cords[1]] = (zeros[:s1_cords[0]] + "1" +
+                                zeros[s1_cords[0]:])
         logger.debug("map after 1st move cord (cord): %s", s1_cords)
         log_led_map(led_map, logger)
         # set second square
-        led_map[s2_cords[1]] = (
-            zeros[: s2_cords[0]] + "1" + zeros[s2_cords[0] :]
-        )
+        led_map[s2_cords[1]] = (zeros[:s2_cords[0]] + "1" +
+                                zeros[s2_cords[0]:])
         logger.debug("led map made for move: %s\n", move)
         log_led_map(led_map, logger)
     # if they are on the same rank
@@ -876,14 +854,13 @@ def build_led_map_for_move(move: str) -> npt.NDArray[np.str_]:
     return led_map
 
 
-#### logger setup ####
+# ==== logger setup ====
 def set_up_logger() -> None:
     """Only run when this module is run as __main__"""
     global logger
 
     formatter = logging.Formatter(
-        "%(asctime)s %(levelname)s %(module)s %(message)s"
-    )
+        "%(asctime)s %(levelname)s %(module)s %(message)s")
 
     consoleHandler = logging.StreamHandler(sys.stdout)
     consoleHandler.setFormatter(formatter)
@@ -914,7 +891,7 @@ def log_except_hook(excType, excValue, traceback):
     logger.error("Uncaught exception", exc_info=(excType, excValue, traceback))
 
 
-def log_handled_exeption(exception: Exception) -> None:
+def log_handled_exception(exception: Exception) -> None:
     """log a handled exception"""
     global logger
     logger.debug("Exception handled: %s", exception)

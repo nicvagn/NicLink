@@ -1,14 +1,10 @@
-venv
+cspell*
 **/NicLink.log
 **/venv
 **/lichess_token/*
 build/*
 /src/pybind11
-EasyLinkSDK
-etc
 **/__pycache__
-nicsoft/niclink_lichess/niclink
-.vscode
 nicsoft/bin
 nicsoft/lib*
 nicsoft/include
@@ -16,4 +12,3 @@ nicsoft/niclink/_niclink*.so
 **/TODO
 **/*.log
 external_clock/old
-berserk
