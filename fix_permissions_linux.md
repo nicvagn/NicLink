@@ -1,12 +1,9 @@
-A udev rule has to be written for the USB
-
-device see README.md
-
+A udev rule has to be written for the chessboard see README.md and 99-chessnutair.rules.example
 also see:
 https://github.com/libusb/hidapi
 
-praticularly
-
+particularly:
+```
     Note that you will need to install an udev rule file with your application for
     unprivileged users to be able to access HID devices with hidapi.
     Refer to the 69-hid.rules file in the udev directory for an example.
@@ -35,7 +32,7 @@ KERNEL=="hidraw*", ATTRS{idVendor}=="04d8", ATTRS{idProduct}=="003f", TAG+="uacc
 # (Small discussion/explanation in systemd repo:
 #  https://github.com/systemd/systemd/issues/4288#issuecomment-348166161)
 # for example, name the file /etc/udev/rules.d/70-my-application-hid.rules.
-# Then, replug your device or run:
+# Then, re-plug your device or run:
 # sudo udevadm control --reload-rules && sudo udevadm trigger
 
 # Note that the hexadecimal values for VID and PID are case sensitive and
@@ -48,3 +45,4 @@ KERNEL=="hidraw*", ATTRS{idVendor}=="04d8", ATTRS{idProduct}=="003f", TAG+="uacc
 # to the end of the udev rule lines, add your user to the plugdev group with:
 # usermod -aG plugdev USERNAME
 # then log out and log back in (or restart the system).
+```

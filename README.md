@@ -17,8 +17,9 @@
 # SETUP:
 
     - there is a github action to help you with setup,
-      I am not framilular but give it a look if you are
-    - there is also a shell script called setubNicLink.sh in the git root, that will clone NicLink and install python deps
+      I am not familiar but give it a look if you are
+    - there is also a shell script called setupNicLink.sh in the git root, that
+      will clone NicLink and install python deps
     - see the python requirements.txt for external python requirements
 
     - see "## non pip requirements" below for further C++ and system req's
@@ -105,8 +106,7 @@ I created the venv for niclink to live in.
 
     cd ~/NicLink/
 
-    python -m venv nicsoft  - This creates a python venv in nicsoft, and should be ran in the
-                              NicLink root dir
+    python -m venv venv  - This creates a python venv in the NicLink root dir
 
     . ./activate    - this uses a lille convenance script, but basically all you have to
                               do is source ./bin/activate
@@ -155,9 +155,9 @@ and it outputted:
 
 # COMPILIING C++ Easylink and pybind11 module code
 
-> after you set up the python environment and C++ dependancies, and are in the python environment:
+> after you set up the python environment and C++ dependencies, and are in the python environment:
 
-    - under gnu/linux + Tux Racer run the bash script updateNicLink.sh. It handles usind cmake
+    - under gnu/linux + Tux Racer run the bash script updateNicLink.sh. It handles using cmake
       to create the make files, and compiling them in the build dir. It then moves the .so created
       into the niclink dir for use in the pyenv.
 
@@ -203,16 +203,6 @@ my chessnutair has the following properties, if your's differs, adjust.
 
 This gives wheel group access to all of your hidraw devices,
 but wheel usually has sudo access so they have that anyway with sudo
-
-## playing with stockfish
-
-> you can play with stockfish with NicLink!
-
-In order to do so, you should read ./play_stockfish/README.md for further info
-
-## Connect w bluetooth
-
-not mature enough to doc, but exists (Is a broken mess, save yourself)
 
 ## have something to add/suggest?
 
