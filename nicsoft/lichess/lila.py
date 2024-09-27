@@ -26,8 +26,8 @@ from berserk.exceptions import ResponseError
 from chess_clock import ChessClock
 from game import Game as LichessGame  # game is already a class
 from game_start import GameStart
-# other Nic modules
-from game_state import GameState, timedelta
+# lila modularity
+from game_state import GameState
 # exceptions
 from serial import SerialException
 
@@ -36,7 +36,7 @@ from niclink import NicLinkManager
 from niclink.nl_exceptions import (ExitNicLink, IllegalMove, NicLinkGameOver,
                                    NicLinkHandlingGame, NoMove)
 
-### command line ###
+# === command line ===
 # parsing command line arguments
 parser = argparse.ArgumentParser()
 parser.add_argument("--tokenfile")
@@ -77,7 +77,7 @@ REFRESH_DELAY = 0.1
 # POLL_DELAY for checking for new games
 POLL_DELAY = 10
 
-### lichess token parsing ###
+# === lichess token parsing ===
 TOKEN_FILE = os.path.join(script_dir, "lichess_token/nrv773_token")
 # TOKEN_FILE = os.path.join(script_dir, "lichess_token/dev_token")
 
@@ -90,7 +90,7 @@ if args.learning or LEARNING:
 if args.tokenfile is not None:
     TOKEN_FILE = args.tokenfile
 
-### logger stuff ###
+# === logger stuff ===
 logger = logging.getLogger("nl_lichess")
 
 consoleHandler = logging.StreamHandler(sys.stdout)
@@ -246,9 +246,8 @@ class Game(threading.Thread):
                     # while checking for game over
                     while state_change_thread.is_alive():
                         if state_change_thread.is_alive():
-                            logger.debug(
-                                "trying to join state_change_thread, it is alive."
-                            )
+                            logger.debug("trying to join state_change_thread, \
+                                it is alive.")
                             # check that the game is not over.
                             # Will call game_done if so.
                             self.check_for_game_over(self.game_state)
@@ -488,13 +487,16 @@ Will only try twice before calling game_done")
         return tmp_chessboard
 
     def move_made(self, game_state: GameState) -> None:
-        """signal that the opponent moved, signal the external clock and NicLink"""
+        """signal that the opponent moved, signal the external clock
+        and NicLink
+        @param: game_state: the gamestate containing the move
+        """
         logger.info(
             "\nmove_made(self, game_state) entered with GameState: %s",
             game_state,
         )
 
-        # check to make sure the game state has moves befor trying to access them
+        # check to make sure the game state has moves first
         if game_state.has_moves():
             move = game_state.get_last_move()
             # tell nl about the move
@@ -512,7 +514,8 @@ Will only try twice before calling game_done")
 
     def handle_state_change(self, game_state: GameState) -> None:
         """Handle a state change in the lichess game.
-        @param: GameState - The lichess game state we are handlinng wrapped in a conviniance class
+        @param: GameState - The lichess game state we are handlinng wrapped
+        in a convenience class
         """
         global nl_inst, logger
 
@@ -543,7 +546,7 @@ Will only try twice before calling game_done")
                 result,
                 winner,
             )
-            # stop the tread (this does some cleanup and throws an exception)
+            # stop the thread (this does some cleanup and throws an exception)
             self.game_done(game_state=game_state)
 
         # a move was made
@@ -553,7 +556,7 @@ Will only try twice before calling game_done")
             # signal move
             self.chess_clock.move_made(game_state)
 
-        # tmp_chessboard.turn == True when white, false when black playing_white is same
+        # is it our turn?
         if tmp_chessboard.turn == self.playing_white:
             # get our move from chessboard
             move = self.get_move_from_chessboard(tmp_chessboard)
@@ -592,7 +595,7 @@ Will only try twice before calling game_done")
         nl_inst.beep()
 
 
-### helper functions ###
+# === helper functions ===
 def show_FEN_on_board(FEN) -> None:
     """show board FEN on an ascii chessboard
     @param FEN - the fed to display on a board"""
@@ -607,11 +610,11 @@ def handle_game_start(game_start: GameStart,
     @param game_start: Typed Dict containing the game start info
     @param chess_clock: ase we using an external chess clock?
     @global berserk_client: client made for ous session with lila
-    @global game: the Game class object, global bc has to be accessed everywhere
+    @global game: Game class object, global bc has to be accessed everywhere
     """
     global berserk_client, logger, game, nl_inst
 
-    # check if game speed is correspondence, skip those if --correspondence argument is not set
+    # check if game speed is correspondence, skip if !--correspondence set
     if not correspondence:
         if game_start["game"]["speed"] == "correspondence":
             logger.info(
