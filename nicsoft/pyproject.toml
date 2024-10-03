@@ -17,9 +17,6 @@ version="1.1.0"
 authors=[
     { name = "Nicolas Vaagen", email="nicolasvaagen@gmail.com" }
 ]
-maintaners= [
-    { name = "Nicolas Vaagen", email="nicolasvaagen@gmail.com" }
-]
 description='A package containing NicLink and associated software. NicLink is a "driver" for chessnut air boards.'
 keywords=["Chessnut", "Chessnut air", "e-board", "EasyLinkSDK", "chess", "lichess", "boardAPI"]
 classifiers= [
@@ -35,7 +32,7 @@ classifiers= [
 ]
 readme = "README.md"
 license = {file = "LICENSE"}
-requires-python = "==3.12.3"
+requires-python = ">=3.12.3"
 
 [project.urls]
 Repository = 'https://github.com/nicvagn/NicLink'

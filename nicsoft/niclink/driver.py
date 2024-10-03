@@ -15,11 +15,9 @@ import chess
 import numpy as np
 import numpy.typing as npt
 
+from . import _niclink, nl_bluetooth
 # mine
-import niclink._niclink as _niclink
-import niclink.nl_bluetooth
-from niclink.nl_exceptions import (ExitNicLink, IllegalMove, NoMove,
-                                   NoNicLinkFEN)
+from .nl_exceptions import ExitNicLink, IllegalMove, NoMove, NoNicLinkFEN
 
 ### CONSTANTS ###
 ONES = np.array(
@@ -60,7 +58,7 @@ logger = logging.getLogger("NicLink")
 
 
 class NicLinkManager(threading.Thread):
-    """manage Chessnut air external board in it's own thread"""
+    """manage ChessNut air external board in it's own thread"""
 
     def __init__(
         self,
@@ -85,7 +83,7 @@ class NicLinkManager(threading.Thread):
 
         if bluetooth:
             # connect the board w bluetooth
-            self.nl_interface = niclink.nl_bluetooth
+            self.nl_interface = nl_bluetooth
         else:
             # connect with the external board usb
             self.nl_interface = _niclink
@@ -161,13 +159,13 @@ class NicLinkManager(threading.Thread):
         # make sure get_FEN is working
         testFEN = self.nl_interface.get_FEN()
 
-        if testFEN == "" or None:
+        if testFEN == '':
             exceptionMessage = "Board initialization error. '' or None  \
 for FEN. Is the board connected and turned on?"
 
             raise RuntimeError(exceptionMessage)
 
-        self.logger.info(f"Board initialized: initial fen: {testFEN}\n")
+        self.logger.info("Board initialized: initial fen: \n %s" % testFEN)
 
     def disconnect(self) -> None:
         """disconnect from the chessboard"""
@@ -202,7 +200,6 @@ for FEN. Is the board connected and turned on?"
         @param: status: True | False
         @side_effect: changes led on chessboard
         """
-        global FILES
 
         # find the file number by iteration
         found = False
@@ -221,7 +218,7 @@ for FEN. Is the board connected and turned on?"
         if not found:
             raise ValueError(f"{square[1]} is not a valid file")
 
-        # this is supper fd, but the chessboard internally strt counting at h8
+        # this is supper fd, but the chessboard internally starts counting at h8
         self.nl_interface.set_LED(7 - num, 7 - file_num, status)
 
     def set_move_LEDs(self, move: str) -> None:
@@ -386,8 +383,9 @@ called with following light_board:")
         fen = self.nl_interface.get_FEN()
         if fen is not None:
             return fen
-        else:
-            raise NoNicLinkFEN("No fen got from board")
+        # else:
+
+        raise NoNicLinkFEN("No fen got from board")
 
     def put_board_FEN_on_board(self, boardFEN: str) -> chess.Board:
         """show just the board part of FEN on asci chessboard,
@@ -414,8 +412,8 @@ called with following light_board:")
             self.logger.debug("no fen difference. FEN was %s", old_FEN)
             raise NoMove("No FEN difference")
 
-        self.logger.debug("new_FEN" + new_FEN)
-        self.logger.debug("old FEN" + old_FEN)
+        self.logger.debug("new_FEN %s" % new_FEN)
+        self.logger.debug("old FEN %s" % old_FEN)
 
         # get a list of the legal moves
         legal_moves = list(self.game_board.legal_moves)
@@ -433,7 +431,7 @@ current board: \n%s\n board we are using to check legal moves: \n%s\n",
             tmp_board.push(move)  # Make the move on the board
 
             # Check if the board's FEN matches the new FEN
-            if (tmp_board.board_fen() == new_FEN):
+            if tmp_board.board_fen() == new_FEN:
                 self.logger.info("move was found to be: %s", move)
 
                 return move.uci()  # Return the last move
@@ -529,7 +527,6 @@ it is white's turn? %s =====\n board we are using to check for moves:\n%s\n",
         """wait for legal move, and return it in coordinate notation after
         making it on internal board
         """
-        global NO_MOVE_DELAY
         # loop until we get a valid move
         attempts = 0
         while not self.kill_switch.is_set():
@@ -552,10 +549,10 @@ it is white's turn? %s =====\n board we are using to check for moves:\n%s\n",
                         attempts,
                     )
                     return move
-                else:
-                    self.logger.debug("no move")
-                    # if move is false continue
-                    continue
+                # else
+                self.logger.debug("no move")
+                # if move is false continue
+                continue
 
             except NoMove:
                 # no move made, wait refresh_delay and continue
@@ -781,7 +778,6 @@ def square_cords(square) -> tuple[int, int]:
     @params: square - std algebraic square, ie b3, a8
     @returns: tuple of the (x, y) coord of the square (0 based) (file, rank)
     """
-    global FILES
     rank = int(square[1]) - 1  # it's 0 based
 
     # find the file number by iteration
@@ -818,7 +814,6 @@ def build_led_map_for_move(move: str) -> npt.NDArray[np.str_]:
     @param: move - move in uci
     @return: constructed led_map
     """
-    global logger, ZEROS
     zeros = "00000000"
     logger.debug("build_led_map_for_move(%s)", move)
 
@@ -848,7 +843,7 @@ def build_led_map_for_move(move: str) -> npt.NDArray[np.str_]:
         rank[s1_cords[0]] = "1"
         rank[s2_cords[0]] = "1"
 
-        logger.debug("led rank computed", rank)
+        logger.debug("led rank computed: %s" % rank)
 
         rank_str = "".join(rank)
 
@@ -861,7 +856,6 @@ def build_led_map_for_move(move: str) -> npt.NDArray[np.str_]:
 # ==== logger setup ====
 def set_up_logger() -> None:
     """Only run when this module is run as __main__"""
-    global logger
 
     formatter = logging.Formatter(
         "%(asctime)s %(levelname)s %(module)s %(message)s")
@@ -891,13 +885,11 @@ def set_up_logger() -> None:
 #  === exception logging ===
 # log unhandled exceptions to the log file
 def log_except_hook(excType, excValue, traceback):
-    global logger
     logger.error("Uncaught exception", exc_info=(excType, excValue, traceback))
 
 
 def log_handled_exception(exception: Exception) -> None:
     """log a handled exception"""
-    global logger
     logger.debug("Exception handled: %s", exception)
 
 
