@@ -19,8 +19,8 @@ from berserk.exceptions import ResponseError
 from game import Game
 from game_state import GameState
 
-from niclink.nl_exceptions import *
-
+import niclink
+from niclink.nl_exceptions import NicLinkGameOver
 """
 snip from chess_clock.ino
   case '2':
@@ -98,9 +98,9 @@ class ChessClock:
             self.logger = logger
         else:
             self.logger = logging.getLogger("chess_clock")
-        self.chess_clock = serial.Serial(
-            port=serial_port, baudrate=baudrate, timeout=timeout
-        )
+        self.chess_clock = serial.Serial(port=serial_port,
+                                         baudrate=baudrate,
+                                         timeout=timeout)
 
         self.lcd_length = 16
         # times to be displayed on lcd
@@ -127,7 +127,9 @@ class ChessClock:
         # clear lcd and lcd serial
         self.clear()
         # countdown thread
-        self.countdown = Thread(target=self.time_keeper, args=(self,), daemon=True)
+        self.countdown = Thread(target=self.time_keeper,
+                                args=(self, ),
+                                daemon=True)
         self.logger.info("ChessClock initialized")
 
     def clear(self) -> None:
@@ -148,9 +150,9 @@ class ChessClock:
 
         if self.displayed_btime is not None and self.displayed_wtime is not None:
             self.logger.info(
-                "\nChessClock.game_over() entered w current ts: %s\n"
-                % (self.create_timestamp(self.displayed_wtime, self.displayed_btime))
-            )
+                "\nChessClock.game_over() entered w current ts: %s\n" %
+                (self.create_timestamp(self.displayed_wtime,
+                                       self.displayed_btime)))
         else:
             self.logger.warning(
                 "ChessClock.game_over(): self.displayed_btime or self.displayed_wtime is None"
@@ -177,10 +179,12 @@ class ChessClock:
         @param game - berserk event incased in conviniance class
         @raises: RuntimeError if the chess clock is still handling a game
         """
-        self.logger.info("\nchess_clock: start_new_game entered with Game %s \n", game)
+        self.logger.info(
+            "\nchess_clock: start_new_game entered with Game %s \n", game)
         # no clock for correspondence
         if game.speed == "correspondence":
-            logger.info("SKIPPING correspondence game w/ id %s \n", game.gameId)
+            self.logger.info("SKIPPING correspondence game w/ id %s \n",
+                             game.gameId)
             return
         # make sure countdown thread is dead
         while self.countdown.is_alive():
@@ -189,7 +193,9 @@ class ChessClock:
 
         self.countdown_kill.clear()
         # create a new coutdown thread
-        self.countdown = Thread(target=self.time_keeper, args=(self,), daemon=True)
+        self.countdown = Thread(target=self.time_keeper,
+                                args=(self, ),
+                                daemon=True)
         # create starting timestamp
         self.update_lcd(game.get_wtime(), game.get_btime())
 
@@ -282,14 +288,14 @@ class ChessClock:
             # ensure ts uses all the space, needed for lcd side
             white_time = f"W: { str(wtime) }"
             if len(white_time) > self.lcd_length:
-                white_time = white_time[: self.lcd_length]
+                white_time = white_time[:self.lcd_length]
             else:
                 while len(white_time) < self.lcd_length:
                     white_time += " "
 
             black_time = f"B: { str(btime) }"
             if len(black_time) > self.lcd_length:
-                black_time = black_time[: self.lcd_length]
+                black_time = black_time[:self.lcd_length]
             else:
                 while len(black_time) < self.lcd_length:
                     black_time += " "
@@ -308,7 +314,8 @@ class ChessClock:
         @param: player_time (timedelta) - timedelta of how much time a player has
         @returns: (bool) if they flaged
         """
-        self.logger.info("did_flag(player_time) with player time %s", player_time)
+        self.logger.info("did_flag(player_time) with player time %s",
+                         player_time)
         if type(player_time) is timedelta:
             if player_time.total_seconds() <= 0:
                 return True
@@ -333,25 +340,26 @@ class ChessClock:
             # if the game is over, kill the time_keeper
             if chess_clock.countdown_kill.is_set():
                 chess_clock.logger.warning("countdown_kill is set")
-                raise NicLinkGameOver(
-                    """time_keeper(...) exiting. 
-chess_clock.countdown_kill.is_set()"""
-                )
+                raise NicLinkGameOver("""time_keeper(...) exiting. 
+chess_clock.countdown_kill.is_set()""")
 
             if chess_clock.move_time is None:
                 chess_clock.logger.warning("chess_clock.move_time is None")
                 sleep(chess_clock.TIME_REFRESH)
                 continue
             if chess_clock.time_left_at_move is None:
-                chess_clock.logger.warning("chess_clock.time_left_at_move is None")
+                chess_clock.logger.warning(
+                    "chess_clock.time_left_at_move is None")
                 sleep(chess_clock.TIME_REFRESH)
                 continue
             if chess_clock.displayed_btime is None:
-                chess_clock.logger.warning("chess_clock.displayed_btime is None")
+                chess_clock.logger.warning(
+                    "chess_clock.displayed_btime is None")
                 sleep(chess_clock.TIME_REFRESH)
                 continue
             if chess_clock.displayed_wtime is None:
-                chess_clock.logger.warning("chess_clock.displayed_wtime is None")
+                chess_clock.logger.warning(
+                    "chess_clock.displayed_wtime is None")
                 sleep(chess_clock.TIME_REFRESH)
                 continue
 
@@ -360,13 +368,11 @@ chess_clock.countdown_kill.is_set()"""
                 # because sometimes time_left_at_move is an int of secondsLeft
                 if type(chess_clock.time_left_at_move) is not timedelta:
                     chess_clock.time_left_at_move = timedelta(
-                        seconds=chess_clock.time_left_at_move
-                    )
+                        seconds=chess_clock.time_left_at_move)
 
                 # create a new timedelta with the updated wtime
                 new_wtime = chess_clock.time_left_at_move - (
-                    datetime.now() - chess_clock.move_time
-                )
+                    datetime.now() - chess_clock.move_time)
                 # check for flag for white
                 if chess_clock.did_flag(new_wtime):
                     chess_clock.black_won()
@@ -379,13 +385,11 @@ chess_clock.countdown_kill.is_set()"""
                 # because sometimes time_left_at_move is an int of secondsLeft
                 if type(chess_clock.time_left_at_move) is not timedelta:
                     chess_clock.time_left_at_move = timedelta(
-                        seconds=chess_clock.time_left_at_move
-                    )
+                        seconds=chess_clock.time_left_at_move)
 
                 # create a new timedelta object w updated b time
                 new_btime = chess_clock.time_left_at_move - (
-                    datetime.now() - chess_clock.move_time
-                )
+                    datetime.now() - chess_clock.move_time)
 
                 # check if black has flaged
                 if chess_clock.did_flag(chess_clock.displayed_btime):
@@ -402,17 +406,15 @@ chess_clock.countdown_kill.is_set()"""
 def test_timekeeper(cc: ChessClock, game: Game) -> None:
     """test the chess clock's countdown"""
     print("TEST: countdown")
-    GS = GameState(
-        {
-            "type": "gameState",
-            "moves": "e2e4 e6e5 d2d4",
-            "wtime": timedelta(seconds=24),
-            "btime": timedelta(seconds=13),
-            "winc": timedelta(seconds=3),
-            "binc": timedelta(seconds=3),
-            "status": "started",
-        }
-    )
+    GS = GameState({
+        "type": "gameState",
+        "moves": "e2e4 e6e5 d2d4",
+        "wtime": timedelta(seconds=24),
+        "btime": timedelta(seconds=13),
+        "winc": timedelta(seconds=3),
+        "binc": timedelta(seconds=3),
+        "status": "started",
+    })
     cc.start_new_game(game)
     x = "n"
     while x == "n":
@@ -473,61 +475,63 @@ def main() -> None:
         "color": "white",
         "lastMove": "",
         "source": "lobby",
-        "status": {"id": 20, "name": "started"},
-        "variant": {"key": "standard", "name": "Standard"},
+        "status": {
+            "id": 20,
+            "name": "started"
+        },
+        "variant": {
+            "key": "standard",
+            "name": "Standard"
+        },
         "speed": "rapid",
         "perf": "rapid",
         "rated": False,
         "hasMoved": False,
-        "opponent": {"id": "david002", "username": "David002", "rating": 1376},
+        "opponent": {
+            "id": "david002",
+            "username": "David002",
+            "rating": 1376
+        },
         "isMyTurn": True,
         "secondsLeft": 1200,
     }
     GAME_START = Game(RAW_GAME)
-    SAMPLE_GAMESTATE0 = GameState(
-        {
-            "type": "gameState",
-            "moves": "",
-            "wtime": timedelta(minutes=3),
-            "btime": timedelta(minutes=3),
-            "winc": timedelta(seconds=3),
-            "binc": timedelta(seconds=3),
-            "status": "started",
-        }
-    )
-    SAMPLE_GAMESTATE1 = GameState(
-        {
-            "type": "gameState",
-            "moves": "e2e4",
-            "wtime": timedelta(minutes=3),
-            "btime": timedelta(minutes=3),
-            "winc": timedelta(seconds=3),
-            "binc": timedelta(seconds=3),
-            "status": "started",
-        }
-    )
-    SAMPLE_GAMESTATE2 = GameState(
-        {
-            "type": "gameState",
-            "moves": "e2e4 e6e5",
-            "wtime": timedelta(minutes=3),
-            "btime": timedelta(minutes=2, seconds=44),
-            "winc": timedelta(seconds=3),
-            "binc": timedelta(seconds=3),
-            "status": "started",
-        }
-    )
-    SAMPLE_GAMESTATE3 = GameState(
-        {
-            "type": "gameState",
-            "moves": "e2e4 e6e5 d2d4",
-            "wtime": timedelta(seconds=24),
-            "btime": timedelta(seconds=13),
-            "winc": timedelta(seconds=3),
-            "binc": timedelta(seconds=3),
-            "status": "started",
-        }
-    )
+    SAMPLE_GAMESTATE0 = GameState({
+        "type": "gameState",
+        "moves": "",
+        "wtime": timedelta(minutes=3),
+        "btime": timedelta(minutes=3),
+        "winc": timedelta(seconds=3),
+        "binc": timedelta(seconds=3),
+        "status": "started",
+    })
+    SAMPLE_GAMESTATE1 = GameState({
+        "type": "gameState",
+        "moves": "e2e4",
+        "wtime": timedelta(minutes=3),
+        "btime": timedelta(minutes=3),
+        "winc": timedelta(seconds=3),
+        "binc": timedelta(seconds=3),
+        "status": "started",
+    })
+    SAMPLE_GAMESTATE2 = GameState({
+        "type": "gameState",
+        "moves": "e2e4 e6e5",
+        "wtime": timedelta(minutes=3),
+        "btime": timedelta(minutes=2, seconds=44),
+        "winc": timedelta(seconds=3),
+        "binc": timedelta(seconds=3),
+        "status": "started",
+    })
+    SAMPLE_GAMESTATE3 = GameState({
+        "type": "gameState",
+        "moves": "e2e4 e6e5 d2d4",
+        "wtime": timedelta(seconds=24),
+        "btime": timedelta(seconds=13),
+        "winc": timedelta(seconds=3),
+        "binc": timedelta(seconds=3),
+        "status": "started",
+    })
 
     chess_clock = ChessClock(
         PORT,
@@ -564,7 +568,8 @@ if __name__ == "__main__":
     logger.setLevel(logging.DEBUG)
     consoleHandler.setLevel(logging.DEBUG)
 
-    formatter = logging.Formatter("%(asctime)s %(levelname)s %(module)s %(message)s")
+    formatter = logging.Formatter(
+        "%(asctime)s %(levelname)s %(module)s %(message)s")
 
     consoleHandler.setFormatter(formatter)
     logger.addHandler(consoleHandler)
