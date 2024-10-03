@@ -16,11 +16,10 @@ import readchar
 import serial
 from berserk import Client
 from berserk.exceptions import ResponseError
-from game import Game
-from game_state import GameState
 
-import niclink
-from niclink.nl_exceptions import NicLinkGameOver
+from ..niclink.nl_exceptions import NicLinkGameOver
+from .game import Game
+from .game_state import GameState
 """
 snip from chess_clock.ino
   case '2':

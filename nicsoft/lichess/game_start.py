@@ -6,8 +6,7 @@
 
 from typing import TypedDict
 
-from game import Game
-
+from .game import Game
 """sample
 
 {'type': 'gameStart',

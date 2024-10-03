@@ -1,0 +1,5 @@
+lichess
+niclink
+niclink_game
+play_stockfish
+test

@@ -22,19 +22,20 @@ import berserk
 import chess
 import chess.pgn
 from berserk.exceptions import ResponseError
-# external chess clock functionality
-from chess_clock import ChessClock
-from game import Game as LichessGame  # game is already a class
-from game_start import GameStart
-# lila modularity
-from game_state import GameState
 # exceptions
 from serial import SerialException
 
 # NicLink shit
-from niclink import NicLinkManager
-from niclink.nl_exceptions import (ExitNicLink, IllegalMove, NicLinkGameOver,
-                                   NicLinkHandlingGame, NoMove)
+from nicsoft.niclink import NicLinkManager
+from nicsoft.niclink.nl_exceptions import (ExitNicLink, IllegalMove,
+                                           NicLinkGameOver,
+                                           NicLinkHandlingGame, NoMove)
+
+# external chess clock functionality
+from .chess_clock import ChessClock
+from .game import Game as LichessGame  # game is already a class
+from .game_start import GameStart
+from .game_state import GameState
 
 # === command line ===
 # parsing command line arguments

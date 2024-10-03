@@ -1,2 +1,2 @@
-from niclink import NicLinkManager
-from niclink.nl_exceptions import *
+from ..niclink.driver import NicLinkManager
+from ..niclink.nl_exceptions import *

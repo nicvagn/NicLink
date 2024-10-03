@@ -6,6 +6,6 @@
 #
 #  You should have received a copy of the GNU General Public License along with NicLink. If not, see <https://www.gnu.org/licenses/>.
 
-import lila
+from . import lila
 
 lila.main()

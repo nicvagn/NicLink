@@ -8,16 +8,9 @@ import asyncio
 
 from bleak import BleakClient
 
-from .constants import (
-    INITIALIZASION_CODE,
-    MASKLOW,
-    READCONFIRMATION,
-    READDATA,
-    WRITECHARACTERISTICS,
-    convertDict,
-)
+from .constants import (INITIALIZASION_CODE, MASKLOW, READCONFIRMATION,
+                        READDATA, WRITECHARACTERISTICS, convertDict)
 from .discovery import GetChessnutAirDevices
-
 """ A api for getting the FEN etc. from the board with bluetooth """
 currentFEN = None
 oldData = None
@@ -57,7 +50,8 @@ def get_FEN() -> str | None:
 def lightsOut():
     """turn off all the chessboard lights"""
     print("lights out bt")
-    led = bytearray([0x0A, 0x08, 0x1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
+    led = bytearray(
+        [0x0A, 0x08, 0x1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
     # send the led bytearray with all zero for last 8 bytes
     CLIENT.write_gatt_char(WRITECHARACTERISTICS, led)
 
@@ -99,7 +93,7 @@ def updateFEN(data):
     chessboard = [8]
     for col_num in range(0, 8):
         empty = 0  # a value for setting empty part's of the fen
-        row = reversed(data[col_num * 4 : col_num * 4 + 4])
+        row = reversed(data[col_num * 4:col_num * 4 + 4])
         print(row)
         # chessboard[col_num] = row
         byte_num = 0
@@ -110,7 +104,8 @@ def updateFEN(data):
                 empty += 1
                 breakpoint()
                 continue
-            convertedRow[byte_num] = (convertDict[b >> 4], convertDict[b & MASKLOW])
+            convertedRow[byte_num] = (convertDict[b >> 4],
+                                      convertDict[b & MASKLOW])
             byte_num += 1
 
         chessboard[col_num] = convertedRow
@@ -152,7 +147,7 @@ def printBoard(data):
     """
     for counterColum in range(0, 8):
         print(8 - counterColum, " ", end=" ")
-        row = reversed(data[counterColum * 4 : counterColum * 4 + 4])
+        row = reversed(data[counterColum * 4:counterColum * 4 + 4])
         for b in row:
             print(convertDict[b >> 4], convertDict[b & MASKLOW], end=" ")
         print("")
@@ -178,9 +173,10 @@ async def leds(data):
     To turn off all LEDs you just send the 10 bytes with the last 8 bytes all as zero values
     """
 
-    led = bytearray([0x0A, 0x08, 0x1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
+    led = bytearray(
+        [0x0A, 0x08, 0x1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
     for counterColum in range(0, 8):
-        row = data[counterColum * 4 : counterColum * 4 + 4]
+        row = data[counterColum * 4:counterColum * 4 + 4]
         for counter, b in enumerate(row):
             v = led[counterColum + 2]
             n1 = convertDict[b & MASKLOW]
@@ -217,19 +213,21 @@ async def run(connect, debug=False):
         CLIENT = client
         print(f"Connected: {client.is_connected}")
         # send initialisation string
-        await client.start_notify(
-            READDATA, notification_handler
-        )  # start the notification handler
-        await client.write_gatt_char(
-            WRITECHARACTERISTICS, INITIALIZASION_CODE
-        )  # send initialisation string
+        await client.start_notify(READDATA, notification_handler
+                                  )  # start the notification handler
+        await client.write_gatt_char(WRITECHARACTERISTICS, INITIALIZASION_CODE
+                                     )  # send initialisation string
         await asyncio.sleep(100.0)  ## wait 100 seconds
         await client.stop_notify(READDATA)  # stop the notification handler
 
 
 def gameover_lights() -> None:
     """just to remind me"""
-    raise NotImplemented()
+    raise NotImplemented
+
+
+def lights_out():
+    raise NotImplemented
 
 
 if __name__ == "__main__":

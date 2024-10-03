@@ -1,8 +1,15 @@
-#  NicLink is free software: you can redistribute it and/or modify it under the terms of the gnu general public license as published by the free software foundation, either version 3 of the license, or (at your option) any later version.
+#  NicLink is free software: you can redistribute it and/or modify it under
+#  the terms of the gnu general public license as published by the free
+#  software foundation, either version 3 of the license, or (at your option)
+#  any later version.
 #
-#  NicLink is distributed in the hope that it will be useful, but without any warranty; without even the implied warranty of merchantability or fitness for a particular purpose. see the gnu general public license for more details.
+#  NicLink is distributed in the hope that it will be useful, but without any
+#  warranty; without even the implied warranty of merchantability or fitness
+#  for a particular purpose.
+#  see the gnu general public license for more details.
 #
-#  you should have received a copy of the gnu general public license along with NicLink. if not, see <https://www.gnu.org/licenses/>.
+#  you should have received a copy of the gnu general public license along with
+#  NicLink. if not, see <https://www.gnu.org/licenses/>.
 
 import logging
 # system
@@ -49,12 +56,12 @@ ZEROS = np.array(
 
 FILES = np.array(["a", "b", "c", "d", "e", "f", "g", "h"])
 
-NO_MOVE_DELAY = 0.1  # I think having a logger delay makes bord unresponsive
+NO_MOVE_DELAY = 0.1  # I think having a logger delay makes board unresponsive
 
 LIGHT_THREAD_DELAY = 0.8
 
-# ## logger ###
-logger = logging.getLogger("NicLink")
+# get a logger, should have structured the module better
+logger = logging.getLogger(__name__)
 
 
 class NicLinkManager(threading.Thread):
@@ -154,18 +161,18 @@ class NicLinkManager(threading.Thread):
 
         # FIX: give time for NL to connect
         time.sleep(self.thread_sleep_delay)
-        testFEN = self.nl_interface.get_FEN()
+        test_fen = self.nl_interface.get_FEN()
         time.sleep(self.thread_sleep_delay)
         # make sure get_FEN is working
-        testFEN = self.nl_interface.get_FEN()
+        test_fen = self.nl_interface.get_FEN()
 
-        if testFEN == '':
-            exceptionMessage = "Board initialization error. '' or None  \
+        if test_fen == '':
+            exception_message = "Board initialization error. '' or None  \
 for FEN. Is the board connected and turned on?"
 
-            raise RuntimeError(exceptionMessage)
+            raise RuntimeError(exception_message)
 
-        self.logger.info("Board initialized: initial fen: \n %s" % testFEN)
+        self.logger.info("Board initialized. initial fen: |%s|" % test_fen)
 
     def disconnect(self) -> None:
         """disconnect from the chessboard"""
@@ -387,7 +394,7 @@ called with following light_board:")
 
         raise NoNicLinkFEN("No fen got from board")
 
-    def put_board_FEN_on_board(self, boardFEN: str) -> chess.Board:
+    def put_board_FEN_on_board(self, board_FEN: str) -> chess.Board:
         """show just the board part of FEN on asci chessboard,
            then return it for logging purposes
         @param: boardFEN: just the board part of a fen,
@@ -395,24 +402,24 @@ called with following light_board:")
         @return: a chess.Board with that board fen on it
         """
         tmp_board = chess.Board()
-        tmp_board.set_board_fen(boardFEN)
+        tmp_board.set_board_fen(board_FEN)
         print(tmp_board)
         return tmp_board
 
     def find_move_from_FEN_change(
-            self, new_FEN: str) -> str:  # a move in coordinate notation
+            self, new_fen: str) -> str:  # a move in coordinate notation
         """get the move that occurred to change the game_board fen
         into a given FEN.
-        @param: new_FEN a board fen of the pos. of external board
+        @param: new_fen a board fen of the pos. of external board
         to parse move from
         return: the move in coordinate notation
         """
         old_FEN = self.game_board.board_fen()
-        if new_FEN == old_FEN:
+        if new_fen == old_FEN:
             self.logger.debug("no fen difference. FEN was %s", old_FEN)
             raise NoMove("No FEN difference")
 
-        self.logger.debug("new_FEN %s" % new_FEN)
+        self.logger.debug("new_fen %s" % new_fen)
         self.logger.debug("old FEN %s" % old_FEN)
 
         # get a list of the legal moves
@@ -431,7 +438,7 @@ current board: \n%s\n board we are using to check legal moves: \n%s\n",
             tmp_board.push(move)  # Make the move on the board
 
             # Check if the board's FEN matches the new FEN
-            if tmp_board.board_fen() == new_FEN:
+            if tmp_board.board_fen() == new_fen:
                 self.logger.info("move was found to be: %s", move)
 
                 return move.uci()  # Return the last move
@@ -439,7 +446,7 @@ current board: \n%s\n board we are using to check legal moves: \n%s\n",
             tmp_board.pop()  # Undo the move and try another
 
         error_board = chess.Board()
-        error_board.set_board_fen(new_FEN)
+        error_board.set_board_fen(new_fen)
         self.show_board_diff(error_board, self.game_board)
         message = f"Board we see:\n{str(error_board)}\nis not a possible  \
 result from a legal move on:\n{str(self.game_board)}\n"
@@ -463,16 +470,16 @@ result from a legal move on:\n{str(self.game_board)}\n"
         # ensure the move was valid
 
         # get current FEN on the external board
-        new_FEN = self.nl_interface.get_FEN()
+        new_fen = self.nl_interface.get_FEN()
 
-        if new_FEN is None:
+        if new_fen is None:
             raise ValueError("No FEN from chessboard")
         try:
             # will cause an index error if game_board has no moves
             last_move = self.game_board.pop()
 
             # check if you just have not moved the opponent's piece
-            if new_FEN == self.game_board.board_fen():
+            if new_fen == self.game_board.board_fen():
                 self.logger.debug(
                     "board fen is the board fen before opponent move made on  \
                     chessboard. Returning")
@@ -484,7 +491,7 @@ result from a legal move on:\n{str(self.game_board)}\n"
         except IndexError:
             last_move = False  # if it is an empty list of moves
 
-        if new_FEN != self.game_board.board_fen:
+        if new_fen != self.game_board.board_fen:
             # a change has occurred on the chessboard
             # check to see if the game is over
             if self.game_over.is_set():
@@ -492,7 +499,7 @@ result from a legal move on:\n{str(self.game_board)}\n"
 
             # check if the move is valid, and set last move
             try:
-                self.last_move = self.find_move_from_FEN_change(new_FEN)
+                self.last_move = self.find_move_from_FEN_change(new_fen)
             except IllegalMove as err:
                 log_handled_exception(err)
                 self.logger.warning(
@@ -502,9 +509,9 @@ it is white's turn? %s =====\n board we are using to check for moves:\n%s\n",
                     self.game_board,
                 )
                 # show the board diff from what we are checking for legal moves
-                logger.info(
+                self.logger.info(
                     "diff from board we are checking legal moves on:\n")
-                current_board = chess.Board(new_FEN)
+                current_board = chess.Board(new_fen)
                 self.show_board_diff(current_board, self.game_board)
                 # pause for the refresh_delay and allow other threads to run
 
@@ -538,7 +545,7 @@ it is white's turn? %s =====\n board we are using to check for moves:\n%s\n",
 
                 # check if the game is over
                 if self.game_over.is_set():
-                    return
+                    return None
                 if self.check_for_move():
                     move = self.get_last_move()
                 if move:  # if we got a move, return it and exit
