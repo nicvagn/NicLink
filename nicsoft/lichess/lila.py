@@ -1,10 +1,18 @@
+"""Lichess board interface driver for ChessNut Air"""
 #  NicLink-lichess is a part of NicLink
 #
-#  NicLink is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or ( at your option ) any later version.
+#  NicLink is free software: you can redistribute it and/or modify it under the
+#  terms of the GNU General Public License as published by the Free Software
+#  Foundation, either version 3 of the License, or ( at your option ) any later
+#  version.
 #
-#  NicLink is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#  NicLink is distributed in the hope that it will be useful, but WITHOUT ANY
+#  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+#  FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+#  details.
 #
-#  You should have received a copy of the GNU General Public License along with NicLink. If not, see <https://www.gnu.org/licenses/>.
+#  You should have received a copy of the GNU General Public License along
+#  with NicLink. If not, see <https://www.gnu.org/licenses/>.
 
 import argparse
 import importlib.util
@@ -123,7 +131,6 @@ logger.addHandler(fileHandler)
 # === exception logging and except hook ===
 # log unhandled exceptions to the log file
 def log_except_hook(excType, excValue, traceback):
-    global logger
     logger.error("Uncaught exception", exc_info=(excType, excValue, traceback))
 
 
@@ -134,7 +141,6 @@ sys.excepthook = log_except_hook
 # for good measure, also log handled exceptions
 def log_handled_exception(exception) -> None:
     """log a handled exception"""
-    global logger
     logger.error("Exception handled: %s", exception)
 
 
@@ -333,7 +339,7 @@ class Game(threading.Thread):
         nl_inst.beep()
         nl_inst.gameover_lights()
         sleep(3)
-        nl_inst.turn_off_all_LEDs()
+        nl_inst.turn_off_all_leds()
         # stop the thread
         raise NicLinkGameOver("Game over")
 
@@ -447,9 +453,9 @@ Will only try twice before calling game_done")
         nl_inst.set_game_board(tmp_chessboard)
 
         logger.debug(
-            "NicLink set_game_board(tmp_chessboard) set. board prior to move FEN %s\n FEN I see external: %s\n",
+            "NicLink set_game_board(tmp_chessboard) set. board prior to move fen %s\n fen I see external: %s\n",
             tmp_chessboard.fen(),
-            nl_inst.get_FEN(),
+            nl_inst.get_fen(),
         )
         # the move_fetch_list is for getting the move and await_move_thread in a thread is it does not block
         move_fetch_list = []
@@ -473,7 +479,7 @@ Will only try twice before calling game_done")
     def update_tmp_chessboard(self, move_list: list[str]) -> chess.Board:
         """create a tmp chessboard with the given move list played on it."""
         global nl_inst, logger
-        # if there is a starting FEN, use it
+        # if there is a starting fen, use it
         if self.starting_fen is not None:
             tmp_chessboard = chess.Board(self.starting_fen)
         else:
@@ -571,7 +577,6 @@ Will only try twice before calling game_done")
 
     def check_for_game_over(self, game_state: GameState) -> None:
         """check a game state to see if the game is through if so raise an exception."""
-        global logger, nl_inst
         logger.debug(
             "check_for_game_over(self, game_state) entered w/ gamestate: %s",
             game_state,
@@ -588,7 +593,6 @@ Will only try twice before calling game_done")
         @param: chat_line - the chat line got from lila
         @side_effect: changes lights and beep's chess board
         """
-        global nl_inst
         print(chat_line)
         # signal_lights set's lights on the chess board
         nl_inst.signal_lights(5)
@@ -597,12 +601,12 @@ Will only try twice before calling game_done")
 
 
 # === helper functions ===
-def show_FEN_on_board(FEN) -> None:
-    """show board FEN on an ascii chessboard
-    @param FEN - the fed to display on a board"""
+def show_fen_on_board(fen) -> None:
+    """show board fen on an ascii chessboard
+    @param fen - the fed to display on a board"""
     tmp_chessboard = chess.Board()
-    tmp_chessboard.set_fen(FEN)
-    print(f"show_FEN_on_board: \n{tmp_chessboard}")
+    tmp_chessboard.set_fen(fen)
+    print(f"show_fen_on_board: \n{tmp_chessboard}")
 
 
 def handle_game_start(game_start: GameStart,
@@ -628,7 +632,7 @@ def handle_game_start(game_start: GameStart,
     nl_inst.signal_lights(6)
 
     logger.info(
-        "\nhandle_game_start(GameStart) enterd w game_start: \n %s\n",
+        "\nhandle_game_start(GameStart) entered w game_start: \n %s\n",
         str(game_start),
     )
     game_data = LichessGame(game_start["game"])
@@ -640,7 +644,7 @@ def handle_game_start(game_start: GameStart,
     logger.debug(msg)
 
     if game_data.hasMoved:
-        """handle ongoing game"""
+        # handle ongoing game
         handle_ongoing_game(game_data)
 
     playing_white = game_data.playing_white()
@@ -675,11 +679,11 @@ def handle_game_start(game_start: GameStart,
         sys.exit(0)
 
 
-def handle_ongoing_game(game: LichessGame) -> None:
+def handle_ongoing_game(gm: LichessGame) -> None:
     """handle joining a game that is already underway"""
     print("\n$$$ joining game in progress $$$\n")
-    logger.info("joining game in proggress, game: \n %s", game)
-    if game.isMyTurn:
+    logger.info("joining game in proggress, game: \n %s", gm)
+    if gm.isMyTurn:
         print("it is your turn. make a move.")
     else:
         print("it is your opponents turn.")
@@ -743,7 +747,7 @@ The berserk lichess client will not work with simplejson.
         e = sys.exc_info()[0]
         log_handled_exception(e)
         print(f"cannot create session: {e}")
-        logger.info("cannot create session", e)
+        logger.info("cannot create session %s" % e)
         sys.exit(-1)
 
     try:
@@ -789,9 +793,9 @@ The berserk lichess client will not work with simplejson.
                         print(event)
                     elif event["type"] == "gameStart":
                         # wrap the gameStart in a Typed Dict class
-                        gameStart = GameStart(event)
+                        game_start = GameStart(event)
                         # and handle getting it started
-                        handle_game_start(gameStart)
+                        handle_game_start(game_start)
                     elif event["type"] == "gameFull":
                         logger.info("\ngameFull received\n")
                         handle_resign(event)

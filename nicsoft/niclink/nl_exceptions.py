@@ -6,7 +6,7 @@
 
 
 class NoMove(Exception):
-    """Exception raised when there is no move from chessboard (ie: the game board FEN == FEN from the external board)"""
+    """Exception raised when there is no move from chessboard (ie: the game board fen == fen from the external board)"""
 
     def __init__(self, message):
         self.message = message
@@ -26,7 +26,7 @@ class ExitNicLink(Exception):
         self.message = message
 
 
-class NoNicLinkFEN(Exception):
+class NoNicLinkFen(Exception):
     """raised when fen is None"""
 
     def __init__(self, message):

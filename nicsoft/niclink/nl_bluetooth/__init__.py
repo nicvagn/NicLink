@@ -15,7 +15,7 @@ from .discovery import GetChessnutAirDevices
 currentFEN = None
 oldData = None
 CLIENT = None
-# the values for specifying the square in rowan LED
+# the values for specifying the square in rowan led
 ROW_SQUARE_VALUES = [128, 64, 32, 16, 8, 4, 2, 1]
 
 # keeps track of what led's are on.
@@ -56,14 +56,14 @@ def lightsOut():
     CLIENT.write_gatt_char(WRITECHARACTERISTICS, led)
 
 
-def set_LED(x, y, status) -> None:
+def set_led(x, y, status) -> None:
     """set a led on the chessboard"""
     set_bit(led, y, status)
 
     CLIENT.write_gatt_char(WRITECHARACTERISTICS, led)
 
 
-def set_all_LEDs(ln1, ln2, ln3, ln4, ln5, ln6, ln7, ln8):
+def set_all_leds(ln1, ln2, ln3, ln4, ln5, ln6, ln7, ln8):
     raise NotImplemented
 
 
@@ -156,21 +156,21 @@ def printBoard(data):
 
 async def leds(data):
     """Switch on all non empty squares.
-        The other data sent to the board controls the LEDs. There are two control bytes and 8 data
+        The other data sent to the board controls the leds. There are two control bytes and 8 data
     bytes:
     0x0A 0x08 <R8> <R7> <R6> <R5> <R4> <R3> <R2> <R1>
-    where the 8 bytes represent the LEDs with one byte for each row of the board. The first byte
+    where the 8 bytes represent the leds with one byte for each row of the board. The first byte
     is for the row furthest away (labelled A8..H8).
-    For each byte the value is determined by whether the LED for each square needs to be on
+    For each byte the value is determined by whether the led for each square needs to be on
     or off. If the square is off then it will have a value of 0 and if it needs to be on then the value
     will be based on the square position in the row, with values being:
     128 64 32 16 8 4 2 1
     The values for all the squares in the row are added together, meaning the maximum value of
-    the byte is 255 which would occur if all of the LEDs in the row were turned on. So to show
+    the byte is 255 which would occur if all of the leds in the row were turned on. So to show
     the move E2-E4 (with the board in the normal, non-flipped position) the ten bytes (including
     the controls) would be:
     0A 08 00 00 00 00 08 00 08 00
-    To turn off all LEDs you just send the 10 bytes with the last 8 bytes all as zero values
+    To turn off all leds you just send the 10 bytes with the last 8 bytes all as zero values
     """
 
     led = bytearray(

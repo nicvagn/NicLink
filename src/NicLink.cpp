@@ -232,17 +232,17 @@ PYBIND11_MODULE(_niclink, m)
     m.def("upload_mode", &ChessLink::switchUploadMode, py::return_value_policy::copy, "Switch to upload mode. [[ () ]]");
     m.def("realtime_mode", &ChessLink::switchRealTimeMode, py::return_value_policy::copy, "Switch to realtime mode. [[ () ]]");
     // doers
-    m.def("set_LED",[](int x, int y, bool LEDsetting) -> void
+    m.def("set_led",[](int x, int y, bool LEDsetting) -> void
             {
                 //release the python GIL
                 py::gil_scoped_release release;
                 setLED(x, y, LEDsetting);
             }, "Set a LED on the chessboard. [[ void setLED(int x, int y, bool LEDsetting)]]");
-    m.def("set_all_LEDs", &setAllLEDs, "Set all LEDs on chessboad via str array. [[ void setAllLEDs(const std::string row8, const std::string row7, const std::string row6, const std::string row5, const std::string row4, const char row3, const std::string row2, const std::string row1)]]");
+    m.def("set_all_leds", &setAllLEDs, "Set all LEDs on chessboad via str array. [[ void setAllLEDs(const std::string row8, const std::string row7, const std::string row6, const std::string row5, const std::string row4, const char row3, const std::string row2, const std::string row1)]]");
     m.def("lights_out", &lightsOut, "turn of all the lights [[ () ]]");
     m.def("gameover_lights", &gameoverLights, "show a game over lightshow. [[ () ]]"); 
     m.def("beep", &beep, "Cause the chessboard to beep. [[ () ]]");
     // getters
-    m.def("get_FEN", &getFEN, py::return_value_policy::copy, "Get the FEN for the chessboard's cur position. [[ () ]]");
+    m.def("get_fen", &getFEN, py::return_value_policy::copy, "Get the FEN for the chessboard's cur position. [[ () ]]");
 }
 
