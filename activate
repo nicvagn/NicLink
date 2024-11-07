@@ -2,5 +2,5 @@
 
 cd $(dirname -- "$( readlink -f -- "$0"; )";);
 
-. ./venv/bin/activate
+. ./.env/venv/bin/activate
 
