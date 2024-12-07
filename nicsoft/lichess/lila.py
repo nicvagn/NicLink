@@ -147,7 +147,7 @@ def log_handled_exception(exception) -> None:
 # === pre-amble fin  ===
 
 print(
-    "\n\n|=====================| NicLink on Lichess startup |=====================|\n\n"
+    "\n\n|=====================| NicLink on Lichess ||=====================|\n\n"
 )
 logger.info("NicLink Lichess startup\n")
 
