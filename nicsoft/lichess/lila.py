@@ -638,8 +638,8 @@ def handle_game_start(game_start: GameStart,
     game_data = LichessGame(game_start["game"])
     game_fen = game_data.fen
 
-    msg = (f"\ngame start received: {str(game_start)}\nyou play: %s" %
-           game_data.colour)
+    msg = (f"\ngame start received: {str(game_start)}\nyou play: %s, game_fen: %s" %
+           (game_data.colour, game_fen))
     print(msg)
     logger.debug(msg)
 
