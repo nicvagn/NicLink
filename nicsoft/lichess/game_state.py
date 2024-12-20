@@ -33,6 +33,7 @@ class GameState:
                 '"GameState instantiated with a game_state["type"] != "gameState"'
             )
 
+        self.starting_fen: str = game_state["fen"]
         self.moves: List[str] = game_state["moves"].split(" ")
         self.wtime: timedelta = game_state["wtime"]
         self.btime: timedelta = game_state["btime"]
