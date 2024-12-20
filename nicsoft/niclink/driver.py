@@ -101,6 +101,7 @@ class NicLinkManager(threading.Thread):
 
         self.refresh_delay = refresh_delay
 
+
         try:
             self.connect()
         except RuntimeError:
@@ -139,7 +140,14 @@ and turned on?"
         end's a game if one is running
         """
 
-        self.reset(game_start_fen=starting_fen)
+        # reset for a new game
+        self.reset()
+
+        # but change starting board to be our starting fen
+        self.starting_fen = starting_fen
+        self.game_board = chess.Board(self.starting_fen)
+
+        self.logger("start_960(...): 960 game started. Initial fen: %s", self.starting_fen)
 
     def run(self) -> None:
         """run and wait for a game to begin
@@ -203,11 +211,13 @@ for fen. Is the board connected and turned on?"
         """make the chessboard beep"""
         self.nl_interface.beep()
 
-    def reset(self, game_start_fen: str | None=None) -> None:
+    def reset(self) -> None:
         """reset NicLink"""
 
+        # reset starting fen
+        self.starting_fen = None
         # this instances game board
-        self.game_board = chess.Board(game_start_fen)
+        self.game_board = chess.Board()
         # the last move the user has played
         self.last_move = None
         # turn off all the lights

@@ -184,6 +184,7 @@ class Game(threading.Thread):
 
         # the most reasontly parsed game_state, in a GameState class wrapper
         self.game_state = GameState(self.current_state["state"])
+
         # === niclink options ===
         self.bluetooth = bluetooth
         # === external clock constants ===
@@ -208,16 +209,13 @@ class Game(threading.Thread):
             self.chess_clock = False
 
         self.playing_white = playing_white
-        if starting_fen and False:  # HACK: TODO: make 960 work
-            nl_inst.reset()
-            self.game_board = chess.Board(starting_fen)
-            nl_inst.set_game_board(self.game_board)
+        if starting_fen:
+            nl_inst.start_960(starting_fen)
             self.starting_fen = starting_fen
         else:
             nl_inst.reset()  # reset niclink for a new game
             self.game_board = chess.Board()
             nl_inst.set_game_board(self.game_board)
-            self.starting_fen = None
 
         logger.info("game init w id: %s", game_id)
 
@@ -636,6 +634,8 @@ def handle_game_start(game_start: GameStart,
         str(game_start),
     )
     game_data = LichessGame(game_start["game"])
+
+    # handle 960 and regular
     game_fen = game_data.fen
 
     msg = (f"\ngame start received: {str(game_start)}\nyou play: %s, game_fen: %s" %

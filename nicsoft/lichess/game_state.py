@@ -33,13 +33,13 @@ class GameState:
                 '"GameState instantiated with a game_state["type"] != "gameState"'
             )
 
-        self.starting_fen: str = game_state["fen"]
         self.moves: List[str] = game_state["moves"].split(" ")
         self.wtime: timedelta = game_state["wtime"]
         self.btime: timedelta = game_state["btime"]
         self.winc: timedelta = game_state["winc"]
         self.binc: timedelta = game_state["binc"]
         self.status: str = game_state["status"]
+
 
         if "winner" in game_state:
             self.winner: str = game_state["winner"]
