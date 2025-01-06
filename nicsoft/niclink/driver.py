@@ -147,7 +147,7 @@ and turned on?"
         self.starting_fen = starting_fen
         self.game_board = chess.Board(self.starting_fen)
 
-        self.logger("start_960(...): 960 game started. Initial fen: %s", self.starting_fen)
+        self.logger.info("start_960(...): 960 game started. Initial fen: %s", self.starting_fen)
 
     def run(self) -> None:
         """run and wait for a game to begin
