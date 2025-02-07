@@ -109,7 +109,7 @@ string getFEN()
         cerr << "bChessLink is nullptr. Are you sure you are connected to board?" << endl;
         return "ERROR: no connection.";
     }
-        
+
     //return the fen
     return currentFen;
 }
@@ -169,18 +169,18 @@ void gameoverLights()
     lightsOut();
     //turn off all the lights
     chessLink -> setLed({
-        bitset<8>("11111111"), //
-        bitset<8>("10000001"), //
-        bitset<8>("10111101"), //
+        bitset<8>("11011011"), //
+        bitset<8>("11000011"), //
+        bitset<8>("00011000"), //
         bitset<8>("10100101"), //
         bitset<8>("10100101"), //
-        bitset<8>("10111101"), //
-        bitset<8>("10000001"), //
+        bitset<8>("00011000"), //
+        bitset<8>("11000011"), //
         bitset<8>("11111111"), //
     });
 }
 /**
- * get the board to beep, switches to uploadMode and leaves the board in realTimeMode 
+ * get the board to beep, switches to uploadMode and leaves the board in realTimeMode
  */
 void beep()
 {
@@ -194,6 +194,9 @@ void beep()
     chessLink -> beep();
 }
 
+/**
+ * test the you can connect to the board and print FEN
+ */
 int main()
 {
     /* connect to the board */
@@ -240,9 +243,8 @@ PYBIND11_MODULE(_niclink, m)
             }, "Set a LED on the chessboard. [[ void setLED(int x, int y, bool LEDsetting)]]");
     m.def("set_all_leds", &setAllLEDs, "Set all LEDs on chessboad via str array. [[ void setAllLEDs(const std::string row8, const std::string row7, const std::string row6, const std::string row5, const std::string row4, const char row3, const std::string row2, const std::string row1)]]");
     m.def("lights_out", &lightsOut, "turn of all the lights [[ () ]]");
-    m.def("gameover_lights", &gameoverLights, "show a game over lightshow. [[ () ]]"); 
+    m.def("gameover_lights", &gameoverLights, "show a game over lightshow. [[ () ]]");
     m.def("beep", &beep, "Cause the chessboard to beep. [[ () ]]");
     // getters
     m.def("get_fen", &getFEN, py::return_value_policy::copy, "Get the FEN for the chessboard's cur position. [[ () ]]");
 }
-

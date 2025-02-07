@@ -147,7 +147,7 @@ def log_handled_exception(exception) -> None:
 # === pre-amble fin  ===
 
 print(
-    "\n\n|=====================| NicLink on Lichess ||=====================|\n\n"
+    "\n\n|=====================| NicLink on Lichess |=====================|\n\n"
 )
 logger.info("NicLink Lichess startup\n")
 
@@ -162,6 +162,7 @@ class Game(threading.Thread):
         playing_white,
         bluetooth=False,
         starting_fen=False,
+        chess960=False,
         chess_clock=CHESS_CLOCK,
         **kwargs,
     ):
@@ -209,12 +210,14 @@ class Game(threading.Thread):
             self.chess_clock = False
 
         self.playing_white = playing_white
-        if starting_fen:
+        if starting_fen and chess960:
             nl_inst.start_960(starting_fen)
             self.starting_fen = starting_fen
+            self.chess960 = True
         else:
             nl_inst.reset()  # reset niclink for a new game
             self.game_board = chess.Board()
+            self.chess960 = False # not 960
             nl_inst.set_game_board(self.game_board)
 
         logger.info("game init w id: %s", game_id)
@@ -478,7 +481,7 @@ Will only try twice before calling game_done")
         """create a tmp chessboard with the given move list played on it."""
         global nl_inst, logger
         # if there is a starting fen, use it
-        if self.starting_fen is not None:
+        if self.chess960:
             tmp_chessboard = chess.Board(self.starting_fen)
         else:
             tmp_chessboard = chess.Board()
