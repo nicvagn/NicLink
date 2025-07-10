@@ -7,3 +7,9 @@
 [submodule "src/thirdparty/hidapi-git"]
 	path = src/thirdparty/hidapi-git
 	url = https://github.com/libusb/hidapi.git
+[submodule "standalone_chessclock"]
+	path = standalone_chessclock
+	url = https://github.com/nicvagn/standalone_chessclock.git
+[submodule "src/thirdparty/chessnutair"]
+	path = src/thirdparty/chessnutair
+	url = https://github.com/nicvagn/chessnutair.git
