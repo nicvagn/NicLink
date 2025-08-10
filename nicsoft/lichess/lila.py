@@ -162,6 +162,7 @@ class Game(threading.Thread):
         playing_white,
         bluetooth=False,
         starting_fen=False,
+        chess960=False,
         chess_clock=CHESS_CLOCK,
         **kwargs,
     ):
@@ -187,6 +188,7 @@ class Game(threading.Thread):
 
         # === niclink options ===
         self.bluetooth = bluetooth
+        self.chess960 = chess960
         # === external clock constants ===
         SERIAL_PORT = "/dev/ttyACM0"
         BAUDRATE = 115200
@@ -478,7 +480,7 @@ Will only try twice before calling game_done")
         """create a tmp chessboard with the given move list played on it."""
         global nl_inst, logger
         # if there is a starting fen, use it
-        if self.starting_fen is not None:
+        if self.chess960:
             tmp_chessboard = chess.Board(self.starting_fen)
         else:
             tmp_chessboard = chess.Board()
