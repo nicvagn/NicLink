@@ -7,259 +7,191 @@
 #
 #  You should have received a copy of the GNU General Public License along with NicLink. If not, see <https://www.gnu.org/licenses/>.
 */
+#define BLACK_TURN "|white|>>|black|"
+#define WHITE_TURN "|white|<<|black|"
 
-#define RESIGN_BUTTON 2
-#define LCD_CLEAR_BUTTON  3
-#define BUZZER_PIN 6
-#define RESIGN_SIG "^^^"
-#define SEEK_SIG "(})"
 #include <LiquidCrystal.h>
-#include <Arduino.h>
 
-
-/*
-lcd.setCursor(0, 0); // top left
-
-lcd.setCursor(15, 0); // top right
-
-lcd.setCursor(0, 1); // bottom left
-
-lcd.setCursor(15, 1); // bottom right
-*/
-
-// initialize the library by associating any needed LCD interface pin
-// with the arduino pin number it is connected to
-const int rs = 12, en = 11, d4 = 10, d5 = 9, d6 = 8, d7 = 7;
+const int rs = 12, en = 13, d4 = 8, d5 = 9, d6 = 10, d7 = 11;
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
-const float TIMEOUT = 80.0;  // slightly shorter than python timeout
-//const float MSGTIMEOUT = 50000000.0;
-const unsigned long BAUDRATE = 115200;
+unsigned long whiteTime = 60000;
+unsigned long blackTime = 60000;
+unsigned long increment = 6000;
+bool whiteToPlay = true;
+unsigned long lastUpdate = 0;
 bool gameOver = false;
 
-const char* SEPERATOR = '*';
-const char* READYMESSAGE = "READY";
-const char* ACKMESSAGE = "ACK";
-const unsigned long TRANSMITINTERVAL = 1e6;
-
-// what to do
-char what_to_do[1] = "n"; // default to not doing anything
-
-// FOR CUSTOM MESSAGES
-// for the ascii to be displayed on the first ln
-char lcd_ln_1_buff[16];
-// and the second
-char lcd_ln_2_buff[16];
-
-// defnined here so it can be used below
-// buzzer - activate noise
-void buzzer() {
-  //buzzer high
-  digitalWrite(BUZZER_PIN, HIGH);
-  delay(500);
-  digitalWrite(BUZZER_PIN, LOW);
+void secondsToHMS(const uint32_t seconds, uint16_t &h, uint8_t &m, uint8_t &s) {
+  s = seconds % 60;
+  uint32_t minutes = seconds / 60;
+  m = minutes % 60;
+  h = minutes / 60;
 }
 
-//case '1' clearLCD
-void clearLCD() {
-    lcd.clear();
-    Serial.println("lcd cleared");
-    Serial.flush();
+void blackMoved() {
+  whiteToPlay = true;
+  lcd.setCursor(0, 0);
+  lcd.print(WHITE_TURN);
+  blackTime = blackTime + increment;
 }
-// case '2'
-void signalGameOver() {
-  lcd.clear();
+
+void whiteMoved() {
+  whiteToPlay = false;
+  lcd.setCursor(0, 0);
+  lcd.print(BLACK_TURN);
+  whiteTime = whiteTime + increment;
+}
+
+void whiteTimeOut() {
   gameOver = true;
+  lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print("%%% GAMEOVER %%%");
-  buzzer();
-  Serial.flush();
+  lcd.print("  TIME'S UP!  ");
+  lcd.setCursor(0, 1);
+  lcd.print("  Black Wins! ");
+  Serial.println("Game Over: Black wins on time");
 }
 
-// case '3' print a String to the LCD
-void printSerialMessage() {
-  String message = Serial.readString();
-  int mes_len = message.length();
-  if( mes_len > 16 ) {
-    //get the first line
-    for(int i=0; i < 16; i++) {
-      lcd_ln_1_buff[i] = message[i];
-    }
-    for(int i=0; i < 16; i++) {
-      if(i <= (mes_len - 16)) {
-        lcd_ln_2_buff[i] = message[(16 + i)]; // only chars >= 16
-      }
-    }
-    // ln 1
-    lcd.setCursor(0,0);
-    lcd.print(lcd_ln_1_buff);
-    // ln 2
-    lcd.setCursor(0,1);
-    lcd.print(lcd_ln_2_buff);
+void blackTimeOut() {
+  gameOver = true;
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("  TIME'S UP!  ");
+  lcd.setCursor(0, 1);
+  lcd.print("  White Wins! ");
+  Serial.println("Game Over: White wins on time");
+}
+
+void whiteCheckmated() {
+  gameOver = true;
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("   CHECKMATE   ");
+  lcd.setCursor(0, 1);
+  lcd.print("  Black Wins!   ");
+  Serial.println("Game Over: White checkmated");
+}
+
+void blackCheckmated() {
+  gameOver = true;
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("   CHECKMATE   ");
+  lcd.setCursor(0, 1);
+  lcd.print("  White Wins!   ");
+  Serial.println("Game Over: Black checkmated");
+}
+
+void displayTime() {
+  unsigned int wTotalSec = whiteTime / 1000;
+  unsigned int bTotalSec = blackTime / 1000;
+  
+  uint16_t wH, bH;
+  uint8_t wM, wS, bM, bS;
+  secondsToHMS(wTotalSec, wH, wM, wS);
+  secondsToHMS(bTotalSec, bH, bM, bS);
+  
+  lcd.setCursor(0, 1);
+  
+  // White time
+  if (wH > 0) {
+    lcd.print(wH);
+    lcd.print(":");
+    if (wM < 10) lcd.print("0");
+    lcd.print(wM);
+    lcd.print(":");
+    if (wS < 10) lcd.print("0");
+    lcd.print(wS);
   } else {
-    // just print on one ln
-    lcd.setCursor(0, 0);
-    lcd.print(message);
+    unsigned int wCenti = (whiteTime / 10) % 100;
+    if (wM < 10) lcd.print("0");
+    lcd.print(wM);
+    lcd.print(":");
+    if (wS < 10) lcd.print("0");
+    lcd.print(wS);
+    lcd.print(".");
+    if (wCenti < 10) lcd.print("0");
+    lcd.print(wCenti);
   }
-
-  Serial.flush();
+  
+  lcd.print("|");
+  
+  // Black time
+  if (bH > 0) {
+    lcd.print(bH);
+    lcd.print(":");
+    if (bM < 10) lcd.print("0");
+    lcd.print(bM);
+    lcd.print(":");
+    if (bS < 10) lcd.print("0");
+    lcd.print(bS);
+  } else {
+    unsigned int bCenti = (blackTime / 10) % 100;
+    if (bM < 10) lcd.print("0");
+    lcd.print(bM);
+    lcd.print(":");
+    if (bS < 10) lcd.print("0");
+    lcd.print(bS);
+    lcd.print(".");
+    if (bCenti < 10) lcd.print("0");
+    lcd.print(bCenti);
+  }
+  
+  lcd.print("   "); // Clear any leftover characters
 }
 
-// case '4' start a new game
-void newGame() {
-  lcd.clear();
-  gameOver = false;
-  lcd.setCursor(0, 0);
-  lcd.print("=== Nic-Link ===");
-  lcd.setCursor(0, 1);
-  lcd.print("$$$ New Game $$$");
-  Serial.flush();
-}
-
-// case '5'show the nl chessclock splash screan
-void niclink_splash() {
-  lcd.setCursor(0, 0);
-  lcd.print("=== Nic-Link ===");
-  lcd.setCursor(0, 1);
-  lcd.print("]External Clock[");
-  Serial.flush();
-}
-
-//case '6'
-void white_won() {
-  lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print("%%%% WINNER %%%%");
-  lcd.setCursor(0, 1);
-  lcd.print("= white victor =");
-  buzzer();
-  Serial.flush();
-}
-
-//case '7'
-void black_won() {
-  lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print("%%%% WINNER %%%%");
-  lcd.setCursor(0, 1);
-  lcd.print("= black victor =");
-  buzzer();
-  Serial.flush();
-}
-
-// case '8'
-void drawn_game() {
-  lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print("%%% GAMEOVER %%%");
-  lcd.setCursor(0, 1);
-  lcd.print("<<<<< DRAW >>>>>");
-  buzzer();
-  Serial.flush();
-}
-
-//bound to button interupt
-void resignGame() {
-  lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print("%%% GAMEOVER %%%");
-  lcd.setCursor(0, 1);
-  lcd.print("<<< RESIGNED >>>");
-  Serial.println(RESIGN_SIG);
-  buzzer();
-  Serial.flush();
-}
-//bound to button interupt
-void seekGame() {
-  lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print("///// SEEK /////");
-  lcd.setCursor(0, 1);
-  lcd.print("  FINDING GAME  ");
-  Serial.println(SEEK_SIG);
-  Serial.flush();
-}
-
-// initialize lcd and show splash
-void lcd_init() {
+void setup() {
+  Serial.begin(9600);
   lcd.begin(16, 2);
-  Serial.setTimeout(TIMEOUT);  // in milli seconds
-
-  // This must be the same baud rate as specified in the python serial object constructor
-  Serial.begin(BAUDRATE);
-
-  // show splash screen on startup
-  niclink_splash();
+  lcd.print("|white|--|black|");
+  lastUpdate = millis();
 }
 
-int main() {
-  // setup ardino and some house keeping idk
-  init();
-  // and lcd, and ardino Serial connect
-  lcd_init();
-
-  //buzzer pin
-  pinMode(BUZZER_PIN, OUTPUT);
-  //set up interupt pins TODO python side etc
-  pinMode(RESIGN_BUTTON, INPUT_PULLUP);
-  // trigger when button pressed, but not when released
-  attachInterrupt(digitalPinToInterrupt(RESIGN_BUTTON), resignGame, FALLING);
-
-  //lcd clear button
-  pinMode(LCD_CLEAR_BUTTON, INPUT_PULLUP);
-  // trigger when button pressed, but not when released
-  attachInterrupt(digitalPinToInterrupt(LCD_CLEAR_BUTTON), clearLCD, FALLING);
-
-  byte clear_sig = 1;
-  while(true) //(gameOver == false)
-  {
-    while(Serial.available() == false){
-      // do nothing
+void loop() {
+  // If game is over, stop processing
+  if (gameOver) {
+    return;
+  }
+  
+  unsigned long currentTime = millis();
+  
+  if (Serial.available() > 0) {
+    String msg = Serial.readString();
+    if (whiteToPlay) {
+      whiteMoved();
+    } else {
+      blackMoved();
     }
-
-    Serial.readBytesUntil(SEPERATOR, what_to_do, 1);
-
-    switch (what_to_do[0]) {
-      case '1':
-        lcd.clear();
-        break;
-      case '2':
-        signalGameOver();
-        break;
-      case '3':
-        // show a str on LED read from Serial
-        printSerialMessage();
-        break;
-      case '4':
-        // start a new game
-        newGame();
-        break;
-      case '5':
-        // show the splay
-        niclink_splash();
-        break;
-      case '6':
-        // white one, and the game is over
-        white_won();
-        break;
-      case '7':
-        // black won the game
-        black_won();
-        break;
-      case '8':
-        // game is a draw
-        drawn_game();
-        break;
-      case '9':
-        // activate buzzer
-        buzzer();
-        break;
-      case '@':
-        //say hello
-        lcd.clear();
-        lcd.setCursor(1, 0);
-        lcd.print("Hi there");
-        break;
+    lastUpdate = currentTime; // Reset timer after move
+  }
+  
+  // Update time every 50ms
+  if (currentTime - lastUpdate >= 50) {
+    lastUpdate = currentTime;
+    
+    if (whiteToPlay) {
+      if (whiteTime > 50) {
+        whiteTime -= 50;
+      } else {
+        whiteTime = 0;
+        whiteTimeOut();
+        return;
+      }
+      Serial.print("w");
+      Serial.println(whiteTime);
+    } else {
+      if (blackTime > 50) {
+        blackTime -= 50;
+      } else {
+        blackTime = 0;
+        blackTimeOut();
+        return;
+      }
+      Serial.print("b");
+      Serial.println(blackTime);
     }
+    
+    displayTime();
   }
 }
