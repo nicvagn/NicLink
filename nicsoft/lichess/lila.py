@@ -107,10 +107,6 @@ if args.tokenfile is not None:
     TOKEN_FILE = args.tokenfile
 
 
-### !!! OVER RULE !!!
-TOKEN_FILE = os.path.join(script_dir, "lichess_token/nrv773_token")
-
-
 # === logger stuff ===
 logger = logging.getLogger("nl_lichess")
 
@@ -325,10 +321,10 @@ class Game(threading.Thread):
                     if self.chess_clock:
                         self.chess_clock.black_won()
                     nl_inst.signal_lights(2)
-                else:
-                    # if no winner
-                    self.chess_clock.game_over()
-                    nl_inst.signal_lights(4)
+            else:
+                # if no winner
+                self.chess_clock.stop()
+                nl_inst.signal_lights(4)
         else:
             # if no game state was given
             if self.chess_clock:
@@ -527,7 +523,7 @@ Will only try twice before calling game_done"
         in a convenience class
         """
         global nl_inst, logger
-        lf self.chess_clock:
+        if self.chess_clock:
             self.chess_clock.handle_game_state(game_state)
         logger.debug("\ngame_state: %s\n", game_state)
 

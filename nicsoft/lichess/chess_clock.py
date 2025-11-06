@@ -163,6 +163,18 @@ class ChessClock:
             self.is_connected = False
             return None
 
+    def game_over(self):
+        """Display the game over and reset clock"""
+        self.send_command("OVER")
+
+    def white_won(self):
+        """Display white won by mate"""
+        self.send_command("BMATE")
+
+    def black_won(self):
+        """Display black won by mate"""
+        self.send_command("WMATE")
+
     def set_time(self, seconds, increment=0):
         """Set initial time and increment
 
@@ -235,15 +247,21 @@ class ChessClock:
         if not hasattr(game_state, "moves"):
             logger.warning("GameState has no moves attribute")
             return
+        if game_state.winner == "black":
+            self.black_won()
+            return
+        if game_state.winner == "white":
+            self.white_won()
+            return
+
+        if game_state.status != "started":
+            self.game_over()
 
         moves = game_state.moves.split() if game_state.moves else []
         current_move_count = len(moves)
 
         if current_move_count > self.last_move_count:
-            if current_move_count % 2 == 1:
-                self.send_move("w")
-            else:
-                self.send_move("b")
+            self.send_move()
 
             self.last_move_count = current_move_count
 
@@ -288,3 +306,5 @@ if __name__ == "__main__":
     while x != "0":
         clock.send_move()
         x = input()
+
+    clock.black_won()
