@@ -4,11 +4,28 @@
 #
 #  You should have received a copy of the GNU General Public License along with chess_clock. If not, see <https://www.gnu.org/licenses/>.
 import serial
+import sys
 import serial.tools.list_ports
 import logging
+import time
 
-logger = logging.getLogger(__name__)
-logger.warning(f"logger created with name {__name__}")
+
+def setup_logging():
+    logger = logging.getLogger("ChessClock")
+    logger.warning(f"logger created for ChessClock")
+
+    consoleHandler = logging.StreamHandler(sys.stdout)
+
+    logger.setLevel(logging.DEBUG)
+    consoleHandler.setLevel(logging.DEBUG)
+
+    formatter = logging.Formatter(
+        "%(levelno)s %(funcName)s %(lineno)d  %(message)s @: %(pathname)s"
+    )
+
+    consoleHandler.setFormatter(formatter)
+    logger.addHandler(consoleHandler)
+    return logger
 
 
 class ChessClock:
@@ -46,6 +63,8 @@ class ChessClock:
             port: Specific serial port (optional, will auto-detect if None)
             baud_rate: Serial baud rate (default 9600)
         """
+        self.logger = setup_logging()
+        self.logger.error("LOGGING SETUP FOR CHESS CLOCK")
         self.clock_serial = None
         self.port = port
         self.baud_rate = baud_rate
@@ -84,11 +103,11 @@ class ChessClock:
                 if self.connect_to_port(port):
                     return True
 
-            logger.warning("Chess clock not found on any port")
+            self.logger.warning("Chess clock not found on any port")
             return False
 
         except Exception as e:
-            logger.error(f"Failed to auto-detect chess clock: {e}")
+            self.logger.error(f"Failed to auto-detect chess clock: {e}")
             return False
 
     def connect_to_port(self, port):
@@ -97,9 +116,7 @@ class ChessClock:
             self.clock_serial = serial.Serial(port, self.baud_rate, timeout=1)
             self.port = port
             self.is_connected = True
-            logger.info(f"Chess clock connected on {port}")
-
-            import time
+            self.logger.info(f"Chess clock connected on {port}")
 
             time.sleep(2)
 
@@ -110,12 +127,12 @@ class ChessClock:
                     .decode("utf-8", errors="ignore")
                     .strip()
                 )
-                logger.info(f"Clock startup: {startup_msg}")
+                self.logger.info(f"Clock startup: {startup_msg}")
 
             return True
 
         except Exception as e:
-            logger.debug(f"Failed to connect to {port}: {e}")
+            self.logger.debug(f"Failed to connect to {port}: {e}")
             self.is_connected = False
             return False
 
@@ -126,23 +143,22 @@ class ChessClock:
             command: Command string to send
 
         Returns:
-            str: Response from clock or None
+            None
         """
         if (
             not self.is_connected
             or not self.clock_serial
             or not self.clock_serial.is_open
         ):
-            logger.warning(f"Chess clock not connected, cannot send: {command}")
+            self.logger.warning(f"Chess clock not connected, cannot send: {command}")
             return None
 
         try:
             self.clock_serial.write(f"{command}\n".encode())
             self.clock_serial.flush()
-            logger.debug(f"Sent to clock: {command}")
+            self.logger.debug(f"Sent to clock: {command}")
 
             # Wait briefly for response
-            import time
 
             time.sleep(0.1)
 
@@ -153,13 +169,13 @@ class ChessClock:
                     .decode("utf-8", errors="ignore")
                     .strip()
                 )
-                logger.debug(f"Clock response: {response}")
+                self.logger.debug(f"Clock response: {response}")
                 return response
 
             return None
 
         except Exception as e:
-            logger.error(f"Failed to send command to chess clock: {e}")
+            self.logger.error(f"Failed to send command to chess clock: {e}")
             self.is_connected = False
             return None
 
@@ -185,39 +201,26 @@ class ChessClock:
         Returns:
             bool: True if successful
         """
-        response = self.send_command(f"TIME:{seconds}:{increment}")
-        if response and response.startswith("TIME_SET"):
-            logger.info(f"Clock time set: {seconds}s + {increment}s increment")
-            return True
-        return False
+        self.send_command(f"TIME:{seconds}:{increment}")
 
     def start(self):
         """Start the chess clock"""
-        response = self.send_command("START")
-        if response == "CLOCK_STARTED":
-            self.clock_running = True
-            logger.info("Clock started")
-            return True
-        return False
+        self.send_command("START")
+        self.clock_running = True
+        self.logger.info("Clock started")
 
     def stop(self):
         """Stop/pause the chess clock"""
-        response = self.send_command("STOP")
-        if response == "CLOCK_STOPPED":
-            self.clock_running = False
-            logger.info("Clock stopped")
-            return True
-        return False
+        self.send_command("STOP")
+        self.clock_running = False
+        self.logger.info("Clock stopped")
 
     def reset(self):
         """Reset clock to default (60 seconds)"""
-        response = self.send_command("RESET")
-        if response == "CLOCK_RESET":
-            self.last_move_count = 0
-            self.clock_running = False
-            logger.info("Clock reset")
-            return True
-        return False
+        self.send_command("RESET")
+        self.last_move_count = 0
+        self.clock_running = False
+        self.logger.info("Clock reset")
 
     def get_status(self):
         """Get current clock status
@@ -236,7 +239,8 @@ class ChessClock:
                     "running": parts[4] == "RUNNING",
                     "to_play": parts[5],
                 }
-        return None
+        raise RuntimeException("Could not parse response %s", response)
+
 
     def send_move(self):
         """Send move signal to chess clock"""
@@ -245,7 +249,7 @@ class ChessClock:
     def handle_game_state(self, game_state):
         """Process game state and send move to clock if needed"""
         if not hasattr(game_state, "moves"):
-            logger.warning("GameState has no moves attribute")
+            self.logger.warning("GameState has no moves attribute")
             return
         if game_state.winner == "black":
             self.black_won()
@@ -266,7 +270,7 @@ class ChessClock:
             self.last_move_count = current_move_count
 
     def configure_for_game(self, time_control):
-        """Configure clock based on lichess time control
+        """Configure clock for a time control
 
         Args:
             time_control: dict with 'initial' (seconds) and 'increment' (seconds)
@@ -274,21 +278,21 @@ class ChessClock:
         Example:
             clock.configure_for_game({'initial': 300, 'increment': 5})  # 5+5
         """
-        initial = time_control.get("initial", 300)
-        increment = time_control.get("increment", 0)
+        initial = time_control.get("initial", 60000)
+        increment = time_control.get("increment", 5)
 
-        if self.set_time(initial, increment):
-            return self.start()
-        return False
+        self.set_time(initial, increment):
+
+        return self.start()
 
     def disconnect(self):
         """Close serial connection to chess clock"""
         if self.clock_serial and self.clock_serial.is_open:
             try:
                 self.clock_serial.close()
-                logger.info("Chess clock serial connection closed")
+                self.logger.info("Chess clock serial connection closed")
             except Exception as e:
-                logger.error(f"Error closing chess clock connection: {e}")
+                self.logger.error(f"Error closing chess clock connection: {e}")
 
         self.is_connected = False
         self.clock_serial = None

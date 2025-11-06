@@ -61,32 +61,35 @@ parser.add_argument("--correspondence", action="store_true")
 parser.add_argument("--clock", action="store_true")  # TODO: MAKE WORK
 parser.add_argument("--quiet", action="store_true")
 parser.add_argument("--debug", action="store_true")
+parser.add_argument("--logging", action="store_true")
 parser.add_argument("--learning", action="store_true")
 args = parser.parse_args()
 
 # === global variables ===
-global game
 global logger
+global game
 game = None
-
-correspondence = False
-if args.correspondence:
-    correspondence = True
+logger = logging.getLogger("nl_lichess")
 
 # the script dir, used to import the lila token file
 script_dir = os.path.dirname(__file__)
 
 LEARNING = False
-
-DEBUG = False
 if args.debug:
     DEBUG = True
-DEBUG_LOGGING = True
+else:
+    DEBUG = False
+
+if args.logging:
+    DEBUG_LOGGING = True
+else:
+    DEBUG_LOGGING = False
 
 if args.clock:
     CHESS_CLOCK = True
 else:
     CHESS_CLOCK = False
+logger.info("CHESS_CLOCK: %s", CHESS_CLOCK)
 
 # === constants ===
 # refresh refresh delay for NicLink and Lichess
@@ -106,9 +109,7 @@ if args.learning or LEARNING:
 if args.tokenfile is not None:
     TOKEN_FILE = args.tokenfile
 
-
 # === logger stuff ===
-logger = logging.getLogger("nl_lichess")
 
 consoleHandler = logging.StreamHandler(sys.stdout)
 
@@ -137,6 +138,10 @@ fileHandler = logging.FileHandler("NicLink.log")
 fileHandler.setLevel(logging.DEBUG)
 
 logger.addHandler(fileHandler)
+
+correspondence = False
+if args.correspondence:
+    correspondence = True
 
 
 # === exception logging and except hook ===
@@ -201,7 +206,12 @@ class Game(threading.Thread):
         # try to connect to chess clock if told
         if chess_clock:
             try:
+                # TODO !!!!
                 self.chess_clock = ChessClock()  # Auto-detects port
+                self.chess_clock.configure_for_game(
+                    {"initial": self.current_state["secondsLeft"], "increment": ""}
+                )
+                logger.info("Chess clock initialized: %s" % chess_clock)
             except SerialException as ex:
                 logger.error("Chess clock could not be connected %s" % ex)
                 self.chess_clock = False
@@ -298,7 +308,7 @@ class Game(threading.Thread):
     def game_done(self, game_state: GameState = None) -> None:
         """stop the thread, game should be over, or maybe a rage quit
         @param - (GameState) a gamestate telling us how the game ended
-        @side-effect - changes the external board led's
+        @side-effect - changes the external board leds
 
         info on signals:
          1 - ring of lights
@@ -323,7 +333,8 @@ class Game(threading.Thread):
                     nl_inst.signal_lights(2)
             else:
                 # if no winner
-                self.chess_clock.stop()
+                if self.chess_clock:
+                    self.chess_clock.stop()
                 nl_inst.signal_lights(4)
         else:
             # if no game state was given
@@ -337,7 +348,7 @@ class Game(threading.Thread):
         nl_inst.game_over.set()
         nl_inst.beep()
         nl_inst.gameover_lights()
-        sleep(3)
+        sleep(1)
         nl_inst.turn_off_all_leds()
 
         # stop the thread
@@ -511,11 +522,9 @@ Will only try twice before calling game_done"
             nl_inst.beep()
             logger.info("move made: %s", move)
 
-        # if chess_clock send new timestamp to clock
+        # if chess_clock, signal move
         if self.chess_clock:
-            if not game_state.first_move():
-                logger.info("\n\nGameState sent to ChessClock: %s \n", game_state)
-                self.chess_clock.move_made(game_state)
+            self.chess_clock.move_made()
 
     def handle_state_change(self, game_state: GameState) -> None:
         """Handle a state change in the lichess game.
@@ -523,8 +532,6 @@ Will only try twice before calling game_done"
         in a convenience class
         """
         global nl_inst, logger
-        if self.chess_clock:
-            self.chess_clock.handle_game_state(game_state)
         logger.debug("\ngame_state: %s\n", game_state)
 
         # get all the moves of the game
@@ -557,11 +564,6 @@ Will only try twice before calling game_done"
 
         # a move was made
         self.move_made(game_state)
-
-        # if there is a chess clock
-        if self.chess_clock:
-            # signal move
-            self.chess_clock.move_made(game_state)
 
         # is it our turn?
         if tmp_chessboard.turn == self.playing_white:
