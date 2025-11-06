@@ -8,6 +8,7 @@ import serial.tools.list_ports
 import logging
 
 logger = logging.getLogger(__name__)
+logger.warning(f"logger created with name {__name__}")
 
 
 class ChessClock:
@@ -225,23 +226,9 @@ class ChessClock:
                 }
         return None
 
-    def send_move(self, player):
-        """Send move signal to chess clock
-
-        Args:
-            player: 'w' or 'white' for white, 'b' or 'black' for black
-        """
-        if not self.clock_running:
-            logger.warning("Clock not running, ignoring move")
-            return False
-
-        player_char = player[0].lower()
-        response = self.send_command(player_char)
-
-        if response and "MOVED" in response:
-            logger.debug(f"Move registered: {response}")
-            return True
-        return False
+    def send_move(self):
+        """Send move signal to chess clock"""
+        self.send_command("m")
 
     def handle_game_state(self, game_state):
         """Process game state and send move to clock if needed"""
@@ -287,3 +274,17 @@ class ChessClock:
 
         self.is_connected = False
         self.clock_serial = None
+
+
+if __name__ == "__main__":
+    # test
+    clock = ChessClock()
+    clock.get_status()
+
+    clock.configure_for_game({"initial": 300, "increment": 30})
+    clock.start()
+    x = 1
+    print("enter 0 to exit")
+    while x != "0":
+        clock.send_move()
+        x = input()
