@@ -40,7 +40,6 @@ class GameState:
         self.binc: timedelta = game_state["binc"]
         self.status: str = game_state["status"]
 
-
         if "winner" in game_state:
             self.winner: str = game_state["winner"]
         else:

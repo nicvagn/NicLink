@@ -22,8 +22,7 @@ set(LIBUSB OFF)
 set(HIDRAW ON)
 # NOTE: This is a linux kernal usb backend
 # see thirdparty/hidapi/README.md
-# WARNING: only tested w 3.12
-set(PY_VERSION 3.12)
+set(PY_VERSION 3.13)
 # the version of python to use, for the pybing module, and etc
 ########################## CONFIG DONE ############################
 
@@ -74,10 +73,11 @@ elseif(CMAKE_HOST_UNIX)
 elseif(CMAKE_HOST_WIN32)
     target_link_libraries(_niclink PRIVATE hidapi)
 else()
+    # CATCH ALL
     target_link_libraries(_niclink PRIVATE hidapi)
 endif()
 
-# pybind and python include dirs
+# pybind11 and python include dirs
 include_directories(PUBLIC ${PYBIND11_INCLUDE_DIRS})
 include_directories(PUBLIC ${Python_INCLUDE_DIRS})
 include_directories(PUBLIC nicsoft/lib/nicsoft/lib/python3.12/site-packages)
