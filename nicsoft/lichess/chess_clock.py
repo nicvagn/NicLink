@@ -241,7 +241,6 @@ class ChessClock:
                 }
         raise RuntimeException("Could not parse response %s", response)
 
-
     def send_move(self):
         """Send move signal to chess clock"""
         self.send_command("m")
@@ -281,7 +280,7 @@ class ChessClock:
         initial = time_control.get("initial", 60000)
         increment = time_control.get("increment", 5)
 
-        self.set_time(initial, increment):
+        self.set_time(initial, increment)
 
         return self.start()
 
