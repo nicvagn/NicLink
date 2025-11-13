@@ -26,7 +26,7 @@ Button greenBtn = {
   HIGH,
   HIGH,
   0,
-  "Green" Button",
+  "Green Button",
   false,
 };
 Button redBtn = {
