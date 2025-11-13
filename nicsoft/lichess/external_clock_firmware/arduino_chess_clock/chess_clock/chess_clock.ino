@@ -3,6 +3,7 @@
 #define WHITE_WIN "  WHITE Wins!   "
 #define BLACK_WIN "  Black Wins!   "
 #define DRAW "   0.5/1 0.5/1 "
+#define GAMEOVER "  GAME  OVER   "
 
 // buttons
 #define DEBOUNCE_DELAY 50
@@ -25,7 +26,7 @@ Button greenBtn = {
   HIGH,
   HIGH,
   0,
-  "Red Button",
+  "Green" Button",
   false,
 };
 Button redBtn = {
@@ -135,6 +136,17 @@ void draw() {
   lcd.print(DRAW);
   Serial.println("GAME_OVER:DRAW");
 }
+void gameDone() {
+  gameOver = true;
+  clockRunning = false;
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print(GAMEOVER);
+  lcd.setCursor(0, 1);
+  lcd.print(GAMEOVER);
+  Serial.println("GAME_OVER:UNKNOWN");
+}
+
 
 
 void displayTime() {
@@ -278,6 +290,8 @@ void processSerialCommand(String cmd) {
     Serial.print(clockRunning ? "RUNNING" : "STOPPED");
     Serial.print(":");
     Serial.println(whiteToPlay ? "WHITE" : "BLACK");
+  } else if (cmd == "OVER") {
+    gameDone();
   } else if (!clockRunning) {
     //  start the clock on any other input
     startClock();
