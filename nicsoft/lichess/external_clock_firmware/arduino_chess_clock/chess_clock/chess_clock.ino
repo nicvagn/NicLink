@@ -1,7 +1,7 @@
 #define BLACK_TURN "|white|>>|black|"
 #define WHITE_TURN "|white|<<|black|"
-#define WHITE_WIN "  WHITE Wins!   "
-#define BLACK_WIN "  Black Wins!   "
+#define WHITE_WIN "    WHITE Wins!   "
+#define BLACK_WIN "    Black Wins!   "
 #define DRAW "   0.5/1 0.5/1 "
 #define GAMEOVER "  GAME  OVER   "
 

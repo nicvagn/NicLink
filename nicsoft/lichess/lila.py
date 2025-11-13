@@ -177,7 +177,7 @@ class Game(threading.Thread):
         bluetooth=False,
         starting_fen=False,
         chess960=False,
-        chess_clock=CHESS_CLOCK,
+        chess_clock=None,
         **kwargs,
     ):
         """Game, the client.board, niclink instance, the game id etc."""
@@ -205,18 +205,8 @@ class Game(threading.Thread):
         self.chess960 = chess960
         # try to connect to chess clock if told
         if chess_clock:
-            try:
-                # TODO !!!!
-                self.chess_clock = ChessClock()  # Auto-detects port
-                self.chess_clock.configure_for_game(
-                    {"initial": self.current_state["secondsLeft"], "increment": ""}
-                )
-                logger.info("Chess clock initialized: %s" % chess_clock)
-            except SerialException as ex:
-                logger.error("Chess clock could not be connected %s" % ex)
-                self.chess_clock = False
-        else:
-            self.chess_clock = False
+            # chess clock configuration is found in handle game start
+            self.chess_clock = chess_clock
 
         self.playing_white = playing_white
         if starting_fen:
@@ -611,9 +601,7 @@ def show_fen_on_board(fen) -> None:
     print(f"show_fen_on_board: \n{tmp_chessboard}")
 
 
-def handle_game_start(
-    game_start: GameStart, chess_clock: bool | ChessClock = False
-) -> None:
+def handle_game_start(game_start: GameStart, chess_clock: bool = False) -> None:
     """handle game start event
     @param game_start: Typed Dict containing the game start info
     @param chess_clock: ase we using an external chess clock?
@@ -639,6 +627,12 @@ def handle_game_start(
         str(game_start),
     )
     game_data = LichessGame(game_start["game"])
+
+    # configure chess clock if chess clock
+    sec = game_data.secondsLeft
+    if chess_clock and sec:
+        chess_clock = ChessClock()
+        chess_clock.configure_for_game({"initial": sec, "increment": 999})
 
     # handle 960 and regular
     game_fen = game_data.fen
@@ -669,7 +663,7 @@ def handle_game_start(
             game_data.id,
             playing_white,
             starting_fen=game_fen,
-            chess_clock=CHESS_CLOCK,
+            chess_clock=chess_clock,
         )
         game.daemon = True
 
@@ -804,7 +798,7 @@ The berserk lichess client will not work with simplejson.
                         # wrap the gameStart in a Typed Dict class
                         game_start = GameStart(event)
                         # and handle getting it started
-                        handle_game_start(game_start)
+                        handle_game_start(game_start, CHESS_CLOCK)
                     elif event["type"] == "gameFull":
                         logger.info("\ngameFull received\n")
                         handle_resign(event)

@@ -241,9 +241,14 @@ class ChessClock:
                 }
         raise RuntimeException("Could not parse response %s", response)
 
-    def send_move(self):
+    def move_made(self):
         """Send move signal to chess clock"""
         self.send_command("m")
+
+    # legacy
+    def send_move(self):
+        """Send move signal to chess clock"""
+        self.move_made()
 
     def handle_game_state(self, game_state):
         """Process game state and send move to clock if needed"""
