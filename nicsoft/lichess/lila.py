@@ -177,7 +177,7 @@ class Game(threading.Thread):
         bluetooth=False,
         starting_fen=False,
         chess960=False,
-        chess_clock=None,
+        chess_clock=False,
         **kwargs,
     ):
         """Game, the client.board, niclink instance, the game id etc."""
@@ -203,10 +203,8 @@ class Game(threading.Thread):
         # === niclink options ===
         self.bluetooth = bluetooth
         self.chess960 = chess960
-        # try to connect to chess clock if told
-        if chess_clock:
-            # chess clock configuration is found in handle game start
-            self.chess_clock = chess_clock
+        # chess clock configuration is found in handle game start
+        self.chess_clock = chess_clock
 
         self.playing_white = playing_white
         if starting_fen:
