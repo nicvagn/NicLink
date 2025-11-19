@@ -56,7 +56,7 @@ class ChessClock:
     clock.reset()
     """
 
-    def __init__(self, port=None, baud_rate=9600):
+    def __init__(self, port="/dev/ttyACM0", baud_rate=9600):
         """Initialize chess clock
 
         Args:
@@ -73,8 +73,11 @@ class ChessClock:
         self.clock_running = False
 
         if port:
+            self.logger.info("connecting to port: %s", port)
             self.connect_to_port(port)
         else:
+
+            self.logger.info("Trying to auto-connect")
             self.auto_detect_and_connect()
 
     def auto_detect_and_connect(self):
@@ -91,10 +94,10 @@ class ChessClock:
                         return True
 
             common_ports = [
-                "/dev/ttyUSB0",
-                "/dev/ttyUSB1",
                 "/dev/ttyACM0",
                 "/dev/ttyACM1",
+                "/dev/ttyUSB0",
+                "/dev/ttyUSB1",
                 "COM3",
                 "COM4",
                 "COM5",
@@ -117,17 +120,6 @@ class ChessClock:
             self.port = port
             self.is_connected = True
             self.logger.info(f"Chess clock connected on {port}")
-
-            time.sleep(2)
-
-            # Read startup message
-            if self.clock_serial.in_waiting:
-                startup_msg = (
-                    self.clock_serial.readline()
-                    .decode("utf-8", errors="ignore")
-                    .strip()
-                )
-                self.logger.info(f"Clock startup: {startup_msg}")
 
             return True
 
@@ -229,17 +221,21 @@ class ChessClock:
             dict: Clock status with keys: white_time, black_time, increment, running, to_play
         """
         response = self.send_command("STATUS")
-        if response and response.startswith("STATUS:"):
-            parts = response.split(":")
-            if len(parts) == 6:
-                return {
-                    "white_time": int(parts[1]),
-                    "black_time": int(parts[2]),
-                    "increment": int(parts[3]),
-                    "running": parts[4] == "RUNNING",
-                    "to_play": parts[5],
-                }
-        raise RuntimeException("Could not parse response %s", response)
+        if response:
+            if response.startswith("STATUS:"):
+                parts = response.split(":")
+                if len(parts) == 6:
+                    return {
+                        "white_time": int(parts[1]),
+                        "black_time": int(parts[2]),
+                        "increment": int(parts[3]),
+                        "running": parts[4] == "RUNNING",
+                        "to_play": parts[5],
+                    }
+            raise RuntimeError("Could not parse response %s", response)
+
+        else:
+            self.logger.warning("Clock did not respond to STATUS:")
 
     def move_made(self):
         """Send move signal to chess clock"""
@@ -306,10 +302,10 @@ if __name__ == "__main__":
     # test
     clock = ChessClock()
     clock.get_status()
-
     clock.configure_for_game({"initial": 300, "increment": 30})
     clock.start()
     x = 1
+
     print("enter 0 to exit")
     while x != "0":
         clock.send_move()

@@ -1,8 +1,8 @@
 #define BLACK_TURN "|white|>>|black|"
 #define WHITE_TURN "|white|<<|black|"
-#define WHITE_WIN "    WHITE Wins!   "
-#define BLACK_WIN "    Black Wins!   "
-#define DRAW "   0.5/1 0.5/1 "
+#define WHITE_WIN "  WHITE Wins!   "
+#define BLACK_WIN "  Black Wins!   "
+#define DRAW "  0.5/1  DRAW  "
 #define GAMEOVER "  GAME  OVER   "
 
 // buttons
@@ -50,6 +50,7 @@ unsigned long whiteTime = W_START_TIME;
 unsigned long blackTime = B_START_TIME;
 unsigned long increment = INCREMENT;
 
+bool connected = false;
 bool whiteToPlay = true;
 unsigned long lastUpdate = 0;
 bool gameOver = false;
@@ -218,6 +219,7 @@ void moveMade() {
 }
 
 void reset() {
+
 
   whiteTime = W_START_TIME;
   blackTime = B_START_TIME;
