@@ -1,4 +1,4 @@
-"""Lichess board interface driver for ChessNut Air"""
+"""Lichess board interface driver for Chess Nut Air."""
 
 #  NicLink-lichess is a part of NicLink
 #
@@ -156,18 +156,18 @@ sys.excepthook = log_except_hook
 
 # for good measure, also log handled exceptions
 def log_handled_exception(exception) -> None:
-    """log a handled exception"""
+    """Log a handled exception."""
     logger.error("Exception handled: %s", exception)
 
 
 # === pre-amble fin  ===
 
-print("\n\n|=====================| NicLink on Lichess ||=====================|\n\n")
+print("\n\n|===| NicLink on Lichess |===|\n\n")
 logger.info("NicLink Lichess startup\n")
 
 
 class Game(threading.Thread):
-    """a game on lichess"""
+    """a game on lichess."""
 
     def __init__(
         self,
@@ -225,7 +225,7 @@ class Game(threading.Thread):
             self.handle_state_change(GameState(self.current_state["state"]))
 
     def run(self) -> None:
-        """run the thread until game is through
+        """Run the thread until game is through
         ie: while the game stream is open
         then kill it w self.game_done()
         """
@@ -678,7 +678,7 @@ def handle_game_start(game_start: GameStart, chess_clock: bool = False) -> None:
 
 
 def handle_ongoing_game(gm: LichessGame) -> None:
-    """handle joining a game that is already underway"""
+    """Handle joining a game that is already underway."""
     print("\n$$$ joining game in progress $$$\n")
     logger.info("joining game in proggress, game: \n %s", gm)
     if gm.isMyTurn:
@@ -688,7 +688,7 @@ def handle_ongoing_game(gm: LichessGame) -> None:
 
 
 def handle_resign(event=None) -> None:
-    """handle ending the game in the case where you resign."""
+    """Handle ending the game in the case where you resign."""
     global logger, game
     # end the game
     if event is not None:
