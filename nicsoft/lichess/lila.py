@@ -147,6 +147,7 @@ if args.correspondence:
 # === exception logging and except hook ===
 # log unhandled exceptions to the log file
 def log_except_hook(excType, excValue, traceback):
+    """Log an unhandled exception."""
     logger.error("Uncaught exception", exc_info=(excType, excValue, traceback))
 
 
@@ -167,7 +168,7 @@ logger.info("NicLink Lichess startup\n")
 
 
 class Game(threading.Thread):
-    """a game on lichess."""
+    """Game on lichess."""
 
     def __init__(
         self,
@@ -225,7 +226,8 @@ class Game(threading.Thread):
             self.handle_state_change(GameState(self.current_state["state"]))
 
     def run(self) -> None:
-        """Run the thread until game is through
+        """Run the thread until game is through.
+
         ie: while the game stream is open
         then kill it w self.game_done()
         """
@@ -290,7 +292,7 @@ class Game(threading.Thread):
         self.game_done()
 
     def get_game_state(self) -> GameState:
-        """get the current game_state"""
+        """Get the current game_state."""
         return self.game_state
 
     def game_done(self, game_state: GameState = None) -> None:
@@ -376,7 +378,7 @@ and setting moved event",
             )
 
     def make_move(self, move: str) -> None:
-        """make a move in a lichess game with self.gameId
+        """Make a move in a lichess game with self.gameId.
         @param - move: UCI move string ie: e4e5
         @side_effect: talkes to lichess, sending the move
         """
@@ -394,7 +396,7 @@ and setting moved event",
                     raise IllegalMove("Move is None")
                 self.berserk_board_client.make_move(self.game_id, move)
                 nl_inst.make_move_game_board(move)
-                logger.debug("move sent to liches: %s", move)
+                logger.debug("move sent to lichess: %s", move)
 
                 # once move has been made set self.response_error_on_last_attempt to false and return
                 self.response_error_on_last_attempt = False
@@ -413,7 +415,7 @@ and setting moved event",
 
                 # if not, try again
                 print(
-                    f"ResponseError: {err}trying again after three seconds.  \
+                    f"ResponseError: [{err}] trying again after three seconds.  \
 Will only try twice before calling game_done"
                 )
                 sleep(3)
@@ -585,14 +587,14 @@ Will only try twice before calling game_done"
         """
         print(chat_line)
         # signal_lights set's lights on the chess board
-        nl_inst.signal_lights(5)
         nl_inst.beep()
+        nl_inst.signal_lights(5)
         nl_inst.beep()
 
 
 # === helper functions ===
 def show_fen_on_board(fen) -> None:
-    """show board fen on an ascii chessboard
+    """Display board fen on an ascii chessboard.
     @param fen - the fed to display on a board"""
     tmp_chessboard = chess.Board()
     tmp_chessboard.set_fen(fen)
@@ -600,7 +602,8 @@ def show_fen_on_board(fen) -> None:
 
 
 def handle_game_start(game_start: GameStart, chess_clock: bool = False) -> None:
-    """handle game start event
+    """Handle game start event.
+
     @param game_start: Typed Dict containing the game start info
     @param chess_clock: ase we using an external chess clock?
     @global berserk_client: client made for ous session with lila
@@ -701,7 +704,7 @@ def handle_resign(event=None) -> None:
 
 # entry point
 def main():
-    """handle startup, and initiation of stuff"""
+    """Handle startup, and initiation of stuff."""
     global berserk_client, nl_inst, REFRESH_DELAY, logger
 
     print("=== NicLink lichess main entered ===")
@@ -788,6 +791,7 @@ The berserk lichess client will not work with simplejson.
                 logger.debug("==== lichess event loop start ====\n")
                 print("=== Waiting for lichess event ===")
                 for event in berserk_client.board.stream_incoming_events():
+                    logger.debug("boartdeven recieved from lila: %s", str(event))
                     if event["type"] == "challenge":
                         logger.info("challenge received: %s", event)
                         print("\n==== Challenge received ====\n")
@@ -804,6 +808,7 @@ The berserk lichess client will not work with simplejson.
 
                     # check for kill switch
                     if nl_inst.kill_switch.is_set():
+                        logger.info("killed by nl_inst kill switch")
                         sys.exit(0)
 
                 logger.info("berserk stream exited")
@@ -835,4 +840,4 @@ The berserk lichess client will not work with simplejson.
 if __name__ == "__main__":
     main()
 
-#  LocalWords:  btime wtime
+#  LocalWords:  btime wtime simplejson
