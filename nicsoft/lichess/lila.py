@@ -100,6 +100,7 @@ POLL_DELAY = 10
 # === lichess token parsing ===
 TOKEN_FILE = os.path.join(script_dir, "lichess_token/nrv773_token")
 
+## Want debug with default token
 if DEBUG:
     TOKEN_FILE = os.path.join(script_dir, "lichess_token/dev_token")
 
