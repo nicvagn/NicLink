@@ -81,9 +81,9 @@ else:
     DEBUG = False
 
 if args.logging:
-    DEBUG_LOGGING = True
+    LOGGING = True
 else:
-    DEBUG_LOGGING = False
+    LOGGING = False
 
 if args.clock:
     CHESS_CLOCK = True
@@ -117,8 +117,8 @@ if DEBUG:
     logger.info("DEBUG is set.")
     logger.setLevel(logging.DEBUG)
     consoleHandler.setLevel(logging.DEBUG)
-elif DEBUG_LOGGING:
-    logger.info("DEBUG logging is set")
+elif LOGGING:
+    logger.info("logging is set")
     logger.setLevel(logging.DEBUG)
     consoleHandler.setLevel(logging.DEBUG)
 else:
@@ -145,8 +145,8 @@ if args.correspondence:
 
 
 # === exception logging and except hook ===
-# log unhandled exceptions to the log file
 def log_except_hook(excType, excValue, traceback):
+   """log unhandled exceptions to the log file."""
     logger.error("Uncaught exception", exc_info=(excType, excValue, traceback))
 
 
@@ -235,15 +235,16 @@ class Game(threading.Thread):
         for event in self.stream:
             logger.debug("event in self.stream: %s", event)
             if event["type"] == "gameState":
+                if LOGGING:
+                    # log game state
+                    with open("game_state_examples.txt", "a", encoding="utf-8") as f:
+                        f.write("game state: \n")
+                        f.write(str(event) + "\n")
 
                 # update the game state in this class with a stream game_state
                 # incapsulated in a conveiniance class
 
                 self.game_state = GameState(event)
-
-                with open("game_state_examples.txt", "a") as f:
-                    f.write("game state: \n")
-                    f.write(str(event) + "\n")
 
                 logger.debug("state_change_thread is: %s", state_change_thread)
                 # if there is a state_change_thread
@@ -399,7 +400,7 @@ and setting moved event",
                     raise IllegalMove("Move is None")
                 self.berserk_board_client.make_move(self.game_id, move)
                 nl_inst.make_move_game_board(move)
-                logger.debug("move sent to liches: %s", move)
+                logger.debug("move sent to lichess: %s", move)
 
                 # once move has been made set self.response_error_on_last_attempt to false and return
                 self.response_error_on_last_attempt = False
@@ -721,7 +722,9 @@ The berserk lichess client will not work with simplejson.
 
     # init NicLink
     try:
-        nl_inst = NicLinkManager(refresh_delay=REFRESH_DELAY, logger=logger)
+        # FIX-ME: I do not want any driver logging now
+        # nl_inst = NicLinkManager(refresh_delay=REFRESH_DELAY, logger=logger)
+        nl_inst = NicLinkManager(refresh_delay=REFRESH_DELAY, logger=None)
         nl_inst.start()
 
     except ExitNicLink:
@@ -840,4 +843,4 @@ The berserk lichess client will not work with simplejson.
 if __name__ == "__main__":
     main()
 
-#  LocalWords:  btime wtime chatLine gameFull opponentGone nNew ngame
+#  LocalWords:  btime wtime chatLine gameFull opponentGone nNew ngame nl
