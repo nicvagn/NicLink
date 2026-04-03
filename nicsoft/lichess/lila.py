@@ -238,7 +238,12 @@ class Game(threading.Thread):
 
                 # update the game state in this class with a stream game_state
                 # incapsulated in a conveiniance class
+
                 self.game_state = GameState(event)
+
+                with open("game_state_examples.txt", "a") as f:
+                    f.write("game state: \n")
+                    f.write(str(event) + "\n")
 
                 logger.debug("state_change_thread is: %s", state_change_thread)
                 # if there is a state_change_thread
@@ -295,7 +300,7 @@ class Game(threading.Thread):
 
     def game_done(self, game_state: GameState = None) -> None:
         """stop the thread, game should be over, or maybe a rage quit
-        @param - (GameState) a gamestate telling us how the game ended
+        @param - (GameState) a game state telling us how the game ended
         @side-effect - changes the external board leds
 
         info on signals:
@@ -512,7 +517,7 @@ Will only try twice before calling game_done"
 
         # if chess_clock, signal move
         if self.chess_clock:
-            self.chess_clock.move_made()
+            self.chess_clock.move_made(game_state)
 
     def handle_state_change(self, game_state: GameState) -> None:
         """Handle a state change in the lichess game.
@@ -835,4 +840,4 @@ The berserk lichess client will not work with simplejson.
 if __name__ == "__main__":
     main()
 
-#  LocalWords:  btime wtime
+#  LocalWords:  btime wtime chatLine gameFull opponentGone nNew ngame

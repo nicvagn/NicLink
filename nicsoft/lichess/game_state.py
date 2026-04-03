@@ -12,7 +12,7 @@ from typing import List
 
 
 class NoMoves(Exception):
-    """raised when GameState has no moves"""
+    """Raised when GameState has no moves."""
 
     def __init__(self, message):
         self.message = message
@@ -85,7 +85,7 @@ class GameState:
         return self.wtime
 
     def get_btime(self) -> timedelta:
-        """get black's time from this GamState"""
+        """get black's time from this GameState"""
         return self.btime
 
     def get_winc(self) -> timedelta:

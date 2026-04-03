@@ -1,0 +1,21 @@
+game state: 
+game state: 
+{'type': 'gameState', 'moves': 'e2e4 c7c5 a2a3 b8c6 b1c3 g8f6 b2b4 c5b4 a3b4', 'wtime': datetime.timedelta(seconds=650, microseconds=350000), 'btime': datetime.timedelta(seconds=897, microseconds=80000), 'winc': datetime.timedelta(seconds=10), 'binc': datetime.timedelta(seconds=10), 'status': 'started'}
+game state: 
+{'type': 'gameState', 'moves': 'e2e4 c7c5 a2a3 b8c6 b1c3 g8f6 b2b4 c5b4 a3b4 c6b4', 'wtime': datetime.timedelta(seconds=650, microseconds=350000), 'btime': datetime.timedelta(seconds=899, microseconds=480000), 'winc': datetime.timedelta(seconds=10), 'binc': datetime.timedelta(seconds=10), 'status': 'started'}
+game state: 
+{'type': 'gameState', 'moves': 'e2e4 c7c5 a2a3 b8c6 b1c3 g8f6 b2b4 c5b4 a3b4 c6b4 c1a3', 'wtime': datetime.timedelta(seconds=647, microseconds=740000), 'btime': datetime.timedelta(seconds=899, microseconds=480000), 'winc': datetime.timedelta(seconds=10), 'binc': datetime.timedelta(seconds=10), 'status': 'started'}
+game state: 
+{'type': 'gameState', 'moves': 'e2e4 c7c5 a2a3 b8c6 b1c3 g8f6 b2b4 c5b4 a3b4 c6b4 c1a3 e7e5', 'wtime': datetime.timedelta(seconds=647, microseconds=740000), 'btime': datetime.timedelta(seconds=903, microseconds=880000), 'winc': datetime.timedelta(seconds=10), 'binc': datetime.timedelta(seconds=10), 'status': 'started'}
+game state: 
+{'type': 'gameState', 'moves': 'e2e4 c7c5 a2a3 b8c6 b1c3 g8f6 b2b4 c5b4 a3b4 c6b4 c1a3 e7e5 a1b1', 'wtime': datetime.timedelta(seconds=645, microseconds=210000), 'btime': datetime.timedelta(seconds=903, microseconds=880000), 'winc': datetime.timedelta(seconds=10), 'binc': datetime.timedelta(seconds=10), 'status': 'started'}
+game state: 
+{'type': 'gameState', 'moves': 'e2e4 c7c5 a2a3 b8c6 b1c3 g8f6 b2b4 c5b4 a3b4 c6b4 c1a3 e7e5 a1b1 a7a5', 'wtime': datetime.timedelta(seconds=645, microseconds=210000), 'btime': datetime.timedelta(seconds=902, microseconds=250000), 'winc': datetime.timedelta(seconds=10), 'binc': datetime.timedelta(seconds=10), 'status': 'started'}
+game state: 
+{'type': 'gameState', 'moves': 'e2e4 c7c5 a2a3 b8c6 b1c3 g8f6 b2b4 c5b4 a3b4 c6b4 c1a3 e7e5 a1b1 a7a5 c3b5 d8b6 c2c4', 'wtime': datetime.timedelta(seconds=475, microseconds=340000), 'btime': datetime.timedelta(seconds=881, microseconds=680000), 'winc': datetime.timedelta(seconds=10), 'binc': datetime.timedelta(seconds=10), 'status': 'started'}
+game state: 
+{'type': 'gameState', 'moves': 'e2e4 c7c5 a2a3 b8c6 b1c3 g8f6 b2b4 c5b4 a3b4 c6b4 c1a3 e7e5 a1b1 a7a5 c3b5 d8b6 c2c4 f6e4', 'wtime': datetime.timedelta(seconds=475, microseconds=340000), 'btime': datetime.timedelta(seconds=830, microseconds=780000), 'winc': datetime.timedelta(seconds=10), 'binc': datetime.timedelta(seconds=10), 'status': 'started'}
+game state: 
+{'type': 'gameState', 'moves': 'e2e4 c7c5 a2a3 b8c6 b1c3 g8f6 b2b4 c5b4 a3b4 c6b4 c1a3 e7e5 a1b1 a7a5 c3b5 d8b6 c2c4 f6e4 g1f3', 'wtime': datetime.timedelta(seconds=450, microseconds=750000), 'btime': datetime.timedelta(seconds=830, microseconds=780000), 'winc': datetime.timedelta(seconds=10), 'binc': datetime.timedelta(seconds=10), 'status': 'started'}
+game state: 
+{'type': 'gameState', 'moves': 'e2e4 c7c5 a2a3 b8c6 b1c3 g8f6 b2b4 c5b4 a3b4 c6b4 c1a3 e7e5 a1b1 a7a5 c3b5 d8b6 c2c4 f6e4 g1f3 b6f2', 'wtime': datetime.timedelta(seconds=450, microseconds=750000), 'btime': datetime.timedelta(seconds=826, microseconds=250000), 'winc': datetime.timedelta(seconds=10), 'binc': datetime.timedelta(seconds=10), 'status': 'mate', 'winner': 'black'}
