@@ -843,4 +843,4 @@ The berserk lichess client will not work with simplejson.
 if __name__ == "__main__":
     main()
 
-#  LocalWords:  btime wtime chatLine gameFull opponentGone nNew ngame nl
+#  LocalWords:  btime wtime chatLine gameFull opponentGone nNew ngame nl simplejson
