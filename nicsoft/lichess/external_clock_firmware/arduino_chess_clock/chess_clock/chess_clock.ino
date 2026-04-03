@@ -38,7 +38,7 @@ Button redBtn = {
   false,
 };
 
-const int rs = 12, en = 13, d4 = 8, d5 = 9, d6 = 10, d7 = 11;
+const int rs = 19, en = 20, d4 = 35, d5 = 36, d6 = 39, d7 = 40;
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
 // default times
