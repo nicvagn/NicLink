@@ -15,6 +15,8 @@
 
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 
+enum Colour {white, black};
+
 // Button structure to hold all state
 struct Button {
   uint8_t pin;
@@ -47,8 +49,9 @@ unsigned long B_START_TIME = 60000;
 unsigned long W_START_TIME = 60000;
 
 unsigned long whiteTime = W_START_TIME;
+unsigned long whiteIncrement = INCREMENT;
 unsigned long blackTime = B_START_TIME;
-unsigned long increment = INCREMENT;
+unsigned long blackIncrement = INCREMENT;
 
 bool connected = false;
 bool whiteToPlay = true;
@@ -77,14 +80,14 @@ void blackMoved() {
   whiteToPlay = true;
   lcd.setCursor(0, 0);
   lcd.print(WHITE_TURN);
-  blackTime = blackTime + increment;
+  blackTime = blackTime + blackIncrement;
 }
 
 void whiteMoved() {
   whiteToPlay = false;
   lcd.setCursor(0, 0);
   lcd.print(BLACK_TURN);
-  whiteTime = whiteTime + increment;
+  whiteTime = whiteTime + whiteIncrement;
 }
 
 void whiteTimeOut() {
@@ -225,7 +228,8 @@ void moveMade() {
 void reset() {
   whiteTime = W_START_TIME;
   blackTime = B_START_TIME;
-  increment = INCREMENT;
+  whiteIncrement = INCREMENT;
+  blackIncrement = INCREMENT;
   whiteToPlay = true;
   gameOver = false;
   clockRunning = false;
@@ -234,6 +238,16 @@ void reset() {
   lcd.print(WHITE_BLACK);
   displayTime();
   Serial.println("CLOCK_RESET");
+}
+
+void setTime(unsigned long seconds, unsigned long increment, Colour colour))
+{
+  switch(colour)
+  {
+    case Colour::white:
+      whiteTime = seconds;
+
+  }
 }
 
 void processSerialCommand(String cmd) {
@@ -287,7 +301,7 @@ void processSerialCommand(String cmd) {
     Serial.print(whiteTime);
     Serial.print(":");
     Serial.print(blackTime);
-    Serial.print("+");
+    Serial.print(":");
     Serial.print(increment);
     Serial.print(":");
     Serial.print(clockRunning ? "RUNNING" : "STOPPED");

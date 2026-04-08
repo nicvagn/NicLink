@@ -50,8 +50,8 @@ from nicsoft.niclink.nl_exceptions import (
 # external chess clock functionality
 from .chess_clock import ChessClock
 from .game import Game as LichessGame  # game is already a class
-from .game_start import GameStart
 from .game_state import GameState
+from .game_start import GameStart
 
 # === command line ===
 # parsing command line arguments
@@ -146,7 +146,7 @@ if args.correspondence:
 
 # === exception logging and except hook ===
 def log_except_hook(excType, excValue, traceback):
-   """log unhandled exceptions to the log file."""
+    """Log unhandled exceptions to the log file."""
     logger.error("Uncaught exception", exc_info=(excType, excValue, traceback))
 
 
@@ -194,7 +194,6 @@ class Game(threading.Thread):
         self.stream = self.berserk_board_client.stream_game_state(game_id)
         # current state from stream
         self.current_state = next(self.stream)
-
         self.response_error_on_last_attempt = False
 
         # the most reasontly parsed game_state, in a GameState class wrapper
@@ -203,7 +202,7 @@ class Game(threading.Thread):
         # === niclink options ===
         self.bluetooth = bluetooth
         self.chess960 = chess960
-        # chess clock configuration is found in handle game start
+
         self.chess_clock = chess_clock
 
         self.playing_white = playing_white
@@ -225,7 +224,8 @@ class Game(threading.Thread):
             self.handle_state_change(GameState(self.current_state["state"]))
 
     def run(self) -> None:
-        """Run the thread until game is through
+        """Run the thread until game is through.
+
         ie: while the game stream is open
         then kill it w self.game_done()
         """
@@ -296,7 +296,7 @@ class Game(threading.Thread):
         self.game_done()
 
     def get_game_state(self) -> GameState:
-        """get the current game_state"""
+        """Get the current GameState."""
         return self.game_state
 
     def game_done(self, game_state: GameState = None) -> None:
@@ -349,8 +349,13 @@ class Game(threading.Thread):
         raise NicLinkGameOver("Game over")
 
     def await_move_thread(self, fetch_list: list) -> None:
-        """await move in a way that does not stop the user from exiting. and when move is found,
-        set it to index 0 on fetch_list in UCI. This function should be ran in it's own Thread.
+        """Await move in a way that does not stop the user from exiting.
+
+        when move is found, set it to index 0 on fetch_list in UCI.
+
+        Notes
+        -----
+        This function should be ran in it's own Thread.
         """
         global logger, nl_inst
         logger.debug("\nGame.await_move_thread(...) entered\n")
@@ -636,7 +641,7 @@ def handle_game_start(game_start: GameStart, chess_clock: bool = False) -> None:
     sec = game_data.secondsLeft
     if chess_clock and sec:
         chess_clock = ChessClock()
-        chess_clock.configure_for_game({"initial": sec, "increment": 999})
+        chess_clock.configure_for_game(game_start)
 
     # handle 960 and regular
     game_fen = game_data.fen

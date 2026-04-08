@@ -1,3 +1,5 @@
+"""Lichess chess clock."""
+
 #  chess_clock is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or ( at your option ) any later version.
 #
 #  chess_clock is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
@@ -11,6 +13,7 @@ import time
 
 
 def setup_logging():
+    """Init logging for module."""
     logger = logging.getLogger("ChessClock")
     logger.warning(f"logger created for ChessClock")
 
@@ -29,7 +32,10 @@ def setup_logging():
 
 
 class ChessClock:
-    """Usage example:
+    """Lichess chess clock.
+
+    Example
+    -------
     # Initialize clock
     clock = ChessClock()
 
@@ -57,9 +63,10 @@ class ChessClock:
     """
 
     def __init__(self, port="/dev/ttyACM0", baud_rate=9600):
-        """Initialize chess clock
+        """Initialize chess clock.
 
-        Args:
+        Args
+        ----
             port: Specific serial port (optional, will auto-detect if None)
             baud_rate: Serial baud rate (default 9600)
         """
@@ -81,7 +88,7 @@ class ChessClock:
             self.auto_detect_and_connect()
 
     def auto_detect_and_connect(self):
-        """Try to find and connect to Arduino chess clock automatically"""
+        """Try to find and connect to Arduino chess clock automatically."""
         try:
             ports = serial.tools.list_ports.comports()
             for port in ports:
@@ -114,7 +121,7 @@ class ChessClock:
             return False
 
     def connect_to_port(self, port):
-        """Connect to specific serial port"""
+        """Connect to specific serial port."""
         try:
             self.clock_serial = serial.Serial(port, self.baud_rate, timeout=1)
             self.port = port
@@ -129,12 +136,14 @@ class ChessClock:
             return False
 
     def send_command(self, command):
-        """Send command to chess clock
+        """Send command to chess clock.
 
-        Args:
+        Args
+        ----
             command: Command string to send
 
-        Returns:
+        Returns
+        -------
             None
         """
         if (
@@ -172,53 +181,56 @@ class ChessClock:
             return None
 
     def game_over(self):
-        """Display the game over and reset clock"""
+        """Display the game over and reset clock."""
         self.send_command("OVER")
 
     def white_won(self):
-        """Display white won by mate"""
+        """Display white won by mate."""
         self.send_command("BMATE")
 
     def black_won(self):
-        """Display black won by mate"""
+        """Display black won by mate."""
         self.send_command("WMATE")
 
     def set_time(self, seconds, increment=0):
-        """Set initial time and increment
+        """Set initial time and increment.
 
-        Args:
-            seconds: Initial time in seconds for each player
-            increment: Increment in seconds per move (default 0)
+        Args
+        ----
+        seconds: Initial time in seconds for each player
+        increment: Increment in seconds per move (default 0)
 
-        Returns:
-            bool: True if successful
+        Returns
+        -------
+        bool: True if successful
         """
-        self.send_command(f"TIME:{seconds}:{increment}")
+        self.send_command(f"TIME:{seconds}+{increment}")
 
     def start(self):
-        """Start the chess clock"""
+        """Start the chess clock."""
         self.send_command("START")
         self.clock_running = True
         self.logger.info("Clock started")
 
     def stop(self):
-        """Stop/pause the chess clock"""
+        """Stop/pause the chess clock."""
         self.send_command("STOP")
         self.clock_running = False
         self.logger.info("Clock stopped")
 
     def reset(self):
-        """Reset clock to default (60 seconds)"""
+        """Reset clock to default (60 seconds)."""
         self.send_command("RESET")
         self.last_move_count = 0
         self.clock_running = False
         self.logger.info("Clock reset")
 
     def get_status(self):
-        """Get current clock status
+        """Get current clock status.
 
-        Returns:
-            dict: Clock status with keys: white_time, black_time, increment, running, to_play
+        Returns
+        -------
+        dict: Clock status with keys: white_time, black_time, increment, running, to_play
         """
         response = self.send_command("STATUS")
         if response:
@@ -229,7 +241,7 @@ class ChessClock:
                         "white_time": int(parts[1]),
                         "black_time": int(parts[2]),
                         "increment": int(parts[3]),
-                        "running": parts[4] == "RUNNING",
+                        "running": (parts[4] == "RUNNING"),
                         "to_play": parts[5],
                     }
             raise RuntimeError("Could not parse response %s", response)
@@ -238,17 +250,12 @@ class ChessClock:
             self.logger.warning("Clock did not respond to STATUS:")
 
     def move_made(self, game_state):
-        """Send move signal to chess clock"""
+        """Send move signal to chess clock."""
         self.logger.info("move_made entered, game_state: %s", game_state)
         self.send_command("m")
 
-    # legacy
-    def send_move(self):
-        """Send move signal to chess clock"""
-        self.move_made()
-
     def handle_game_state(self, game_state):
-        """Process game state and send move to clock if needed"""
+        """Process game state and send move to clock if needed."""
         if not hasattr(game_state, "moves"):
             self.logger.warning("GameState has no moves attribute")
             return
@@ -270,24 +277,26 @@ class ChessClock:
 
             self.last_move_count = current_move_count
 
-    def configure_for_game(self, time_control):
-        """Configure clock for a time control
+    def configure_for_game(self, game_start):
+        """Configure clock for a time control.
 
-        Args:
-            time_control: dict with 'initial' (seconds) and 'increment' (seconds)
+        Args
+        ----
+        time_control: dict with 'initial' (seconds) and 'increment' (seconds)
 
-        Example:
+        Example
+        -------
             clock.configure_for_game({'initial': 300, 'increment': 5})  # 5+5
         """
-        initial = time_control.get("initial", 60000)
-        increment = time_control.get("increment", 5)
+        initial = game_start.get("initial")
+        increment = game_start.get("increment")
 
         self.set_time(initial, increment)
 
         return self.start()
 
     def disconnect(self):
-        """Close serial connection to chess clock"""
+        """Close serial connection to chess clock."""
         if self.clock_serial and self.clock_serial.is_open:
             try:
                 self.clock_serial.close()
@@ -305,11 +314,14 @@ if __name__ == "__main__":
     clock.get_status()
     clock.configure_for_game({"initial": 300, "increment": 30})
     clock.start()
+
     x = 1
 
-    print("enter 0 to exit")
+    print("Enter something to send move; enter 0 to exit")
     while x != "0":
-        clock.send_move()
+        clock.move_made()
         x = input()
 
     clock.black_won()
+
+#  LocalWords:  BMATE WMATE
