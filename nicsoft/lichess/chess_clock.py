@@ -249,7 +249,7 @@ class ChessClock:
         else:
             self.logger.warning("Clock did not respond to STATUS:")
 
-    def move_made(self, game_state):
+    def move_made(self, game_state=None):
         """Send move signal to chess clock."""
         self.logger.info("move_made entered, game_state: %s", game_state)
         self.send_command("m")
