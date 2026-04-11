@@ -1,4 +1,4 @@
-"""NicLink driver for ChessNut air"""
+"""NicLink driver for ChessNut air."""
 
 #  NicLink is free software: you can redistribute it and/or modify it under
 #  the terms of the gnu general public license as published by the free
@@ -101,7 +101,6 @@ class NicLinkManager(threading.Thread):
 
         self.refresh_delay = refresh_delay
 
-
         try:
             self.connect()
         except RuntimeError:
@@ -147,7 +146,9 @@ and turned on?"
         self.starting_fen = starting_fen
         self.game_board = chess.Board(self.starting_fen)
 
-        self.logger.info("start_960(...): 960 game started. Initial fen: %s", self.starting_fen)
+        self.logger.info(
+            "start_960(...): 960 game started. Initial fen: %s", self.starting_fen
+        )
 
     def run(self) -> None:
         """run and wait for a game to begin
