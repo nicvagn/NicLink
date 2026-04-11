@@ -240,7 +240,7 @@ void reset() {
   Serial.println("CLOCK_RESET");
 }
 
-void setTime(unsigned long seconds, unsigned long increment, Colour colour))
+void setTime(unsigned long seconds, unsigned long increment, Colour colour)
 {
   switch(colour)
   {
@@ -272,7 +272,6 @@ void processSerialCommand(String cmd) {
 
       whiteTime = seconds * 1000;
       blackTime = seconds * 1000;
-      increment = incSeconds * 1000;
 
       lcd.setCursor(0, 0);
       lcd.print(WHITE_BLACK);
@@ -299,10 +298,12 @@ void processSerialCommand(String cmd) {
   } else if (cmd == "STATUS") {
     Serial.print("STATUS:");
     Serial.print(whiteTime);
+    Serial.print("+");
+    Serial.print(whiteIncrement);
     Serial.print(":");
     Serial.print(blackTime);
-    Serial.print(":");
-    Serial.print(increment);
+    Serial.print("+");
+    Serial.print(blackIncrement);
     Serial.print(":");
     Serial.print(clockRunning ? "RUNNING" : "STOPPED");
     Serial.print(":");
@@ -405,3 +406,5 @@ void loop() {
   checkButton(redBtn);
   checkButton(greenBtn);
 }
+
+//  LocalWords:  BMATE
