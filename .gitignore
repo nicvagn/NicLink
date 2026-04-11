@@ -12,3 +12,4 @@ nicsoft/niclink/_niclink*.so
 **/TODO
 **/*.log
 external_clock/old
+game_state_examples.txt
