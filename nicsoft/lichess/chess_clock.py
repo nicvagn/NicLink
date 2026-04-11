@@ -71,13 +71,17 @@ class ChessClock:
             baud_rate: Serial baud rate (default 9600)
         """
         self.logger = setup_logging()
-        self.logger.error("LOGGING SETUP FOR CHESS CLOCK")
+        self.logger.info("LOGGING SETUP FOR CHESS CLOCK")
         self.clock_serial = None
         self.port = port
         self.baud_rate = baud_rate
         self.is_connected = False
         self.last_move_count = 0
         self.clock_running = False
+        self.wtime: timedelta = None
+        self.btime: timedelta = None
+        self.winc: timedelta = None
+        self.binc: timedelta = None
 
         if port:
             self.logger.info("connecting to port: %s", port)
@@ -268,14 +272,12 @@ class ChessClock:
 
         if game_state.status != "started":
             self.game_over()
+            return
 
-        moves = game_state.moves.split() if game_state.moves else []
-        current_move_count = len(moves)
-
-        if current_move_count > self.last_move_count:
-            self.send_move()
-
-            self.last_move_count = current_move_count
+        self.wtime: timedelta = game_state["wtime"]
+        self.btime: timedelta = game_state["btime"]
+        self.winc: timedelta = game_state["winc"]
+        self.binc: timedelta = game_state["binc"]
 
     def configure_for_game(self, game_start):
         """Configure clock for a time control.

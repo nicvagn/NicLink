@@ -564,6 +564,9 @@ Will only try twice before calling game_done"
         # a move was made
         self.move_made(game_state)
 
+        if self.chess_clock:
+            self.chess_clock.handle_game_state(game_state)
+
         # is it our turn?
         if tmp_chessboard.turn == self.playing_white:
             # get our move from chessboard
@@ -638,10 +641,8 @@ def handle_game_start(game_start: GameStart, chess_clock: bool = False) -> None:
     game_data = LichessGame(game_start["game"])
 
     # configure chess clock if chess clock
-    sec = game_data.secondsLeft
-    if chess_clock and sec:
+    if chess_clock:
         chess_clock = ChessClock()
-        chess_clock.configure_for_game(game_start)
 
     # handle 960 and regular
     game_fen = game_data.fen
@@ -795,6 +796,7 @@ The berserk lichess client will not work with simplejson.
         print(f"cannot get lichess account info: {e}")
         sys.exit(-1)
     try:
+
         # main program loop
         while True:
             try:
