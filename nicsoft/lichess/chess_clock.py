@@ -274,10 +274,10 @@ class ChessClock:
             self.game_over()
             return
 
-        self.wtime: timedelta = game_state["wtime"]
-        self.btime: timedelta = game_state["btime"]
-        self.winc: timedelta = game_state["winc"]
-        self.binc: timedelta = game_state["binc"]
+        self.wtime: timedelta = game_state.wtime
+        self.btime: timedelta = game_state.btime
+        self.winc: timedelta = game_state.winc
+        self.binc: timedelta = game_state.binc
 
     def configure_for_game(self, game_start):
         """Configure clock for a time control.
