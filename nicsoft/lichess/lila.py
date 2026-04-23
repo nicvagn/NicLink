@@ -50,8 +50,8 @@ from nicsoft.niclink.nl_exceptions import (
 # external chess clock functionality
 from .chess_clock import ChessClock
 from .game import Game as LichessGame  # game is already a class
-from .game_start import GameStart
 from .game_state import GameState
+from .game_start import GameStart
 
 # === command line ===
 # parsing command line arguments
@@ -81,9 +81,9 @@ else:
     DEBUG = False
 
 if args.logging:
-    DEBUG_LOGGING = True
+    LOGGING = True
 else:
-    DEBUG_LOGGING = False
+    LOGGING = False
 
 if args.clock:
     CHESS_CLOCK = True
@@ -118,8 +118,8 @@ if DEBUG:
     logger.info("DEBUG is set.")
     logger.setLevel(logging.DEBUG)
     consoleHandler.setLevel(logging.DEBUG)
-elif DEBUG_LOGGING:
-    logger.info("DEBUG logging is set")
+elif LOGGING:
+    logger.info("logging is set")
     logger.setLevel(logging.DEBUG)
     consoleHandler.setLevel(logging.DEBUG)
 else:
@@ -146,9 +146,8 @@ if args.correspondence:
 
 
 # === exception logging and except hook ===
-# log unhandled exceptions to the log file
 def log_except_hook(excType, excValue, traceback):
-    """Log an unhandled exception."""
+    """Log unhandled exceptions."""
     logger.error("Uncaught exception", exc_info=(excType, excValue, traceback))
 
 
@@ -196,7 +195,6 @@ class Game(threading.Thread):
         self.stream = self.berserk_board_client.stream_game_state(game_id)
         # current state from stream
         self.current_state = next(self.stream)
-
         self.response_error_on_last_attempt = False
 
         # the most reasontly parsed game_state, in a GameState class wrapper
@@ -205,7 +203,7 @@ class Game(threading.Thread):
         # === niclink options ===
         self.bluetooth = bluetooth
         self.chess960 = chess960
-        # chess clock configuration is found in handle game start
+
         self.chess_clock = chess_clock
 
         self.playing_white = playing_white
@@ -238,9 +236,15 @@ class Game(threading.Thread):
         for event in self.stream:
             logger.debug("event in self.stream: %s", event)
             if event["type"] == "gameState":
+                if LOGGING:
+                    # log game state
+                    with open("game_state_examples.txt", "a", encoding="utf-8") as f:
+                        f.write("game state: \n")
+                        f.write(str(event) + "\n")
 
                 # update the game state in this class with a stream game_state
                 # incapsulated in a conveiniance class
+
                 self.game_state = GameState(event)
 
                 logger.debug("state_change_thread is: %s", state_change_thread)
@@ -293,12 +297,12 @@ class Game(threading.Thread):
         self.game_done()
 
     def get_game_state(self) -> GameState:
-        """Get the current game_state."""
+        """Get the current GameState."""
         return self.game_state
 
     def game_done(self, game_state: GameState = None) -> None:
         """stop the thread, game should be over, or maybe a rage quit
-        @param - (GameState) a gamestate telling us how the game ended
+        @param - (GameState) a game state telling us how the game ended
         @side-effect - changes the external board leds
 
         info on signals:
@@ -346,8 +350,13 @@ class Game(threading.Thread):
         raise NicLinkGameOver("Game over")
 
     def await_move_thread(self, fetch_list: list) -> None:
-        """await move in a way that does not stop the user from exiting. and when move is found,
-        set it to index 0 on fetch_list in UCI. This function should be ran in it's own Thread.
+        """Await move in a way that does not stop the user from exiting.
+
+        when move is found, set it to index 0 on fetch_list in UCI.
+
+        Notes
+        -----
+        This function should be ran in it's own Thread.
         """
         global logger, nl_inst
         logger.debug("\nGame.await_move_thread(...) entered\n")
@@ -515,7 +524,7 @@ Will only try twice before calling game_done"
 
         # if chess_clock, signal move
         if self.chess_clock:
-            self.chess_clock.move_made()
+            self.chess_clock.move_made(game_state)
 
     def handle_state_change(self, game_state: GameState) -> None:
         """Handle a state change in the lichess game.
@@ -555,6 +564,9 @@ Will only try twice before calling game_done"
 
         # a move was made
         self.move_made(game_state)
+
+        if self.chess_clock:
+            self.chess_clock.handle_game_state(game_state)
 
         # is it our turn?
         if tmp_chessboard.turn == self.playing_white:
@@ -631,10 +643,8 @@ def handle_game_start(game_start: GameStart, chess_clock: bool = False) -> None:
     game_data = LichessGame(game_start["game"])
 
     # configure chess clock if chess clock
-    sec = game_data.secondsLeft
-    if chess_clock and sec:
+    if chess_clock:
         chess_clock = ChessClock()
-        chess_clock.configure_for_game({"initial": sec, "increment": 999})
 
     # handle 960 and regular
     game_fen = game_data.fen
@@ -720,7 +730,9 @@ The berserk lichess client will not work with simplejson.
 
     # init NicLink
     try:
-        nl_inst = NicLinkManager(refresh_delay=REFRESH_DELAY, logger=logger)
+        # FIX-ME: I do not want any driver logging now
+        # nl_inst = NicLinkManager(refresh_delay=REFRESH_DELAY, logger=logger)
+        nl_inst = NicLinkManager(refresh_delay=REFRESH_DELAY, logger=None)
         nl_inst.start()
 
     except ExitNicLink:
@@ -786,6 +798,7 @@ The berserk lichess client will not work with simplejson.
         print(f"cannot get lichess account info: {e}")
         sys.exit(-1)
     try:
+
         # main program loop
         while True:
             try:
@@ -841,4 +854,4 @@ The berserk lichess client will not work with simplejson.
 if __name__ == "__main__":
     main()
 
-#  LocalWords:  btime wtime simplejson
+#  LocalWords:  btime wtime chatLine gameFull opponentGone nNew ngame nl simplejson

@@ -48,7 +48,7 @@ void connect() {
   });
 
   chessLink->switchRealTimeMode();
-  cout << "connect out, chessboard in realtime mode" << endl;
+  cout << "Connect attempted." << endl;
 }
 
 /**

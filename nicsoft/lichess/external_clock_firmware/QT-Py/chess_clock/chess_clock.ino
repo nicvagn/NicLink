@@ -1,8 +1,9 @@
-
+// messages
+#define WHITE_BLACK "|white|--|black|"
 #define BLACK_TURN "|white|>>|black|"
 #define WHITE_TURN "|white|<<|black|"
 #define WHITE_WIN "  WHITE Wins!   "
-#define BLACK_WIN "  Black Wins!   "
+#define BLACK_WIN "  BLACK Wins!   "
 #define DRAW "  0.5/1  DRAW  "
 #define GAMEOVER "  GAME  OVER   "
 
@@ -11,6 +12,10 @@
 
 #include <LiquidCrystal_I2C.h>
 #include <Wire.h>
+
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+enum Colour {white, black};
 
 // Button structure to hold all state
 struct Button {
@@ -38,18 +43,15 @@ Button redBtn = {
   "Red Button",
   false,
 };
-
-LiquidCrystal_I2C *lcd;
-
-
 // default times
 unsigned long INCREMENT = 6000;
 unsigned long B_START_TIME = 60000;
 unsigned long W_START_TIME = 60000;
 
 unsigned long whiteTime = W_START_TIME;
+unsigned long whiteIncrement = INCREMENT;
 unsigned long blackTime = B_START_TIME;
-unsigned long increment = INCREMENT;
+unsigned long blackIncrement = INCREMENT;
 
 bool connected = false;
 bool whiteToPlay = true;
@@ -57,17 +59,13 @@ unsigned long lastUpdate = 0;
 bool gameOver = false;
 bool clockRunning = false;
 
-bool i2CAddrTest(uint8_t addr) {
-    Wire.beginTransmission(addr);
-    return Wire.endTransmission() == 0;
-}
 
 void startClock() {
   clockRunning = true;
   gameOver = false;
   lastUpdate = millis();
-  lcd->setCursor(0, 0);
-  lcd->print(WHITE_TURN);
+  lcd.setCursor(0, 0);
+  lcd.print(WHITE_TURN);
   Serial.println("CLOCK_STARTED");
 }
 
@@ -80,77 +78,79 @@ void secondsToHMS(const uint32_t seconds, uint16_t &h, uint8_t &m, uint8_t &s) {
 
 void blackMoved() {
   whiteToPlay = true;
-  lcd->setCursor(0, 0);
-  lcd->print(WHITE_TURN);
-  blackTime = blackTime + increment;
+  lcd.setCursor(0, 0);
+  lcd.print(WHITE_TURN);
+  blackTime = blackTime + blackIncrement;
 }
 
 void whiteMoved() {
   whiteToPlay = false;
-  lcd->setCursor(0, 0);
-  lcd->print(BLACK_TURN);
-  whiteTime = whiteTime + increment;
+  lcd.setCursor(0, 0);
+  lcd.print(BLACK_TURN);
+  whiteTime = whiteTime + whiteIncrement;
 }
 
 void whiteTimeOut() {
   gameOver = true;
-  lcd->clear();
-  lcd->setCursor(0, 0);
-  lcd->print("  TIME'S UP!  ");
-  lcd->setCursor(0, 1);
-  lcd->print(BLACK_WIN);
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("  TIME'S UP!  ");
+  lcd.setCursor(0, 1);
+  lcd.print(BLACK_WIN);
   Serial.println("Game Over: Black wins on time");
 }
 
 void blackTimeOut() {
   gameOver = true;
-  lcd->clear();
-  lcd->setCursor(0, 0);
-  lcd->print("  TIME'S UP!  ");
-  lcd->setCursor(0, 1);
-  lcd->print(WHITE_WIN);
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("  TIME'S UP!  ");
+  lcd.setCursor(0, 1);
+  lcd.print(WHITE_WIN);
   Serial.println("Game Over: White wins on time");
 }
 
 void whiteCheckmated() {
   gameOver = true;
   clockRunning = false;
-  lcd->clear();
-  lcd->setCursor(0, 0);
-  lcd->print("   CHECKMATE   ");
-  lcd->setCursor(0, 1);
-  lcd->print(BLACK_WIN);
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("   CHECKMATE   ");
+  lcd.setCursor(0, 1);
+  lcd.print(BLACK_WIN);
   Serial.println("GAME_OVER:BLACK_WINS");
 }
 
 void blackCheckmated() {
   gameOver = true;
   clockRunning = false;
-  lcd->clear();
-  lcd->setCursor(0, 0);
-  lcd->print("   CHECKMATE   ");
-  lcd->setCursor(0, 1);
-  lcd->print("  White Wins!   ");
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("   CHECKMATE   ");
+  lcd.setCursor(0, 1);
+  lcd.print("  White Wins!   ");
   Serial.println("GAME_OVER:WHITE_WINS");
 }
+
 void draw() {
   gameOver = true;
   clockRunning = false;
-  lcd->clear();
-  lcd->setCursor(0, 0);
-  lcd->print(DRAW);
-  lcd->setCursor(0, 1);
-  lcd->print(DRAW);
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print(DRAW);
+  lcd.setCursor(0, 1);
+  lcd.print(DRAW);
   Serial.println("GAME_OVER:DRAW");
 }
+
 void gameDone() {
   gameOver = true;
   clockRunning = false;
-  lcd->clear();
-  lcd->setCursor(0, 0);
-  lcd->print(GAMEOVER);
-  lcd->setCursor(0, 1);
-  lcd->print(GAMEOVER);
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print(GAMEOVER);
+  lcd.setCursor(0, 1);
+  lcd.print(GAMEOVER);
   Serial.println("GAME_OVER:UNKNOWN");
 }
 
@@ -160,56 +160,57 @@ void displayTime() {
   unsigned int wTotalSec = whiteTime / 1000;
   unsigned int bTotalSec = blackTime / 1000;
 
+  //White and black hours, minutes and seconds
   uint16_t wH, bH;
   uint8_t wM, wS, bM, bS;
   secondsToHMS(wTotalSec, wH, wM, wS);
   secondsToHMS(bTotalSec, bH, bM, bS);
 
-  lcd->setCursor(0, 1);
+  lcd.setCursor(0, 1);
 
   // White time
   if (wH > 0) {
-    lcd->print(wH);
-    lcd->print(":");
-    if (wM < 10) lcd->print("0");
-    lcd->print(wM);
-    lcd->print(":");
-    if (wS < 10) lcd->print("0");
-    lcd->print(wS);
+    lcd.print(wH);
+    lcd.print(":");
+    if (wM < 10) lcd.print("0");
+    lcd.print(wM);
+    lcd.print(":");
+    if (wS < 10) lcd.print("0");
+    lcd.print(wS);
   } else {
     unsigned int wCenti = (whiteTime / 10) % 100;
-    lcd->print(wM);  // Removed leading zero check
-    lcd->print(":");
-    if (wS < 10) lcd->print("0");
-    lcd->print(wS);
-    lcd->print(".");
-    if (wCenti < 10) lcd->print("0");
-    lcd->print(wCenti);
+    lcd.print(wM);  // Removed leading zero check
+    lcd.print(":");
+    if (wS < 10) lcd.print("0");
+    lcd.print(wS);
+    lcd.print(".");
+    if (wCenti < 10) lcd.print("0");
+    lcd.print(wCenti);
   }
 
-  lcd->print("|");
+  lcd.print("|");
 
   // Black time
   if (bH > 0) {
-    lcd->print(bH);
-    lcd->print(":");
-    if (bM < 10) lcd->print("0");
-    lcd->print(bM);
-    lcd->print(":");
-    if (bS < 10) lcd->print("0");
-    lcd->print(bS);
+    lcd.print(bH);
+    lcd.print(":");
+    if (bM < 10) lcd.print("0");
+    lcd.print(bM);
+    lcd.print(":");
+    if (bS < 10) lcd.print("0");
+    lcd.print(bS);
   } else {
     unsigned int bCenti = (blackTime / 10) % 100;
-    lcd->print(bM);  // Removed leading zero check
-    lcd->print(":");
-    if (bS < 10) lcd->print("0");
-    lcd->print(bS);
-    lcd->print(".");
-    if (bCenti < 10) lcd->print("0");
-    lcd->print(bCenti);
+    lcd.print(bM);  // Removed leading zero check
+    lcd.print(":");
+    if (bS < 10) lcd.print("0");
+    lcd.print(bS);
+    lcd.print(".");
+    if (bCenti < 10) lcd.print("0");
+    lcd.print(bCenti);
   }
 
-  lcd->print("   ");  // Clear any leftover characters
+  lcd.print("   ");  // Clear any leftover characters
 }
 
 void moveMade() {
@@ -225,19 +226,28 @@ void moveMade() {
 }
 
 void reset() {
-
-
   whiteTime = W_START_TIME;
   blackTime = B_START_TIME;
-  increment = INCREMENT;
+  whiteIncrement = INCREMENT;
+  blackIncrement = INCREMENT;
   whiteToPlay = true;
   gameOver = false;
   clockRunning = false;
-  lcd->clear();
-  lcd->setCursor(0, 0);
-  lcd->print("|white|--|black|");
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print(WHITE_BLACK);
   displayTime();
   Serial.println("CLOCK_RESET");
+}
+
+void setTime(unsigned long seconds, unsigned long increment, Colour colour)
+{
+  switch(colour)
+  {
+    case Colour::white:
+      whiteTime = seconds;
+
+  }
 }
 
 void processSerialCommand(String cmd) {
@@ -247,34 +257,32 @@ void processSerialCommand(String cmd) {
   if (cmd == "m") {
     moveMade();
   } else if (cmd.startsWith("TIME:")) {
-    // Format: TIME:300:5 (300 seconds + 5 second increment)
+    // Format: TIME:300+5 (300 seconds + 5 second increment)
     // or TIME:300:0 (300 seconds, no increment)
-    int firstColon = cmd.indexOf(':', 5);
-    Serial.print("firstColon: ");
-    Serial.println(firstColon);
-    if (firstColon > 0) {
-      String timeStr = cmd.substring(5, firstColon);
-      String incStr = cmd.substring(firstColon + 1);
+
+    /* find the position of theh first '+'. This denotes the end boundry between the start time and increment*/
+    int incrementIndex = cmd.indexOf('+');
+    if (incrementIndex > 0) {
+      // extract time values from TIME:timeStr+incStr
+      String timeStr = cmd.substring(5, incrementIndex);
+      String incStr = cmd.substring(incrementIndex + 1);
 
       unsigned long seconds = timeStr.toInt();
       unsigned long incSeconds = incStr.toInt();
 
       whiteTime = seconds * 1000;
       blackTime = seconds * 1000;
-      increment = incSeconds * 1000;
 
-      gameOver = false;
-      clockRunning = false;
-      whiteToPlay = true;
-
-      lcd->setCursor(0, 0);
-      lcd->print("|white|--|black|");
+      lcd.setCursor(0, 0);
+      lcd.print(WHITE_BLACK);
       displayTime();
 
       Serial.print("TIME_SET:");
       Serial.print(seconds);
-      Serial.print(":");
+      Serial.print("+");
       Serial.println(incSeconds);
+    } else {
+      Serial.println("ERROR: Invalid time");
     }
   } else if (cmd == "BMATE") {
     blackCheckmated();
@@ -290,10 +298,12 @@ void processSerialCommand(String cmd) {
   } else if (cmd == "STATUS") {
     Serial.print("STATUS:");
     Serial.print(whiteTime);
+    Serial.print("+");
+    Serial.print(whiteIncrement);
     Serial.print(":");
     Serial.print(blackTime);
-    Serial.print(":");
-    Serial.print(increment);
+    Serial.print("+");
+    Serial.print(blackIncrement);
     Serial.print(":");
     Serial.print(clockRunning ? "RUNNING" : "STOPPED");
     Serial.print(":");
@@ -307,16 +317,15 @@ void processSerialCommand(String cmd) {
 }
 
 void setup() {
-  Wire.begin(SDA, SCL);
-  if (!i2CAddrTest(0x27)) {
-      lcd = new LiquidCrystal_I2C(0x3F, 16, 2);
-  } else {
-      lcd = new LiquidCrystal_I2C(0x27, 16, 2);
+  // start serial connection
+  Serial.begin(9600);
+  while (!Serial) {
+    delay(10);
   }
-  lcd->init();                     // LCD driver initialization
-  lcd->backlight();                // Open the backlight
-  lcd->setCursor(0,0);             // Move the cursor to row 0, column 0
-  lcd->print("hello, world!");     // The print content is displayed on the LCD
+
+  lcd.init();
+  lcd.backlight();
+  reset();
 
   displayTime();
   lastUpdate = millis();
@@ -390,13 +399,12 @@ void loop() {
           return;
         }
       }
-
       displayTime();
     }
   }
-
   // check buttons
   checkButton(redBtn);
-
   checkButton(greenBtn);
 }
+
+//  LocalWords:  BMATE
