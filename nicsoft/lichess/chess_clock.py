@@ -15,8 +15,7 @@ import time
 def setup_logging():
     """Init logging for module."""
     logger = logging.getLogger("ChessClock")
-    logger.warning(f"logger created for ChessClock")
-
+    logger.info(f"logger created for ChessClock")
     consoleHandler = logging.StreamHandler(sys.stdout)
 
     logger.setLevel(logging.DEBUG)

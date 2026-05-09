@@ -1,4 +1,5 @@
 A udev rule has to be written for the chessboard see README.md and 99-chessnutair.rules.example
+
 also see:
 https://github.com/libusb/hidapi
 
