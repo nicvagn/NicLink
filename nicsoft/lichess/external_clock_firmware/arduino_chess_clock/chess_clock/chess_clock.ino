@@ -23,33 +23,19 @@ struct Button {
 };
 
 Button greenBtn = {
-  6,
-  HIGH,
-  HIGH,
-  0,
-  "Green Button",
-  false,
+    6, HIGH, HIGH, 0, "Green Button", false,
 };
 Button redBtn = {
-  7,
-  HIGH,
-  HIGH,
-  0,
-  "Red Button",
-  false,
+    7, HIGH, HIGH, 0, "Red Button", false,
 };
 
 LiquidCrystal_I2C *lcd;
 
-
 // default times
-unsigned long INCREMENT = 6000;
-unsigned long B_START_TIME = 60000;
-unsigned long W_START_TIME = 60000;
-
-unsigned long whiteTime = W_START_TIME;
-unsigned long blackTime = B_START_TIME;
-unsigned long increment = INCREMENT;
+unsigned long whiteTime = 100000;
+unsigned long blackTime = 100000;
+unsigned long whiteincrement = 0;
+unsigned long blackincrement = 0;
 
 bool connected = false;
 bool whiteToPlay = true;
@@ -58,8 +44,8 @@ bool gameOver = false;
 bool clockRunning = false;
 
 bool i2CAddrTest(uint8_t addr) {
-    Wire.beginTransmission(addr);
-    return Wire.endTransmission() == 0;
+  Wire.beginTransmission(addr);
+  return Wire.endTransmission() == 0;
 }
 
 void startClock() {
@@ -154,8 +140,6 @@ void gameDone() {
   Serial.println("GAME_OVER:UNKNOWN");
 }
 
-
-
 void displayTime() {
   unsigned int wTotalSec = whiteTime / 1000;
   unsigned int bTotalSec = blackTime / 1000;
@@ -171,21 +155,27 @@ void displayTime() {
   if (wH > 0) {
     lcd->print(wH);
     lcd->print(":");
-    if (wM < 10) lcd->print("0");
-    lcd->print(wM);
-    lcd->print(":");
-    if (wS < 10) lcd->print("0");
-    lcd->print(wS);
   } else {
-    unsigned int wCenti = (whiteTime / 10) % 100;
-    lcd->print(wM);  // Removed leading zero check
-    lcd->print(":");
-    if (wS < 10) lcd->print("0");
-    lcd->print(wS);
-    lcd->print(".");
-    if (wCenti < 10) lcd->print("0");
-    lcd->print(wCenti);
+    lcd->print(" ");
   }
+  if (wM < 10) {
+    lcd->print("0");
+  }
+  lcd->print(wM);
+  lcd->print(":");
+  if (wS < 10)
+    lcd->print("0");
+  lcd->print(wS);
+  unsigned int wCenti = (whiteTime / 10) % 100;
+  lcd->print(wM); // Removed leading zero check
+  lcd->print(":");
+  if (wS < 10)
+    lcd->print("0");
+  lcd->print(wS);
+  lcd->print(".");
+  if (wCenti < 10)
+    lcd->print("0");
+  lcd->print(wCenti);
 
   lcd->print("|");
 
@@ -193,23 +183,26 @@ void displayTime() {
   if (bH > 0) {
     lcd->print(bH);
     lcd->print(":");
-    if (bM < 10) lcd->print("0");
-    lcd->print(bM);
-    lcd->print(":");
-    if (bS < 10) lcd->print("0");
-    lcd->print(bS);
-  } else {
-    unsigned int bCenti = (blackTime / 10) % 100;
-    lcd->print(bM);  // Removed leading zero check
-    lcd->print(":");
-    if (bS < 10) lcd->print("0");
-    lcd->print(bS);
-    lcd->print(".");
-    if (bCenti < 10) lcd->print("0");
-    lcd->print(bCenti);
   }
+  if (bM < 10)
+    lcd->print("0");
+  lcd->print(bM);
+  lcd->print(":");
+  if (bS < 10)
+    lcd->print("0");
+  lcd->print(bS);
+  unsigned int bCenti = (blackTime / 10) % 100;
+  lcd->print(bM); // Removed leading zero check
+  lcd->print(":");
+  if (bS < 10)
+    lcd->print("0");
+  lcd->print(bS);
+  lcd->print(".");
+  if (bCenti < 10)
+    lcd->print("0");
+  lcd->print(bCenti);
 
-  lcd->print("   ");  // Clear any leftover characters
+  lcd->print("   "); // Clear any leftover characters
 }
 
 void moveMade() {
@@ -225,7 +218,6 @@ void moveMade() {
 }
 
 void reset() {
-
 
   whiteTime = W_START_TIME;
   blackTime = B_START_TIME;
@@ -247,7 +239,7 @@ void processSerialCommand(String cmd) {
   if (cmd == "m") {
     moveMade();
   } else if (cmd.startsWith("TIME:")) {
-    // Format: TIME:300:5 (300 seconds + 5 second increment)
+    // Format: TIME:
     // or TIME:300:0 (300 seconds, no increment)
     int firstColon = cmd.indexOf(':', 5);
     Serial.print("firstColon: ");
@@ -309,14 +301,14 @@ void processSerialCommand(String cmd) {
 void setup() {
   Wire.begin(SDA, SCL);
   if (!i2CAddrTest(0x27)) {
-      lcd = new LiquidCrystal_I2C(0x3F, 16, 2);
+    lcd = new LiquidCrystal_I2C(0x3F, 16, 2);
   } else {
-      lcd = new LiquidCrystal_I2C(0x27, 16, 2);
+    lcd = new LiquidCrystal_I2C(0x27, 16, 2);
   }
-  lcd->init();                     // LCD driver initialization
-  lcd->backlight();                // Open the backlight
-  lcd->setCursor(0,0);             // Move the cursor to row 0, column 0
-  lcd->print("hello, world!");     // The print content is displayed on the LCD
+  lcd->init();                 // LCD driver initialization
+  lcd->backlight();            // Open the backlight
+  lcd->setCursor(0, 0);        // Move the cursor to row 0, column 0
+  lcd->print("hello, world!"); // The print content is displayed on the LCD
 
   displayTime();
   lastUpdate = millis();
@@ -400,3 +392,5 @@ void loop() {
 
   checkButton(greenBtn);
 }
+
+//  LocalWords:  firstColon incSeconds
