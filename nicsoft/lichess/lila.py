@@ -411,6 +411,9 @@ and setting moved event",
                 # once move has been made set self.response_error_on_last_attempt to false and return
                 self.response_error_on_last_attempt = False
 
+                if self.chess_clock:
+                    self.chess_clock.move_made()
+
                 # exit function on success
                 return
             except ResponseError as err:
@@ -503,13 +506,13 @@ Will only try twice before calling game_done"
 
         return tmp_chessboard
 
-    def move_made(self, game_state: GameState) -> None:
+    def opponent_moved(self, game_state: GameState) -> None:
         """signal that the opponent moved, signal the external clock
         and NicLink
         @param: game_state: the gamestate containing the move
         """
         logger.info(
-            "\nmove_made(self, game_state) entered with GameState: %s",
+            "\n" + "Opponent_moved(self, game_state) entered with GameState: %s",
             game_state,
         )
 
@@ -563,7 +566,7 @@ Will only try twice before calling game_done"
             self.game_done(game_state=game_state)
 
         # a move was made
-        self.move_made(game_state)
+        self.opponent_moved(game_state)
 
         if self.chess_clock:
             self.chess_clock.handle_game_state(game_state)

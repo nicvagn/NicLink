@@ -15,8 +15,7 @@ import time
 def setup_logging():
     """Init logging for module."""
     logger = logging.getLogger("ChessClock")
-    logger.warning(f"logger created for ChessClock")
-
+    logger.info(f"logger created for ChessClock")
     consoleHandler = logging.StreamHandler(sys.stdout)
 
     logger.setLevel(logging.DEBUG)
@@ -179,7 +178,7 @@ class ChessClock:
 
             return None
 
-        except Exception as e:
+        except RuntimeException as e:
             self.logger.error(f"Failed to send command to chess clock: {e}")
             self.is_connected = False
             return None
@@ -196,19 +195,15 @@ class ChessClock:
         """Display black won by mate."""
         self.send_command("WMATE")
 
-    def set_time(self, seconds, increment=0):
-        """Set initial time and increment.
+    def set_time(self, winit, binit, winc, binc):
+        self.winit = winit
+        self.binit = binit
+        self.winc = winc
+        self.binc = binc
 
-        Args
-        ----
-        seconds: Initial time in seconds for each player
-        increment: Increment in seconds per move (default 0)
-
-        Returns
-        -------
-        bool: True if successful
-        """
-        self.send_command(f"TIME:{seconds}+{increment}")
+        cmd = f"TIME:{winit}+{winc},{binit}+{binc}"
+        self.logger.info("time_set cmd: %s", cmd)
+        self.send_command(cmd)
 
     def start(self):
         """Start the chess clock."""
@@ -284,17 +279,18 @@ class ChessClock:
 
         Args
         ----
-        time_control: dict with 'initial' (seconds) and 'increment' (seconds)
+        time_control: dict with "winit", "binit", "winc" and "binc"
 
         Example
         -------
-            clock.configure_for_game({'initial': 300, 'increment': 5})  # 5+5
+            clock.configure_for_game({"winit":900, "binit":900, "winc":100, "binc":10})
         """
-        initial = game_start.get("initial")
-        increment = game_start.get("increment")
+        winit = game_start.get("winit")
+        binit = game_start.get("binit")
+        winc = game_start.get("winc")
+        binc = game_start.get("binc")
 
-        self.set_time(initial, increment)
-
+        self.set_time(winit, binit, winc, binc)
         return self.start()
 
     def disconnect(self):
@@ -314,7 +310,7 @@ if __name__ == "__main__":
     # test
     clock = ChessClock()
     clock.get_status()
-    clock.configure_for_game({"initial": 300, "increment": 30})
+    clock.configure_for_game({"winit": 30000, "winc": 300, "binit": 9000, "binc": 300})
     clock.start()
 
     x = 1
@@ -326,4 +322,4 @@ if __name__ == "__main__":
 
     clock.black_won()
 
-#  LocalWords:  BMATE WMATE
+#  LocalWords:  BMATE WMATE winit binit binc winc
