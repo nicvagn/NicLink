@@ -77,6 +77,7 @@ class NicLinkManager(threading.Thread):
         logger: logging.Logger | None,
         thread_sleep_delay=1,
         bluetooth: bool = False,
+        debug: bool = True,
     ):
         """initialize the link to the chessboard, and set up NicLink"""
 
@@ -100,6 +101,8 @@ class NicLinkManager(threading.Thread):
         self.nl_interface = _niclink
 
         self.refresh_delay = refresh_delay
+
+        self.debug = debug
 
         try:
             self.connect()
@@ -177,6 +180,13 @@ and turned on?"
             "\n\n _run_game(...): game_over event set, resetting NicLink\n"
         )
 
+    def _connect(self):
+        self.nl_interface.connect()
+        time.sleep(self.thread_sleep_delay)
+        test_fen = self.nl_interface.get_fen()
+        self.logger.info("_connect() -> fen '%s'" % test_fen)
+        return test_fen
+
     def connect(self, bluetooth: bool = False) -> None:
         """connect to the chessboard
         @param: bluetooth - should we use bluetooth
@@ -185,21 +195,17 @@ and turned on?"
         if bluetooth:
             raise NotImplementedError
 
+        test_fen = self._connect()
         # connect to the chessboard, this must be done first
-        self.nl_interface.connect()
-
-        # FIX: give time for NL to connect
-        time.sleep(self.thread_sleep_delay)
-        test_fen = self.nl_interface.get_fen()
-        time.sleep(self.thread_sleep_delay)
-        # make sure get_fen is working
-        test_fen = self.nl_interface.get_fen()
-
-        if test_fen == "":
-            exception_message = "Board initialization error. '' or None \
-for fen. Is the board connected and turned on?"
-
-            raise RuntimeError(exception_message)
+        while not test_fen:
+            test_fen = self.nl_interface.get_fen()
+            if not test_fen:
+                self.logger.info("Failed to get fen, reconnecting.")
+                self.disconnect()
+                time.sleep(self.thread_sleep_delay)
+                self.connect()
+                time.sleep(self.thread_sleep_delay)
+                test_fen = self.nl_interface.get_fen()
 
         self.logger.info("Board initialized. initial fen: |%s|" % test_fen)
 
@@ -421,12 +427,15 @@ called with following light_board:"
 
     def get_fen(self) -> str:
         """get the board fen from chessboard"""
-        fen = self.nl_interface.get_fen()
-        if fen is not None:
-            return fen
-        # else:
 
-        raise NoNicLinkFen("No fen got from board")
+        fen = ""
+        while not fen:
+            fen = self.nl_interface.get_fen()
+
+            if fen:
+                return fen
+            else:
+                self.logger.warning(f"falsy fen got from board. fen '%s'" % fen)
 
     def put_board_fen_on_board(self, board_fen: str) -> chess.Board:
         """show just the board part of fen on asci chessboard,
@@ -435,6 +444,11 @@ called with following light_board:"
                           ie: 8/8/8/8/8/8/8 for empty board ...
         @return: a chess.Board with that board fen on it
         """
+        if not board_fen:
+            msg = "board_fen is falsy."
+            self.logger.info(msg)
+            return msg
+
         tmp_board = chess.Board()
         tmp_board.set_board_fen(board_fen)
         print(tmp_board)
@@ -544,14 +558,23 @@ it is white's turn? %s =====\n board we are using to check for moves:\n%s\n",
                     self.game_board.turn,
                     self.game_board,
                 )
-                # show the board diff from what we are checking for legal moves
-                self.logger.info("diff from board we are checking legal moves on:\n")
-                current_board = chess.Board(new_fen)
-                self.show_board_diff(current_board, self.game_board)
-                # pause for the refresh_delay and allow other threads to run
+                try:
+                    # show the board diff from what we are checking for legal moves
+                    self.logger.info(
+                        "diff from board we are checking legal moves on:\n"
+                    )
+                    current_board = chess.Board(new_fen)
+                    self.show_board_diff(current_board, self.game_board)
+                    # pause for the refresh_delay and allow other threads to run
 
-                time.sleep(self.refresh_delay)
-                return False
+                    time.sleep(self.refresh_delay)
+                    return False
+
+                except ValueError as err:
+                    self.logger.info("value error: %s", err)
+                    log_handled_exception(err)
+                    time.sleep(self.refresh_delay)
+                    return False
 
             # return the move
             with self.lock:
@@ -646,7 +669,10 @@ it is white's turn? %s =====\n board we are using to check for moves:\n%s\n",
 
     def set_board_fen(self, board: chess.Board, fen: str) -> None:
         """set a board up according to a fen"""
-        chess.Board.set_board_fen(board, fen=fen)
+        if fen:
+            chess.Board.set_board_fen(board, fen=fen)
+        else:
+            self.logger.warning("fen is None")
 
     def set_game_board_fen(self, fen: str) -> None:
         """set the internal game board fen"""
