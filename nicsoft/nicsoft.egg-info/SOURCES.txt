@@ -10,8 +10,6 @@ lichess/game_state.py
 lichess/lila.py
 lichess/external_clock_firmware/__init__.py
 lichess/external_clock_firmware/sending_messages.py
-lichess/external_clock_firmware/old/chess_clock.py
-lichess/external_clock_firmware/old/talking_to_aurdino.py
 niclink/__init__.py
 niclink/driver.py
 niclink/nl_exceptions.py
@@ -31,6 +29,7 @@ play_stockfish/__main__.py
 test/__init__.py
 test/__main__.py
 test/nl_test_threading.py
+test/test_960.py
 test/test_niclink_FEN.py
 test/test_niclink_board_compairison.py
 test/test_niclink_lights.py
