@@ -61,11 +61,12 @@ class ChessClock:
     clock.reset()
     """
 
-    def __init__(self, port="/dev/ttyACM0", baud_rate=9600):
+    def __init__(self, game_state=None, port="/dev/ttyACM0", baud_rate=9600):
         """Initialize chess clock.
 
         Args
         ----
+            game_state: maybe an initial game state, else None
             port: Specific serial port (optional, will auto-detect if None)
             baud_rate: Serial baud rate (default 9600)
         """
@@ -77,10 +78,17 @@ class ChessClock:
         self.is_connected = False
         self.last_move_count = 0
         self.clock_running = False
-        self.wtime: timedelta = None
-        self.btime: timedelta = None
-        self.winc: timedelta = None
-        self.binc: timedelta = None
+
+        if game_state is None:
+            self.wtime: timedelta = None
+            self.btime: timedelta = None
+            self.winc: timedelta = None
+            self.binc: timedelta = None
+        else:
+            self.wtime: timedelta = game_state.get_wtime()
+            self.btime: timedelta = game_state.get_btime()
+            self.winc: timedelta = game_state.get_winc()
+            self.binc: timedelta = game_state.get_binc()
 
         if port:
             self.logger.info("connecting to port: %s", port)
@@ -178,7 +186,7 @@ class ChessClock:
 
             return None
 
-        except RuntimeException as e:
+        except RuntimeError as e:
             self.logger.error(f"Failed to send command to chess clock: {e}")
             self.is_connected = False
             return None
@@ -195,13 +203,14 @@ class ChessClock:
         """Display black won by mate."""
         self.send_command("WMATE")
 
-    def set_time(self, winit, binit, winc, binc):
-        self.winit = winit
-        self.binit = binit
+    def set_time(self, wtime, btime, winc, binc):
+        """all times should be in seconds"""
+        self.wtime = wtime
+        self.btime = btime
         self.winc = winc
         self.binc = binc
 
-        cmd = f"TIME:{winit}+{winc},{binit}+{binc}"
+        cmd = f"TIME:{wtime}+{winc},{btime}+{binc}"
         self.logger.info("time_set cmd: %s", cmd)
         self.send_command(cmd)
 
@@ -232,6 +241,7 @@ class ChessClock:
         dict: Clock status with keys: white_time, black_time, increment, running, to_play
         """
         response = self.send_command("STATUS")
+        self.logger.info("cmd STATUS got %s", response)
         if response:
             if response.startswith("STATUS:"):
                 parts = response.split(":")
@@ -239,11 +249,10 @@ class ChessClock:
                     return {
                         "white_time": int(parts[1]),
                         "black_time": int(parts[2]),
-                        "increment": int(parts[3]),
-                        "running": (parts[4] == "RUNNING"),
-                        "to_play": parts[5],
+                        "running": (parts[3] == "RUNNING"),
+                        "to_play": parts[4],
                     }
-            raise RuntimeError("Could not parse response %s", response)
+            raise RuntimeError("Could not parse response %s" % response)
 
         else:
             self.logger.warning("Clock did not respond to STATUS:")
@@ -269,10 +278,10 @@ class ChessClock:
             self.game_over()
             return
 
-        self.wtime: timedelta = game_state.wtime
-        self.btime: timedelta = game_state.btime
-        self.winc: timedelta = game_state.winc
-        self.binc: timedelta = game_state.binc
+        # send time to clock
+        self.set_time(
+            game_state.wtime, game_state.btime, game_state.winc, game_state.binc
+        )
 
     def configure_for_game(self, game_start):
         """Configure clock for a time control.

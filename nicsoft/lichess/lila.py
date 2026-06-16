@@ -645,8 +645,7 @@ def handle_game_start(game_start: GameStart, chess_clock: bool = False) -> None:
 
     # configure chess clock if chess clock
     if chess_clock:
-        chess_clock = ChessClock()
-
+        chess_clock = ChessClock(game_state=game_data)
     # handle 960 and regular
     game_fen = game_data.fen
 

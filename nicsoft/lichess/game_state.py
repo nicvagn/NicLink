@@ -102,4 +102,4 @@ class GameState:
 
     def __str__(self) -> str:
         return f"GameState, Moves: { self.moves }, status: {self.status
-        },\n wtime: { self.wtime } btime: { self.btime }"
+        }, wtime: { self.wtime } btime: { self.btime }"

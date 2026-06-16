@@ -8,8 +8,6 @@ lichess/game.py
 lichess/game_start.py
 lichess/game_state.py
 lichess/lila.py
-lichess/external_clock_firmware/__init__.py
-lichess/external_clock_firmware/sending_messages.py
 niclink/__init__.py
 niclink/driver.py
 niclink/nl_exceptions.py
