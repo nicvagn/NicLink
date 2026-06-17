@@ -1,0 +1,2 @@
+default_fqbn: adafruit:samd:adafruit_qtpy_m0
+default_port: /dev/ttyACM0

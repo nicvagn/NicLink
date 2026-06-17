@@ -10,6 +10,8 @@ import sys
 import serial.tools.list_ports
 import logging
 import time
+import datetime
+from datetime import timedelta
 
 
 def setup_logging() -> logging.logger:
@@ -79,12 +81,7 @@ class ChessClock:
         self.last_move_count = 0
         self.clock_running = False
 
-        if game_state is None:
-            self.wtime: timedelta = None
-            self.btime: timedelta = None
-            self.winc: timedelta = None
-            self.binc: timedelta = None
-        else:
+        if game_state:
             self.wtime: timedelta = game_state.get_wtime()
             self.btime: timedelta = game_state.get_btime()
             self.winc: timedelta = game_state.get_winc()
@@ -208,33 +205,30 @@ class ChessClock:
 
         Parameters
         ----------
-        wtime : int
-            whites time in milliseconds
-        btime : int
-            blacks time time in milliseconds
-        winc : int
-            whites increment time in milliseconds
-        binc : int
-            blacks increment time time in milliseconds
+        wtime : timedelta
+            whites time
+        btime : timedelta
+            blacks time
+        winc : timedelta
+            whites increment time
+        binc : timedelta
+            blacks increment time
 
         Returns
         ------
         None
         """
-        wtime_in_seconds = wtime
-        btime_in_seconds = btime
-        winc_in_seconds = winc
-        binc_in_seconds = binc
         self.logger.info(
-            "wtime_in_seconds: %s, btime_in_seconds: %s, winc_in_seconds: %s, binc_in_seconds: %s",
-            wtime_in_seconds,
-            btime_in_seconds,
-            winc_in_seconds,
-            binc_in_seconds,
+            "wtime: %s, btime: %s, winc: %s, binc: %s",
+            wtime,
+            btime,
+            winc,
+            binc,
         )
-        breakpoint()
-        cmd = f"TIME:{wtime_in_seconds}+{winc_in_seconds},{btime_in_seconds}+{binc_in_seconds}"
+        # firmware depends on this format
+        cmd = f"TIME:{int(wtime.total_seconds())}+{int(winc.total_seconds())},{int(btime.total_seconds())}+{int(binc.total_seconds())}"
         self.logger.info("time_set cmd: %s", cmd)
+        breakpoint()
         self.send_command(cmd)
 
     def start(self):
@@ -268,9 +262,10 @@ class ChessClock:
         if response:
             if response.startswith("STATUS:"):
                 parts = response.split(":")
+
                 return {
-                    "white_time": int(parts[1]),
-                    "black_time": int(parts[2]),
+                    "white_time": parts[1],
+                    "black_time": parts[2],
                     "running": (parts[3] == "RUNNING"),
                     "to_play": parts[4],
                 }
@@ -282,6 +277,9 @@ class ChessClock:
     def move_made(self, game_state=None):
         """Send move signal to chess clock."""
         self.logger.info("move_made entered, game_state: %s", game_state)
+        if game_state:
+            self.handle_game_state(game_state)
+
         self.send_command("m")
 
     def handle_game_state(self, game_state):
@@ -338,19 +336,12 @@ class ChessClock:
 
 
 if __name__ == "__main__":
-    # test
-    clock = ChessClock()
-    clock.get_status()
-    clock.configure_for_game({"winit": 30000, "winc": 300, "binit": 9000, "binc": 300})
-    clock.start()
+    chess_clock = ChessClock()
 
-    x = 1
+    whiteTime = datetime.timedelta(seconds=3000)
+    blackTime = datetime.timedelta(seconds=3000)
+    wInc = datetime.timedelta(seconds=30)
+    bInc = datetime.timedelta(seconds=30)
 
-    print("Enter something to send move; enter 0 to exit")
-    while x != "0":
-        clock.move_made()
-        x = input()
-
-    clock.black_won()
 
 #  LocalWords:  BMATE WMATE winit binit binc winc

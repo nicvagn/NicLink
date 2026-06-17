@@ -8,6 +8,8 @@ import logging
 from datetime import timedelta
 from typing import List
 
+
+# see: https://lichess.org/api#tag/board/GET/api/board/game/stream/{gameId}
 """ some exceptions """
 
 
@@ -70,7 +72,7 @@ class GameState:
         return False
 
     def white_to_move(self) -> bool:
-        """is white to move in this gamestate
+        """is white to move in this GameState
         @returns: (bool) if it is whites move
         """
         if self.has_moves():
