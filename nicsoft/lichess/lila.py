@@ -93,7 +93,7 @@ logger.info("CHESS_CLOCK: %s", CHESS_CLOCK)
 
 # === constants ===
 # refresh refresh delay for NicLink and Lichess
-REFRESH_DELAY = 0.3
+REFRESH_DELAY = 0.5
 # POLL_DELAY for checking for new games
 POLL_DELAY = 10
 
@@ -645,7 +645,7 @@ def handle_game_start(game_start: GameStart, chess_clock: bool = False) -> None:
 
     # configure chess clock if chess clock
     if chess_clock:
-        chess_clock = ChessClock(game_state=game_data)
+        chess_clock = ChessClock()
     # handle 960 and regular
     game_fen = game_data.fen
 

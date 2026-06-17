@@ -12,7 +12,7 @@ import logging
 import time
 
 
-def setup_logging():
+def setup_logging() -> logging.logger:
     """Init logging for module."""
     logger = logging.getLogger("ChessClock")
     logger.info(f"logger created for ChessClock")
@@ -204,13 +204,36 @@ class ChessClock:
         self.send_command("WMATE")
 
     def set_time(self, wtime, btime, winc, binc):
-        """all times should be in seconds"""
-        self.wtime = wtime
-        self.btime = btime
-        self.winc = winc
-        self.binc = binc
+        """Set the time displayed on LCD
 
-        cmd = f"TIME:{wtime}+{winc},{btime}+{binc}"
+        Parameters
+        ----------
+        wtime : int
+            whites time in milliseconds
+        btime : int
+            blacks time time in milliseconds
+        winc : int
+            whites increment time in milliseconds
+        binc : int
+            blacks increment time time in milliseconds
+
+        Returns
+        ------
+        None
+        """
+        wtime_in_seconds = wtime
+        btime_in_seconds = btime
+        winc_in_seconds = winc
+        binc_in_seconds = binc
+        self.logger.info(
+            "wtime_in_seconds: %s, btime_in_seconds: %s, winc_in_seconds: %s, binc_in_seconds: %s",
+            wtime_in_seconds,
+            btime_in_seconds,
+            winc_in_seconds,
+            binc_in_seconds,
+        )
+        breakpoint()
+        cmd = f"TIME:{wtime_in_seconds}+{winc_in_seconds},{btime_in_seconds}+{binc_in_seconds}"
         self.logger.info("time_set cmd: %s", cmd)
         self.send_command(cmd)
 
@@ -245,15 +268,14 @@ class ChessClock:
         if response:
             if response.startswith("STATUS:"):
                 parts = response.split(":")
-                if len(parts) == 6:
-                    return {
-                        "white_time": int(parts[1]),
-                        "black_time": int(parts[2]),
-                        "running": (parts[3] == "RUNNING"),
-                        "to_play": parts[4],
-                    }
-            raise RuntimeError("Could not parse response %s" % response)
-
+                return {
+                    "white_time": int(parts[1]),
+                    "black_time": int(parts[2]),
+                    "running": (parts[3] == "RUNNING"),
+                    "to_play": parts[4],
+                }
+            else:
+                self.logger.warning("Could not parse response: %s", response)
         else:
             self.logger.warning("Clock did not respond to STATUS:")
 
