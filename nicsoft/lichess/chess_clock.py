@@ -63,7 +63,9 @@ class ChessClock:
     clock.reset()
     """
 
-    def __init__(self, game_state=None, port="/dev/ttyACM0", baud_rate=9600):
+    def __init__(
+        self, game_state=None, port="/dev/ttyACM0", baud_rate=9600, logger=None
+    ):
         """Initialize chess clock.
 
         Args
@@ -71,8 +73,12 @@ class ChessClock:
             game_state: maybe an initial game state, else None
             port: Specific serial port (optional, will auto-detect if None)
             baud_rate: Serial baud rate (default 9600)
+            logger: logger to use, is None one is made
         """
-        self.logger = setup_logging()
+        if logger is None:
+            self.logger = setup_logging()
+        else:
+            self.logger = logger
         self.logger.info("LOGGING SETUP FOR CHESS CLOCK")
         self.clock_serial = None
         self.port = port
@@ -200,17 +206,19 @@ class ChessClock:
         """Display black won by mate."""
         self.send_command("WMATE")
 
-    def set_time(self, wtime, btime, winc, binc):
+    def set_time(
+        self, wtime: timedelta, winc: timedelta, btime: timedelta, binc: timedelta
+    ):
         """Set the time displayed on LCD
 
         Parameters
         ----------
         wtime : timedelta
             whites time
-        btime : timedelta
-            blacks time
         winc : timedelta
             whites increment time
+        btime : timedelta
+            blacks time
         binc : timedelta
             blacks increment time
 
@@ -219,16 +227,27 @@ class ChessClock:
         None
         """
         self.logger.info(
-            "wtime: %s, btime: %s, winc: %s, binc: %s",
+            "wtime: %s,  winc: %s, btime: %s, binc: %s",
             wtime,
-            btime,
             winc,
+            btime,
             binc,
         )
+        white_ms = int(wtime.total_seconds() * 1000)
+        black_ms = int(btime.total_seconds() * 1000)
+        winc_ms = int(winc.total_seconds() * 1000)
+        binc_ms = int(binc.total_seconds() * 1000)
+
+        self.logger.info(
+            "wtime_ms: %s,  winc_ms: %s, btime_ms: %s, binc_ms: %s",
+            white_ms,
+            winc_ms,
+            black_ms,
+            binc_ms,
+        )
         # firmware depends on this format
-        cmd = f"TIME:{int(wtime.total_seconds())}+{int(winc.total_seconds())},{int(btime.total_seconds())}+{int(binc.total_seconds())}"
+        cmd = f"TIME:{white_ms}+{winc_ms},{black_ms}+{binc_ms}"
         self.logger.info("time_set cmd: %s", cmd)
-        breakpoint()
         self.send_command(cmd)
 
     def start(self):
@@ -335,13 +354,28 @@ class ChessClock:
         self.clock_serial = None
 
 
-if __name__ == "__main__":
-    chess_clock = ChessClock()
+def test():
+    global logger
+    try:
+        logger
+    except NameError:
+        logger = setup_logging()
+
+    cc = ChessClock(logger=logger)
 
     whiteTime = datetime.timedelta(seconds=3000)
     blackTime = datetime.timedelta(seconds=3000)
     wInc = datetime.timedelta(seconds=30)
     bInc = datetime.timedelta(seconds=30)
 
+    while True:
+        exit = input("EOF to exit")
+        whiteTime = whiteTime - wInc
+        blackTime = blackTime - bInc
+        cc.set_time(whiteTime, wInc, blackTime, bInc)
+
+
+if __name__ == "__main__":
+    test()
 
 #  LocalWords:  BMATE WMATE winit binit binc winc
