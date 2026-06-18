@@ -12,6 +12,7 @@
 #define GAMEOVER "  GAME  OVER   "
 
 // buttons
+#define DEBOUNCE_DELAY 10
 #define SDA_PIN 13
 #define SCL_PIN 14
 #define LCD_ADDR 0x27
@@ -28,13 +29,13 @@
 #define MOVE_MADE_PIN 5
 
 /**
- * LiquidCrystal_I2C  Constructor
- *
- * @param LCD_ADDR	I2C slave address of the LCD display. Most likely printed on the
- *					LCD circuit board, or look in the supplied LCD documentation.
- * @param LCD_COLS	Number of columns your LCD display has.
- * @param LCD_ROWS	Number of rows your LCD display has.
- */
+* LiquidCrystal_I2C  Constructor
+*
+* @param LCD_ADDR	I2C slave address of the LCD display. Most likely printed on the
+*					LCD circuit board, or look in the supplied LCD documentation.
+* @param LCD_COLS	Number of columns your LCD display has.
+* @param LCD_ROWS	Number of rows your LCD display has.
+*/
 LiquidCrystal_I2C lcd(LCD_ADDR, LCD_ROWS, LCD_COL);
 
 enum Colour { white,
@@ -50,20 +51,20 @@ struct Button {
   bool holdKey;
 };
 
-Button resetBtn = {
+Button greenBtn = {
   RESET_BTN_PIN,
   HIGH,
   HIGH,
   0,
-  "Reset Button",
+  "Green Button",
   false,
 };
-Button moveBtn = {
+Button redBtn = {
   MOVE_MADE_PIN,
   HIGH,
   HIGH,
   0,
-  "Move Button",
+  "Red Button",
   false,
 };
 
@@ -286,18 +287,17 @@ void processSerialCommand(String cmd) {
     moveMade();
     // set time for both players
   } else if (cmd.startsWith("TIME:")) {
-    // Format: TIME:{time in milliseconds}+{Increment in milliseconds}
-    //         TIME:{w_time in ms}+{w_inc in ms},{b_time in ms}+{b_inc in ms}
-    //         TIME:300000+5000,600000+10000 (white: 300s+5s, black: 600s+10s)
-    //         TIME:300000,600000   (white: 300s, black: 600s, no increment)
+    // Format: TIME:300+5        (both players: 300s + 5s increment)
+    //         TIME:300+5,600+10 (white: 300s+5s, black: 600s+10s)
+    //         TIME:300,600      (white: 300s, black: 600s, no increment)
     int commaIndex = cmd.indexOf(',');
     unsigned long wTime = 0, wInc = 0, bTime = 0, bInc = 0;
     bool valid = false;
 
     if (commaIndex > 0) {
-#ifdef DEBUG
+      #ifdef DEBUG
       Serial.println("commaIndex > 0, [TIME:(black time)+(black inc),(white time)+(white inc)] form");
-#endif
+      #endif
       // Two separate tokens — white,black
       String whiteTime = cmd.substring(5, commaIndex);
       String blackTime = cmd.substring(commaIndex + 1);
@@ -383,8 +383,8 @@ void setup() {
   lastUpdate = millis();
   Serial.println("CLOCK_READY");
   // button pins
-  pinMode(moveBtn.pin, INPUT_PULLUP);
-  pinMode(resetBtn.pin, INPUT_PULLUP);
+  pinMode(redBtn.pin, INPUT_PULLUP);
+  pinMode(greenBtn.pin, INPUT_PULLUP);
 }
 
 void checkButton(Button &btn) {
@@ -396,26 +396,29 @@ void checkButton(Button &btn) {
     btn.curRead = reading;
   }
 
-  // If the stable state has changed
-  if (btn.curRead != btn.lastState) {
-    btn.lastState = btn.curRead;
+  // If enough time has passed, accept the reading as stable
+  if ((millis() - btn.lastDebounceTime) > DEBOUNCE_DELAY) {
+    // If the stable state has changed
+    if (btn.curRead != btn.lastState) {
+      btn.lastState = btn.curRead;
 
-    if (btn.curRead == LOW) {
-      Serial.print(btn.name);
-      Serial.println(" pressed");
+      if (btn.curRead == LOW) {
+        Serial.print(btn.name);
+        Serial.println(" pressed");
 
-      if (btn.pin == MOVE_MADE_PIN) {
-        moveMade();
-      } else if (btn.pin == RESET_BTN_PIN) {
-        reset();
+        if (btn.pin == MOVE_MADE_PIN) {
+          moveMade();
+        } else if (btn.pin == RESET_BTN_PIN) {
+          reset();
+        }
+
+      #ifdef DEBUG
+        // the button is not momentary
+      } else if (btn.holdKey) {
+        Serial.print(btn.name);
+        Serial.println(" released");
+      #endif
       }
-
-#ifdef DEBUG
-      // the button is not momentary
-    } else if (btn.holdKey) {
-      Serial.print(btn.name);
-      Serial.println(" released");
-#endif
     }
   }
 }
@@ -455,8 +458,8 @@ void loop() {
     }
   }
   // check buttons
-  checkButton(moveBtn);
-  checkButton(resetBtn);
+  checkButton(redBtn);
+  checkButton(greenBtn);
 }
 
-//  LocalWords:  BMATE commaIndex addr
+//  LocalWords:  BMATE commaIndex addr greenBtn
