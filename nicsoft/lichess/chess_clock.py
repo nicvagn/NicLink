@@ -233,20 +233,8 @@ class ChessClock:
             btime,
             binc,
         )
-        white_ms = int(wtime.total_seconds() * 1000)
-        black_ms = int(btime.total_seconds() * 1000)
-        winc_ms = int(winc.total_seconds() * 1000)
-        binc_ms = int(binc.total_seconds() * 1000)
-
-        self.logger.info(
-            "wtime_ms: %s,  winc_ms: %s, btime_ms: %s, binc_ms: %s",
-            white_ms,
-            winc_ms,
-            black_ms,
-            binc_ms,
-        )
         # firmware depends on this format
-        cmd = f"TIME:{white_ms}+{winc_ms},{black_ms}+{binc_ms}"
+        cmd = f"TIME:{wtime}+{winc},{btime}+{binc}"
         self.logger.info("time_set cmd: %s", cmd)
         self.send_command(cmd)
 

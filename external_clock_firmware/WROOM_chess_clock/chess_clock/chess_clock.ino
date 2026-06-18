@@ -1,4 +1,5 @@
-// file: /data/git/niclink/standalone_chessclock/external_clock_firmware/WROOM_chess_clock/chess_clock/chess_clock.ino
+// file:
+// /data/git/niclink/standalone_chessclock/external_clock_firmware/WROOM_chess_clock/chess_clock/chess_clock.ino
 #include <LiquidCrystal_I2C.h>
 #include <Wire.h>
 
@@ -20,26 +21,25 @@
 #define LCD_COL 2
 
 // default times
-#define B_START_TIME  60000
-#define W_START_TIME  60000
-#define W_INCREMENT  6000
-#define B_INCREMENT  6000
+#define B_START_TIME 60000
+#define W_START_TIME 60000
+#define W_INCREMENT 6000
+#define B_INCREMENT 6000
 
 #define RESET_BTN_PIN 4
 #define MOVE_MADE_PIN 5
 
 /**
-* LiquidCrystal_I2C  Constructor
-*
-* @param LCD_ADDR	I2C slave address of the LCD display. Most likely printed on the
-*					LCD circuit board, or look in the supplied LCD documentation.
-* @param LCD_COLS	Number of columns your LCD display has.
-* @param LCD_ROWS	Number of rows your LCD display has.
-*/
+ * LiquidCrystal_I2C  Constructor
+ *
+ * @param LCD_ADDR	I2C slave address of the LCD display. Most likely
+ * printed on the LCD circuit board, or look in the supplied LCD documentation.
+ * @param LCD_COLS	Number of columns your LCD display has.
+ * @param LCD_ROWS	Number of rows your LCD display has.
+ */
 LiquidCrystal_I2C lcd(LCD_ADDR, LCD_ROWS, LCD_COL);
 
-enum Colour { white,
-              black };
+enum Colour { white, black };
 
 // Button structure to hold all state
 struct Button {
@@ -52,20 +52,10 @@ struct Button {
 };
 
 Button greenBtn = {
-  RESET_BTN_PIN,
-  HIGH,
-  HIGH,
-  0,
-  "Green Button",
-  false,
+    RESET_BTN_PIN, HIGH, HIGH, 0, "Green Button", false,
 };
 Button redBtn = {
-  MOVE_MADE_PIN,
-  HIGH,
-  HIGH,
-  0,
-  "Red Button",
-  false,
+    MOVE_MADE_PIN, HIGH, HIGH, 0, "Red Button", false,
 };
 
 unsigned long whiteTimeMs = W_START_TIME;
@@ -79,7 +69,6 @@ unsigned long lastUpdate = 0;
 bool gameOver = false;
 bool clockRunning = false;
 
-
 void startClock() {
   clockRunning = true;
   gameOver = false;
@@ -89,7 +78,7 @@ void startClock() {
   Serial.println("CLOCK_STARTED");
 }
 
-void secondsToHMS(const uint32_t seconds, uint16_t &h, uint8_t &m, uint8_t &s) {
+void secondsToHMS(uint32_t seconds, uint16_t &h, uint16_t &m, uint16_t &s) {
   s = seconds % 60;
   uint32_t minutes = seconds / 60;
   m = minutes % 60;
@@ -174,14 +163,14 @@ void gameDone() {
   Serial.println("GAME_OVER:UNKNOWN");
 }
 
-
 void displayTime() {
-  unsigned int wTotalSec = whiteTimeMs / 1000;
-  unsigned int bTotalSec = blackTimeMs / 1000;
+  // convert from ms to seconds
+  uint32_t wTotalSec = whiteTimeMs / 1000;
+  uint32_t bTotalSec = blackTimeMs / 1000;
 
-  //White and black hours, minutes and seconds
+  // White and black hours, minutes and seconds
   uint16_t wH, bH;
-  uint8_t wM, wS, bM, bS;
+  uint16_t wM, wS, bM, bS;
   secondsToHMS(wTotalSec, wH, wM, wS);
   secondsToHMS(bTotalSec, bH, bM, bS);
 
@@ -191,42 +180,40 @@ void displayTime() {
   if (wH > 0) {
     lcd.print(wH);
     lcd.print(":");
-    if (wM < 10) lcd.print("0");
+    if (wM < 10)
+      lcd.print("0");
     lcd.print(wM);
     lcd.print(":");
-    if (wS < 10) lcd.print("0");
+    if (wS < 10)
+      lcd.print("0");
     lcd.print(wS);
   } else {
-    unsigned int wCenti = (whiteTimeMs / 10) % 100;
     lcd.print(wM);
     lcd.print(":");
-    if (wS < 10) lcd.print("0");
+    if (wS < 10)
+      lcd.print("0");
     lcd.print(wS);
-    lcd.print(".");
-    if (wCenti < 10) lcd.print("0");
-    lcd.print(wCenti);
   }
 
-  lcd.print("  ");
+  lcd.setCursor(9, 1);
 
   // Black time
   if (bH > 0) {
     lcd.print(bH);
     lcd.print(":");
-    if (bM < 10) lcd.print("0");
+    if (bM < 10)
+      lcd.print("0");
     lcd.print(bM);
     lcd.print(":");
-    if (bS < 10) lcd.print("0");
+    if (bS < 10)
+      lcd.print("0");
     lcd.print(bS);
   } else {
-    unsigned int bCenti = (blackTimeMs / 10) % 100;
     lcd.print(bM);
     lcd.print(":");
-    if (bS < 10) lcd.print("0");
+    if (bS < 10)
+      lcd.print("0");
     lcd.print(bS);
-    lcd.print(".");
-    if (bCenti < 10) lcd.print("0");
-    lcd.print(bCenti);
   }
 }
 
@@ -258,10 +245,18 @@ void reset() {
 }
 
 bool parseTime(String token, unsigned long &outTime, unsigned long &outInc) {
+  // The string token will be in seconds, we will convert to ms for use with
+  // millis
   int plusIdx = token.indexOf('+');
   if (plusIdx > 0) {
     outTime = token.substring(0, plusIdx).toInt() * 1000UL;
     outInc = token.substring(plusIdx + 1).toInt() * 1000UL;
+#ifdef DEBUG
+    Serial.print("parseTime plusIdx > 0. outTime: ");
+    Serial.print(outTime);
+    Sarial.print(" outInc: ");
+    Serial.println(outInc);
+#endif
   } else if (token.length() > 0) {
     outTime = token.toInt() * 1000UL;
     outInc = 0;
@@ -270,8 +265,6 @@ bool parseTime(String token, unsigned long &outTime, unsigned long &outInc) {
   }
   return true;
 }
-
-
 
 void processSerialCommand(String cmd) {
   cmd.trim();
@@ -291,19 +284,30 @@ void processSerialCommand(String cmd) {
     //         TIME:300+5,600+10 (white: 300s+5s, black: 600s+10s)
     //         TIME:300,600      (white: 300s, black: 600s, no increment)
     int commaIndex = cmd.indexOf(',');
-    unsigned long wTime = 0, wInc = 0, bTime = 0, bInc = 0;
+    uint32_t wTime = 0, wInc = 0, bTime = 0, bInc = 0;
     bool valid = false;
 
     if (commaIndex > 0) {
-      #ifdef DEBUG
-      Serial.println("commaIndex > 0, [TIME:(black time)+(black inc),(white time)+(white inc)] form");
-      #endif
+#ifdef DEBUG
+      Serial.println("commaIndex > 0, [TIME:(black time)+(black inc),(white "
+                     "time)+(white inc)] form");
+#endif
       // Two separate tokens — white,black
       String whiteTime = cmd.substring(5, commaIndex);
-      String blackTime = cmd.substring(commaIndex + 1);
-      valid = parseTime(whiteTime, wTime, wInc) && parseTime(blackTime, bTime, bInc);
+
+#ifdef DEBUG
+      Serial.print("whiteTime token: ");
+      Serial.println(whiteTime);
+      Serial.print("blackTime token: ")
+#endif
+          String blackTime = cmd.substring(commaIndex + 1);
+#ifdef DEBUG
+      Serial.println(blackTime)
+#endif
+      valid = parseTime(whiteTime, wTime, wInc) &&
+              parseTime(blackTime, bTime, bInc);
     } else {
-      // Single token — same time for both players
+      // Single token - same time for both players
       String time = cmd.substring(5);
       valid = parseTime(time, wTime, wInc);
       if (valid) {
@@ -322,7 +326,7 @@ void processSerialCommand(String cmd) {
       lcd.print(WHITE_BLACK);
       displayTime();
 #ifdef DEBUG
-      Serial.print("TIME_SET:W=");
+      Serial.println("valid token.") Serial.print("TIME_SET:W=");
       Serial.print(wTime);
       Serial.print("+");
       Serial.print(wInc);
@@ -342,7 +346,10 @@ void processSerialCommand(String cmd) {
     draw();
   } else if (cmd == "STOP" || cmd == "PAUSE") {
     clockRunning = false;
+
+#ifdef DEBUG
     Serial.println("CLOCK_STOPPED");
+#endif
   } else if (cmd == "RESET") {
     reset();
   } else if (cmd == "STATUS") {
@@ -403,21 +410,23 @@ void checkButton(Button &btn) {
       btn.lastState = btn.curRead;
 
       if (btn.curRead == LOW) {
+
+#ifdef DEBUG
         Serial.print(btn.name);
         Serial.println(" pressed");
-
+#endif
         if (btn.pin == MOVE_MADE_PIN) {
           moveMade();
         } else if (btn.pin == RESET_BTN_PIN) {
           reset();
         }
 
-      #ifdef DEBUG
+#ifdef DEBUG
         // the button is not momentary
       } else if (btn.holdKey) {
         Serial.print(btn.name);
         Serial.println(" released");
-      #endif
+#endif
       }
     }
   }
@@ -432,7 +441,7 @@ void loop() {
 
   // Update time only if clock is running and game not over
   if (clockRunning && !gameOver) {
-    unsigned long currentTime = millis();
+    uint32_t currentTime = millis();
 
     if (currentTime - lastUpdate >= 50) {
       lastUpdate = currentTime;
@@ -462,4 +471,5 @@ void loop() {
   checkButton(greenBtn);
 }
 
-//  LocalWords:  BMATE commaIndex addr greenBtn
+//  LocalWords:  BMATE commaIndex addr greenBtn outTime outInc
+//  LocalWords:  whiteTime blackTime
