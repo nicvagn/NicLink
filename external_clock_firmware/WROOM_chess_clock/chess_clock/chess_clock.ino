@@ -69,6 +69,7 @@ unsigned long lastUpdate = 0;
 bool gameOver = false;
 bool clockRunning = false;
 
+
 void startClock() {
   clockRunning = true;
   gameOver = false;
@@ -174,6 +175,7 @@ void displayTime() {
   secondsToHMS(wTotalSec, wH, wM, wS);
   secondsToHMS(bTotalSec, bH, bM, bS);
 
+
   lcd.setCursor(0, 1);
 
   // White time
@@ -183,10 +185,6 @@ void displayTime() {
     if (wM < 10)
       lcd.print("0");
     lcd.print(wM);
-    lcd.print(":");
-    if (wS < 10)
-      lcd.print("0");
-    lcd.print(wS);
   } else {
     lcd.print(wM);
     lcd.print(":");
@@ -194,6 +192,8 @@ void displayTime() {
       lcd.print("0");
     lcd.print(wS);
   }
+  // make to clear stale numbers
+  lcd.print("     ");
 
   lcd.setCursor(9, 1);
 
@@ -204,10 +204,6 @@ void displayTime() {
     if (bM < 10)
       lcd.print("0");
     lcd.print(bM);
-    lcd.print(":");
-    if (bS < 10)
-      lcd.print("0");
-    lcd.print(bS);
   } else {
     lcd.print(bM);
     lcd.print(":");
@@ -455,6 +451,7 @@ void loop() {
           return;
         }
       } else {
+
         if (blackTimeMs > 50) {
           blackTimeMs -= 50;
         } else {
