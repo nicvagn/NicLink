@@ -338,7 +338,7 @@ class ChessClock:
         winc = game_start.get("winc")
         binc = game_start.get("binc")
 
-        self.set_time(winit, binit, winc, binc)
+        self.set_time(winit, winc, binit, binc)
         return self.start()
 
     def disconnect(self):
