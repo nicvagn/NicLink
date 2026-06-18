@@ -211,6 +211,8 @@ void displayTime() {
       lcd.print("0");
     lcd.print(bS);
   }
+  // clear stale
+  lcd.print("     ");
 }
 
 void moveMade() {
