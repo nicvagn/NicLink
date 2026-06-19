@@ -25,7 +25,7 @@ class GameState:
 
     def __init__(self, game_state: dict) -> None:
         self.logger = logging.getLogger("nl_lichess")
-
+        breakpoint()
         self.logger.debug(
             "GameState created w game_state: dict -> %s \n -gamestate bellow- \n",
             game_state,
@@ -34,12 +34,20 @@ class GameState:
             raise ValueError(
                 '"GameState instantiated with a game_state["type"] != "gameState"'
             )
-
         self.moves: List[str] = game_state["moves"].split(" ")
-        self.wtime: timedelta = game_state["wtime"]
-        self.btime: timedelta = game_state["btime"]
-        self.winc: timedelta = game_state["winc"]
-        self.binc: timedelta = game_state["binc"]
+
+        if isinstance(game_state["wtime"], timedelta):
+            self.wtime = game_state["wtime"]
+            self.wtime = game_state["wtime"]
+            self.btime = game_state["btime"]
+            self.winc = game_state["winc"]
+            self.binc = game_state["binc"]
+        else:
+            self.wtime = timedelta(seconds=game_state["wtime"])
+            self.wtime = timedelta(seconds=game_state["wtime"])
+            self.btime = timedelta(seconds=game_state["btime"])
+            self.winc = timedelta(seconds=game_state["winc"])
+            self.binc = timedelta(seconds=game_state["binc"])
         self.status: str = game_state["status"]
 
         if "winner" in game_state:
@@ -57,7 +65,7 @@ class GameState:
         return self.moves
 
     def get_last_move(self) -> str:
-        """get the last move in uci"""
+        """get the last move in UCI"""
         if self.has_moves():
             return self.moves[-1]
         else:

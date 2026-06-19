@@ -304,7 +304,7 @@ class ChessClock:
 
         # send time to clock
         self.set_time(
-            game_state.wtime, game_state.btime, game_state.winc, game_state.binc
+            game_state.wtime, game_state.winc, game_state.btime, game_state.binc
         )
 
     def configure_for_game(self, game_start):
