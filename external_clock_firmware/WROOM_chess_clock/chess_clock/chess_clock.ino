@@ -3,6 +3,7 @@
 #include <LiquidCrystal_I2C.h>
 #include <Wire.h>
 
+#define DEBUG t
 // messages
 #define WHITE_BLACK "|white|  |black|"
 #define BLACK_TURN "|white|>>|black|"
@@ -10,7 +11,7 @@
 #define WHITE_WIN "  WHITE Wins!   "
 #define BLACK_WIN "  BLACK Wins!   "
 #define DRAW "  0.5/1  DRAW  "
-#define GAMEOVER "  GAME  OVER   "
+#define GAMEOVER "   GAME  OVER   "
 
 // buttons
 #define DEBOUNCE_DELAY 10
@@ -51,17 +52,17 @@ struct Button {
   bool holdKey;
 };
 
-Button greenBtn = {
-    RESET_BTN_PIN, HIGH, HIGH, 0, "Green Button", false,
+Button resetBtn = {
+    RESET_BTN_PIN, HIGH, HIGH, 0, "Reset Button", false,
 };
-Button redBtn = {
-    MOVE_MADE_PIN, HIGH, HIGH, 0, "Red Button", false,
+Button moveBtn = {
+    MOVE_MADE_PIN, HIGH, HIGH, 0, "Move Button", false,
 };
 
 unsigned long whiteTimeMs = W_START_TIME;
-unsigned long whiteIncrement = W_INCREMENT;
+unsigned long whiteIncMs = W_INCREMENT;
 unsigned long blackTimeMs = B_START_TIME;
-unsigned long blackIncrement = B_INCREMENT;
+unsigned long blackIncMs = B_INCREMENT;
 
 bool connected = false;
 bool whiteToPlay = true;
@@ -90,17 +91,18 @@ void blackMoved() {
   whiteToPlay = true;
   lcd.setCursor(0, 0);
   lcd.print(WHITE_TURN);
-  blackTimeMs = blackTimeMs + blackIncrement;
+  blackTimeMs = blackTimeMs + blackIncMs;
 }
 
 void whiteMoved() {
   whiteToPlay = false;
   lcd.setCursor(0, 0);
   lcd.print(BLACK_TURN);
-  whiteTimeMs = whiteTimeMs + whiteIncrement;
+  whiteTimeMs = whiteTimeMs + whiteIncMs;
 }
 
 void whiteTimeOut() {
+  whiteTimeMs = 0;
   gameOver = true;
   lcd.clear();
   lcd.setCursor(0, 0);
@@ -111,6 +113,7 @@ void whiteTimeOut() {
 }
 
 void blackTimeOut() {
+  whiteTimeMs = 0;
   gameOver = true;
   lcd.clear();
   lcd.setCursor(0, 0);
@@ -154,6 +157,10 @@ void draw() {
 }
 
 void gameDone() {
+  // if game is over, do not process
+  if(gameOver) {
+    return;
+  }
   gameOver = true;
   clockRunning = false;
   lcd.clear();
@@ -230,8 +237,8 @@ void moveMade() {
 void reset() {
   whiteTimeMs = W_START_TIME;
   blackTimeMs = B_START_TIME;
-  whiteIncrement = W_INCREMENT;
-  blackIncrement = B_INCREMENT;
+  whiteIncMs = W_INCREMENT;
+  blackIncMs = B_INCREMENT;
   whiteToPlay = true;
   gameOver = false;
   clockRunning = false;
@@ -242,9 +249,13 @@ void reset() {
   Serial.println("CLOCK_RESET");
 }
 
-bool parseTime(String token, unsigned long &outTime, unsigned long &outInc) {
+bool parseTime(String token, uint32_t &outTime, uint32_t &outInc) {
   // The string token will be in seconds, we will convert to ms for use with
   // millis
+#ifdef DEBUG
+    Serial.print("Token string: ");
+    Serial.println(token);
+#endif
   int plusIdx = token.indexOf('+');
   if (plusIdx > 0) {
     outTime = token.substring(0, plusIdx).toInt() * 1000UL;
@@ -252,13 +263,20 @@ bool parseTime(String token, unsigned long &outTime, unsigned long &outInc) {
 #ifdef DEBUG
     Serial.print("parseTime plusIdx > 0. outTime: ");
     Serial.print(outTime);
-    Sarial.print(" outInc: ");
+    Serial.print(" outInc: ");
     Serial.println(outInc);
 #endif
   } else if (token.length() > 0) {
+#ifdef DEBUG
+    Serial.print("No inc. outTime:");
+    Serial.print(outTime);
+#endif
     outTime = token.toInt() * 1000UL;
     outInc = 0;
   } else {
+#ifdef DEBUG
+    Serial.println("Failed to parse token.");
+#endif
     return false;
   }
   return true;
@@ -296,11 +314,11 @@ void processSerialCommand(String cmd) {
 #ifdef DEBUG
       Serial.print("whiteTime token: ");
       Serial.println(whiteTime);
-      Serial.print("blackTime token: ")
+      Serial.print("blackTime token: ");
 #endif
-          String blackTime = cmd.substring(commaIndex + 1);
+      String blackTime = cmd.substring(commaIndex + 1);
 #ifdef DEBUG
-      Serial.println(blackTime)
+      Serial.println(blackTime);
 #endif
       valid = parseTime(whiteTime, wTime, wInc) &&
               parseTime(blackTime, bTime, bInc);
@@ -317,14 +335,15 @@ void processSerialCommand(String cmd) {
     if (valid) {
       whiteTimeMs = wTime;
       blackTimeMs = bTime;
-      whiteIncrement = wInc;
-      blackIncrement = bInc;
+      whiteIncMs = wInc;
+      blackIncMs = bInc;
 
       lcd.setCursor(0, 0);
       lcd.print(WHITE_BLACK);
       displayTime();
 #ifdef DEBUG
-      Serial.println("valid token.") Serial.print("TIME_SET:W=");
+      Serial.println("valid token.");
+      Serial.print("TIME_SET:W=");
       Serial.print(wTime);
       Serial.print("+");
       Serial.print(wInc);
@@ -352,13 +371,13 @@ void processSerialCommand(String cmd) {
     reset();
   } else if (cmd == "STATUS") {
     Serial.print("STATUS:");
-    Serial.print(whiteTimeMs);
+    Serial.print(whiteTimeMs / 1000UL);
     Serial.print("+");
-    Serial.print(whiteIncrement);
+    Serial.print(whiteIncMs / 1000UL);
     Serial.print(":");
-    Serial.print(blackTimeMs);
+    Serial.print(blackTimeMs / 1000UL);
     Serial.print("+");
-    Serial.print(blackIncrement);
+    Serial.print(blackIncMs / 1000UL);
     Serial.print(":");
     Serial.print(clockRunning ? "RUNNING" : "STOPPED");
     Serial.print(":");
@@ -388,8 +407,8 @@ void setup() {
   lastUpdate = millis();
   Serial.println("CLOCK_READY");
   // button pins
-  pinMode(redBtn.pin, INPUT_PULLUP);
-  pinMode(greenBtn.pin, INPUT_PULLUP);
+  pinMode(moveBtn.pin, INPUT_PULLUP);
+  pinMode(resetBtn.pin, INPUT_PULLUP);
 }
 
 void checkButton(Button &btn) {
@@ -449,7 +468,6 @@ void loop() {
           whiteTimeMs -= 50;
         } else {
           whiteTimeOut();
-          whiteTimeMs = 0;
           return;
         }
       } else {
@@ -466,8 +484,8 @@ void loop() {
     }
   }
   // check buttons
-  checkButton(redBtn);
-  checkButton(greenBtn);
+  checkButton(moveBtn);
+  checkButton(resetBtn);
 }
 
 //  LocalWords:  BMATE commaIndex addr greenBtn outTime outInc

@@ -171,7 +171,7 @@ class ChessClock:
         try:
             self.clock_serial.write(f"{command}\n".encode())
             self.clock_serial.flush()
-            self.logger.debug(f"Sent to clock: {command}")
+            self.logger.debug("Sent to clock: %s", command)
 
             # Wait briefly for response
 
@@ -184,13 +184,13 @@ class ChessClock:
                     .decode("utf-8", errors="ignore")
                     .strip()
                 )
-                self.logger.debug(f"Clock response: {response}")
+                self.logger.debug("Clock response: %s", response)
                 return response
 
             return None
 
         except RuntimeError as e:
-            self.logger.error(f"Failed to send command to chess clock: {e}")
+            self.logger.error("Failed to send command to chess clock: %s", e)
             self.is_connected = False
             return None
 
@@ -233,8 +233,8 @@ class ChessClock:
             btime,
             binc,
         )
-        # firmware depends on this format
-        cmd = f"TIME:{wtime}+{winc},{btime}+{binc}"
+        # firmware depends on this format and that the unit is seconds
+        cmd = f"TIME:{wtime.total_seconds()}+{winc.total_seconds()},{btime.total_seconds()}+{binc.total_seconds()}"
         self.logger.info("time_set cmd: %s", cmd)
         self.send_command(cmd)
 
