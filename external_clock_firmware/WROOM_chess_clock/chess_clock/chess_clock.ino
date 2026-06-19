@@ -357,6 +357,8 @@ void processSerialCommand(String cmd) {
     } else {
       Serial.println("ERROR: Invalid time");
     }
+    // signal a move was made.
+    moveMade();
   } else if (cmd == "BMATE") {
     blackCheckmated();
   } else if (cmd == "WMATE") {

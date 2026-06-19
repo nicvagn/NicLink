@@ -25,7 +25,6 @@ class GameState:
 
     def __init__(self, game_state: dict) -> None:
         self.logger = logging.getLogger("nl_lichess")
-        breakpoint()
         self.logger.debug(
             "GameState created w game_state: dict -> %s \n -gamestate bellow- \n",
             game_state,

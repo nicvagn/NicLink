@@ -318,10 +318,10 @@ class ChessClock:
         -------
             clock.configure_for_game({"winit":900, "binit":900, "winc":100, "binc":10})
         """
-        winit = game_start.get("winit")
-        binit = game_start.get("binit")
-        winc = game_start.get("winc")
-        binc = game_start.get("binc")
+        winit = timdelta(seconds=game_start.get("winit"))
+        binit = timdelta(seconds=game_start.get("binit"))
+        winc = timdelta(seconds=game_start.get("winc"))
+        binc = timdelta(seconds=game_start.get("binc"))
 
         self.set_time(winit, winc, binit, binc)
         return self.start()
