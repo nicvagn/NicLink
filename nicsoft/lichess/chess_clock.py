@@ -88,10 +88,7 @@ class ChessClock:
         self.clock_running = False
 
         if game_state:
-            self.wtime: timedelta = game_state.get_wtime()
-            self.btime: timedelta = game_state.get_btime()
-            self.winc: timedelta = game_state.get_winc()
-            self.binc: timedelta = game_state.get_binc()
+            self.handle_game_state(game_state)
 
         if port:
             self.logger.info("connecting to port: %s", port)

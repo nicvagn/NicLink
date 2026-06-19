@@ -1,18 +1,17 @@
-// file:
-// /data/git/niclink/standalone_chessclock/external_clock_firmware/WROOM_chess_clock/chess_clock/chess_clock.ino
+// file: /data/git/niclink/standalone_chessclock/external_clock_firmware/WROOM_chess_clock/chess_clock/chess_clock.ino
 #include <LiquidCrystal_I2C.h>
 #include <Wire.h>
 
-#define DEBUG t
+//define DEBUG T
 // messages
 #define WHITE_BLACK "|white|  |black|"
 #define BLACK_TURN "|white|>>|black|"
 #define WHITE_TURN "|white|<<|black|"
-#define WHITE_WIN "  WHITE Wins!   "
-#define BLACK_WIN "  BLACK Wins!   "
+#define WHITE_WIN "  WHITE  Wins!   "
+#define BLACK_WIN "  BLACK  Wins!   "
 #define DRAW "  0.5/1  DRAW  "
 #define GAMEOVER "   GAME  OVER   "
-
+#define TIME_UP "   TIME'S UP!   "
 // buttons
 #define DEBOUNCE_DELAY 10
 #define SDA_PIN 13
@@ -59,14 +58,15 @@ Button moveBtn = {
     MOVE_MADE_PIN, HIGH, HIGH, 0, "Move Button", false,
 };
 
-unsigned long whiteTimeMs = W_START_TIME;
-unsigned long whiteIncMs = W_INCREMENT;
-unsigned long blackTimeMs = B_START_TIME;
-unsigned long blackIncMs = B_INCREMENT;
+
+uint32_t whiteTimeMs = W_START_TIME;
+uint32_t whiteIncMs = W_INCREMENT;
+uint32_t blackTimeMs = B_START_TIME;
+uint32_t blackIncMs = B_INCREMENT;
 
 bool connected = false;
 bool whiteToPlay = true;
-unsigned long lastUpdate = 0;
+uint32_t lastUpdate = 0;
 bool gameOver = false;
 bool clockRunning = false;
 
@@ -106,7 +106,7 @@ void whiteTimeOut() {
   gameOver = true;
   lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print("  TIME'S UP!  ");
+  lcd.print(TIME_UP);
   lcd.setCursor(0, 1);
   lcd.print(BLACK_WIN);
   Serial.println("Game Over: Black wins on time");
@@ -117,7 +117,7 @@ void blackTimeOut() {
   gameOver = true;
   lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print("  TIME'S UP!  ");
+  lcd.print(TIME_UP);
   lcd.setCursor(0, 1);
   lcd.print(WHITE_WIN);
   Serial.println("Game Over: White wins on time");
@@ -384,9 +384,11 @@ void processSerialCommand(String cmd) {
     Serial.println(whiteToPlay ? "WHITE" : "BLACK");
   } else if (cmd == "OVER") {
     gameDone();
-  } else if (!clockRunning) {
-    //  start the clock on any other input
-    startClock();
+  } else {
+    Serial.print("ERROR:  cmd '");
+    Serial.print(cmd);
+    Serial.println("' not known.");
+
   }
 }
 
