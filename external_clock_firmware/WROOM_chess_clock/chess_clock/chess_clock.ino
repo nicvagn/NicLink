@@ -225,11 +225,15 @@ void displayTime() {
 }
 
 void moveMade() {
+  if (gameOver) {
+    gameOver = false;
+  }
+
   if (!clockRunning) {
     startClock();
     return;
   }
-  if (!gameOver && whiteToPlay) {
+  if (whiteToPlay) {
     whiteMoved();
   } else if (!gameOver) {
     blackMoved();
