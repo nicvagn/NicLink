@@ -77,7 +77,9 @@ void startClock() {
   lastUpdate = millis();
   lcd.setCursor(0, 0);
   lcd.print(WHITE_TURN);
+#ifdef DEBUG
   Serial.println("CLOCK_STARTED");
+#endif
 }
 
 void secondsToHMS(uint32_t seconds, uint16_t &h, uint16_t &m, uint16_t &s) {
@@ -131,7 +133,7 @@ void whiteCheckmated() {
   lcd.print("   CHECKMATE   ");
   lcd.setCursor(0, 1);
   lcd.print(BLACK_WIN);
-  Serial.println("GAME_OVER:BLACK_WINS");
+  Serial.println("Game over: black wins by checkmate.");
 }
 
 void blackCheckmated() {
@@ -142,7 +144,7 @@ void blackCheckmated() {
   lcd.print("   CHECKMATE   ");
   lcd.setCursor(0, 1);
   lcd.print("  White Wins!   ");
-  Serial.println("GAME_OVER:WHITE_WINS");
+  Serial.println("Game over: white wins by checkmate.");
 }
 
 void draw() {
@@ -153,7 +155,7 @@ void draw() {
   lcd.print(DRAW);
   lcd.setCursor(0, 1);
   lcd.print(DRAW);
-  Serial.println("GAME_OVER:DRAW");
+  Serial.println("Game over: Draw");
 }
 
 void gameDone() {
@@ -491,4 +493,4 @@ void loop() {
 }
 
 //  LocalWords:  BMATE commaIndex addr greenBtn outTime outInc
-//  LocalWords:  whiteTime blackTime
+//  LocalWords:  whiteTime blackTime parseTime
