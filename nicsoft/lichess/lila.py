@@ -206,12 +206,14 @@ class Game(threading.Thread):
         self.chess_clock = chess_clock
 
         self.playing_white = playing_white
-        if starting_fen:
+        if starting_fen and chess960:
             nl_inst.start_960(starting_fen)
             self.starting_fen = starting_fen
+            self.chess960 = True
         else:
             nl_inst.reset()  # reset niclink for a new game
             self.game_board = chess.Board()
+            self.chess960 = False  # not 960
             nl_inst.set_game_board(self.game_board)
 
         logger.info("game init w id: %s", game_id)
