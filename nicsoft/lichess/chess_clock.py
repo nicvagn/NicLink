@@ -7,7 +7,6 @@
 #  You should have received a copy of the GNU General Public License along with chess_clock. If not, see <https://www.gnu.org/licenses/>.
 import serial
 import sys
-import serial.tools.list_ports
 import logging
 import time
 import datetime
@@ -63,15 +62,12 @@ class ChessClock:
     clock.reset()
     """
 
-    def __init__(
-        self, game_state=None, port="/dev/ttyACM0", baud_rate=9600, logger=None
-    ):
+    def __init__(self, game_state=None, baud_rate=9600, logger=None):
         """Initialize chess clock.
 
         Args
         ----
             game_state: maybe an initial game state, else None
-            port: Specific serial port (optional, will auto-detect if None)
             baud_rate: Serial baud rate (default 9600)
             logger: logger to use, is None one is made
         """
@@ -81,68 +77,36 @@ class ChessClock:
             self.logger = logger
         self.logger.info("LOGGING SETUP FOR CHESS CLOCK")
         self.clock_serial = None
-        self.port = port
         self.baud_rate = baud_rate
-        self.is_connected = False
         self.last_move_count = 0
         self.clock_running = False
+
+        self.is_connected = self.connect_to_clock()
+        if self.is_connected == False:
+            self.logger.info("failed to connect.")
+            raise RuntimeError("could not connect to chess clock")
 
         if game_state:
             self.handle_game_state(game_state)
 
-        if port:
-            self.logger.info("connecting to port: %s", port)
-            self.connect_to_port(port)
-        else:
+    def connect_to_clock(self) -> bool:
+        """Connect to chess clock port. udev rule is needed for the /dev symlink
 
-            self.logger.info("Trying to auto-connect")
-            self.auto_detect_and_connect()
-
-    def auto_detect_and_connect(self):
-        """Try to find and connect to Arduino chess clock automatically."""
+        Example
+        -------
+        SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="55d3", SYMLINK+="chess_clock"
+        """
         try:
-            ports = serial.tools.list_ports.comports()
-            for port in ports:
-                if (
-                    "Arduino" in port.description
-                    or "CH340" in port.description
-                    or "USB" in port.description
-                ):
-                    if self.connect_to_port(port.device):
-                        return True
-
-            common_ports = [
-                "/dev/ttyACM0",
-                "/dev/ttyACM1",
-                "/dev/ttyUSB0",
-                "/dev/ttyUSB1",
-                "COM3",
-                "COM4",
-                "COM5",
-            ]
-            for port in common_ports:
-                if self.connect_to_port(port):
-                    return True
-
-            self.logger.warning("Chess clock not found on any port")
-            return False
-
-        except Exception as e:
-            self.logger.error(f"Failed to auto-detect chess clock: {e}")
-            return False
-
-    def connect_to_port(self, port):
-        """Connect to specific serial port."""
-        try:
-            self.clock_serial = serial.Serial(port, self.baud_rate, timeout=1)
-            self.port = port
+            self.clock_serial = serial.Serial(
+                "/dev/chess_clock", self.baud_rate, timeout=1
+            )
             self.is_connected = True
-            self.logger.info(f"Chess clock connected on {port}")
+            self.logger.info("Chess clock connected")
 
             return True
 
         except Exception as e:
-            self.logger.debug(f"Failed to connect to {port}: {e}")
+            self.logger.debug(f"Failed to connect to port. Raised: %s", e)
             self.is_connected = False
             return False
 
