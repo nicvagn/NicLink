@@ -39,7 +39,8 @@
  */
 LiquidCrystal_I2C lcd(LCD_ADDR, LCD_ROWS, LCD_COL);
 
-enum Colour { white, black };
+enum Colour { white,
+              black };
 
 // Button structure to hold all state
 struct Button {
@@ -48,14 +49,21 @@ struct Button {
   int lastState;
   unsigned long lastDebounceTime;
   const char *name;
-  bool holdKey;
 };
 
 Button resetBtn = {
-  RESET_BTN_PIN, HIGH, HIGH, 0, "Reset Button", false,
+  RESET_BTN_PIN,
+  HIGH,
+  HIGH,
+  0,
+  "Reset Button",
 };
 Button moveBtn = {
-  MOVE_MADE_PIN, HIGH, HIGH, 0, "Move Button", false,
+  MOVE_MADE_PIN,
+  HIGH,
+  HIGH,
+  0,
+  "Move Button",
 };
 
 
@@ -159,7 +167,7 @@ void draw() {
 
 void gameDone() {
   // if game is over, do not process
-  if(gameOver) {
+  if (gameOver) {
     return;
   }
   gameOver = true;
@@ -326,8 +334,7 @@ void processSerialCommand(String cmd) {
 #ifdef DEBUG
       Serial.println(blackTime);
 #endif
-      valid = parseTime(whiteTime, wTime, wInc) &&
-              parseTime(blackTime, bTime, bInc);
+      valid = parseTime(whiteTime, wTime, wInc) && parseTime(blackTime, bTime, bInc);
     } else {
       // Single token - same time for both players
       String time = cmd.substring(5);
@@ -390,12 +397,13 @@ void processSerialCommand(String cmd) {
     Serial.println(whiteToPlay ? "WHITE" : "BLACK");
   } else if (cmd == "OVER") {
     gameDone();
+#ifdef DEBUG
   } else {
-    Serial.print("ERROR:  cmd '");
+    Serial.print("ERROR: cmd '");
     Serial.print(cmd);
     Serial.println("' not known.");
-
   }
+#endif
 }
 
 void setup() {
@@ -428,32 +436,25 @@ void checkButton(Button &btn) {
   if (reading != btn.curRead) {
     btn.lastDebounceTime = millis();
     btn.curRead = reading;
-  }
 
-  // If enough time has passed, accept the reading as stable
-  if ((millis() - btn.lastDebounceTime) > DEBOUNCE_DELAY) {
-    // If the stable state has changed
-    if (btn.curRead != btn.lastState) {
-      btn.lastState = btn.curRead;
+    // If enough time has passed, accept the reading as stable
+    if ((millis() - btn.lastDebounceTime) > DEBOUNCE_DELAY) {
+      // If the stable state has changed
+      if (btn.curRead != btn.lastState) {
+        btn.lastState = btn.curRead;
 
-      if (btn.curRead == LOW) {
+        if (btn.curRead == LOW) {
 
 #ifdef DEBUG
-        Serial.print(btn.name);
-        Serial.println(" pressed");
+          Serial.print(btn.name);
+          Serial.println(" pressed");
 #endif
-        if (btn.pin == MOVE_MADE_PIN) {
-          moveMade();
-        } else if (btn.pin == RESET_BTN_PIN) {
-          reset();
+          if (btn.pin == MOVE_MADE_PIN) {
+            moveMade();
+          } else if (btn.pin == RESET_BTN_PIN) {
+            reset();
+          }
         }
-
-#ifdef DEBUG
-        // the button is not momentary
-      } else if (btn.holdKey) {
-        Serial.print(btn.name);
-        Serial.println(" released");
-#endif
       }
     }
   }
