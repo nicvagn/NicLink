@@ -4,9 +4,9 @@
 
 //define DEBUG T
 // messages
-#define WHITE_BLACK "|white|  |black|"
-#define BLACK_TURN "|white|>>|black|"
-#define WHITE_TURN "|white|<<|black|"
+#define WHITE_BLACK "|white| |black| "
+#define BLACK_TURN "|white|>|black| "
+#define WHITE_TURN "|white|<|black| "
 #define WHITE_WIN "  WHITE  Wins!   "
 #define BLACK_WIN "  BLACK  Wins!   "
 #define DRAW "  0.5/1  DRAW  "
@@ -21,8 +21,8 @@
 #define LCD_COL 2
 
 // default times
-#define B_START_TIME 60000
-#define W_START_TIME 60000
+#define B_START_TIME 600000
+#define W_START_TIME 600000
 #define W_INCREMENT 6000
 #define B_INCREMENT 6000
 
@@ -52,10 +52,10 @@ struct Button {
 };
 
 Button resetBtn = {
-    RESET_BTN_PIN, HIGH, HIGH, 0, "Reset Button", false,
+  RESET_BTN_PIN, HIGH, HIGH, 0, "Reset Button", false,
 };
 Button moveBtn = {
-    MOVE_MADE_PIN, HIGH, HIGH, 0, "Move Button", false,
+  MOVE_MADE_PIN, HIGH, HIGH, 0, "Move Button", false,
 };
 
 
@@ -69,7 +69,6 @@ bool whiteToPlay = true;
 uint32_t lastUpdate = 0;
 bool gameOver = false;
 bool clockRunning = false;
-
 
 void startClock() {
   clockRunning = true;
@@ -184,7 +183,6 @@ void displayTime() {
   secondsToHMS(wTotalSec, wH, wM, wS);
   secondsToHMS(bTotalSec, bH, bM, bS);
 
-
   lcd.setCursor(0, 1);
 
   // White time
@@ -202,9 +200,9 @@ void displayTime() {
     lcd.print(wS);
   }
   // make to clear stale numbers
-  lcd.print("     ");
+  lcd.print("   ");
 
-  lcd.setCursor(9, 1);
+  lcd.setCursor(8, 1);
 
   // Black time
   if (bH > 0) {
@@ -221,7 +219,7 @@ void displayTime() {
     lcd.print(bS);
   }
   // clear stale
-  lcd.print("     ");
+  lcd.print("    ");
 }
 
 void moveMade() {
@@ -252,15 +250,17 @@ void reset() {
   lcd.setCursor(0, 0);
   lcd.print(WHITE_BLACK);
   displayTime();
+#ifdef DEBUG
   Serial.println("CLOCK_RESET");
+#endif
 }
 
 bool parseTime(String token, uint32_t &outTime, uint32_t &outInc) {
   // The string token will be in seconds, we will convert to ms for use with
   // millis
 #ifdef DEBUG
-    Serial.print("Token string: ");
-    Serial.println(token);
+  Serial.print("Token string: ");
+  Serial.println(token);
 #endif
   int plusIdx = token.indexOf('+');
   if (plusIdx > 0) {
@@ -361,8 +361,6 @@ void processSerialCommand(String cmd) {
     } else {
       Serial.println("ERROR: Invalid time");
     }
-    // signal a move was made.
-    moveMade();
   } else if (cmd == "BMATE") {
     blackCheckmated();
   } else if (cmd == "WMATE") {
@@ -415,7 +413,9 @@ void setup() {
 
   displayTime();
   lastUpdate = millis();
+#ifdef DEBUG
   Serial.println("CLOCK_READY");
+#endif
   // button pins
   pinMode(moveBtn.pin, INPUT_PULLUP);
   pinMode(resetBtn.pin, INPUT_PULLUP);
@@ -481,7 +481,6 @@ void loop() {
           return;
         }
       } else {
-
         if (blackTimeMs > 50) {
           blackTimeMs -= 50;
         } else {
