@@ -413,6 +413,7 @@ and setting moved event",
                 self.response_error_on_last_attempt = False
 
                 if self.chess_clock:
+                    self.logger.info("self.chess_clock.move_made() called")
                     self.chess_clock.move_made()
 
                 # exit function on success
@@ -425,7 +426,7 @@ and setting moved event",
                     logger.error(
                         "Not your turn, or game is already over. Exiting make_move(...)"
                     )
-                    break
+                    return
 
                 # if not, try again
                 print(

@@ -196,7 +196,7 @@ class ChessClock:
         )
         # firmware depends on this format and that the unit is seconds
         cmd = f"TIME:{wtime.total_seconds()}+{winc.total_seconds()},{btime.total_seconds()}+{binc.total_seconds()}"
-        self.logger.info("time_set cmd: %s", cmd)
+        self.logger.info("time_set w: %s", cmd)
         self.send_command(cmd)
 
     def start(self):
@@ -251,7 +251,7 @@ class ChessClock:
         self.send_command("m")
 
     def handle_game_state(self, game_state):
-        """Process game state and send move to clock if needed."""
+        """Process game state and set clock."""
         if not hasattr(game_state, "moves"):
             self.logger.warning("GameState has no moves attribute")
             return
@@ -289,7 +289,7 @@ class ChessClock:
         binc = game_start.get("binc")
 
         # sometimes it is an int of elapsed milliseconds?
-        if isinstance(winit, (int, float)):
+        if not isinstance(winit, timedelta):
             winit = timdelta(milliseconds=winit)
             binit = timdelta(milliseconds=binit)
             winc = timdelta(milliseconds=winc)
@@ -330,6 +330,7 @@ def test():
         whiteTime = whiteTime - wInc
         blackTime = blackTime - bInc
         cc.set_time(whiteTime, wInc, blackTime, bInc)
+        cc.move_made()
 
 
 if __name__ == "__main__":

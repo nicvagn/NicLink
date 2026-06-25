@@ -4,7 +4,7 @@
 
 //define DEBUG T
 // messages
-#define WHITE_BLACK "|white| |black| "
+#define WHITE_BLACK "|white|-|black| "
 #define BLACK_TURN "|white|>|black| "
 #define WHITE_TURN "|white|<|black| "
 #define WHITE_WIN "  WHITE  Wins!   "
@@ -352,7 +352,6 @@ void processSerialCommand(String cmd) {
       blackIncMs = bInc;
 
       lcd.setCursor(0, 0);
-      lcd.print(WHITE_BLACK);
       displayTime();
 #ifdef DEBUG
       Serial.println("valid token.");
@@ -397,8 +396,9 @@ void processSerialCommand(String cmd) {
     Serial.println(whiteToPlay ? "WHITE" : "BLACK");
   } else if (cmd == "OVER") {
     gameDone();
+  }
 #ifdef DEBUG
-  } else {
+  else {
     Serial.print("ERROR: cmd '");
     Serial.print(cmd);
     Serial.println("' not known.");
