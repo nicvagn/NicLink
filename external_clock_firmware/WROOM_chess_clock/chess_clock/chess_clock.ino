@@ -2,7 +2,8 @@
 #include <LiquidCrystal_I2C.h>
 #include <Wire.h>
 
-#define DEBUG_TICK T
+#define DEBUG T
+//#define DEBUG_TICK T
 // messages
 #define WHITE_BLACK "|white|-|black| "
 #define BLACK_TURN "|white|>|black| "
@@ -97,6 +98,7 @@ void secondsToHMS(uint32_t seconds, uint16_t &h, uint16_t &m, uint16_t &s) {
 }
 
 void blackMoved() {
+  clockRunning=true;
   whiteToPlay = true;
   lcd.setCursor(0, 0);
   lcd.print(WHITE_TURN);
@@ -104,6 +106,7 @@ void blackMoved() {
 }
 
 void whiteMoved() {
+  clockRunning=true;
   whiteToPlay = false;
   lcd.setCursor(0, 0);
   lcd.print(BLACK_TURN);
@@ -476,6 +479,10 @@ void loop() {
   Serial.println(clockRunning);
   Serial.print("!gameOver is: ");
   Serial.println(!gameOver);
+
+  Serial.println("delay 50");
+  delay(5000);
+  Serial.println("delay out");
 #endif
   // Update time only if clock is running and game not over
   if (clockRunning) {
