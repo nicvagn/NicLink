@@ -2,7 +2,8 @@
 #
 #  NicLink is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #
-#  You should have received a copy of the GNU General Public License along with NicLink. If not, see <https://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along
+# with NicLink. If not, see <https://www.gnu.org/licenses/>.
 
 import asyncio
 
@@ -217,7 +218,7 @@ async def run(connect, debug=False):
                                   )  # start the notification handler
         await client.write_gatt_char(WRITECHARACTERISTICS, INITIALIZASION_CODE
                                      )  # send initialisation string
-        await asyncio.sleep(100.0)  ## wait 100 seconds
+        await asyncio.sleep(100.0)  # wait 100 seconds
         await client.stop_notify(READDATA)  # stop the notification handler
 
 

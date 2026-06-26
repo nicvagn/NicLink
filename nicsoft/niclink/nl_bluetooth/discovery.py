@@ -1,5 +1,5 @@
 """Discover chessnut Air devices.
-See pdf file Chessnut_comunications.pdf 
+See pdf file Chessnut_comunications.pdf
 for more information."""
 
 import asyncio

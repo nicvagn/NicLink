@@ -4,7 +4,8 @@
 #
 #  chess_clock is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #
-#  You should have received a copy of the GNU General Public License along with chess_clock. If not, see <https://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along
+# with chess_clock. If not, see <https://www.gnu.org/licenses/>.
 import serial
 import sys
 import logging
@@ -80,6 +81,9 @@ class ChessClock:
         self.baud_rate = baud_rate
         self.last_move_count = 0
         self.clock_running = False
+
+        # start with white to move. If there is a game state, that will be used
+        self.white_to_move = True
 
         self.is_connected = self.connect_to_clock()
         if self.is_connected == False:
@@ -161,11 +165,11 @@ class ChessClock:
 
     def white_won(self):
         """Display white won by mate."""
-        self.send_command("BMATE")
+        self.send_command("WWON")
 
     def black_won(self):
         """Display black won by mate."""
-        self.send_command("WMATE")
+        self.send_command("BWON")
 
     def set_time(
         self, wtime: timedelta, winc: timedelta, btime: timedelta, binc: timedelta
@@ -248,7 +252,10 @@ class ChessClock:
         if game_state:
             self.handle_game_state(game_state)
 
-        self.send_command("m")
+        if self.white_to_move:
+            self.send_command("W")
+        else:
+            self.send_command("B")
 
     def handle_game_state(self, game_state):
         """Process game state and set clock."""
@@ -262,9 +269,13 @@ class ChessClock:
             self.white_won()
             return
 
-        if game_state.status != "started":
-            self.game_over()
-            return
+        if game_state:
+            self.white_to_move = game_state.white_to_move()
+            self.logger.info("chess_clock.white_to_move set to: %s", self.white_to_move)
+        else:
+            # sane default
+            self.white_to_move = True
+            self.logger.info("chess_clock.white_to_move set as default True")
 
         # send time to clock
         self.set_time(
@@ -336,4 +347,4 @@ def test():
 if __name__ == "__main__":
     test()
 
-#  LocalWords:  BMATE WMATE winit binit binc winc
+#  LocalWords:  BMATE WMATE winit binit binc winc WWON BWON

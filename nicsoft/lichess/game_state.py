@@ -2,7 +2,8 @@
 #
 #  NicLink-lichess is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #
-#  You should have received a copy of the GNU General Public License along with NicLink. If not, see <https://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along
+# with NicLink. If not, see <https://www.gnu.org/licenses/>.
 
 import logging
 from datetime import timedelta
@@ -110,5 +111,5 @@ class GameState:
         return self.status
 
     def __str__(self) -> str:
-        return f"GameState, Moves: { self.moves }, status: {self.status
-        }, wtime: { self.wtime } btime: { self.btime }"
+        return f"GameState, Moves: {self.moves}, status: {self.status
+                                                          }, wtime: {self.wtime} btime: {self.btime}"

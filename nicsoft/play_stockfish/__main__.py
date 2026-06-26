@@ -2,7 +2,8 @@
 #
 #  NicLink is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #
-#  You should have received a copy of the GNU General Public License along with NicLink. If not, see <https://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along
+# with NicLink. If not, see <https://www.gnu.org/licenses/>.
 
 import argparse
 import importlib
@@ -80,7 +81,7 @@ class Game(threading.Thread):
         else:
             winner = "White"
         print(
-            f"Winner: { winner } reason: {over_state['reason']} \n \
+            f"Winner: {winner} reason: {over_state['reason']} \n \
 have a nice day."
         )
 
@@ -98,12 +99,12 @@ have a nice day."
                 move = self.nl_inst.await_move()
                 time.sleep(0.3)
             # await move from e-board the move from niclink
-            print(f"move from board: { move }")
+            print(f"move from board: {move}")
         except KeyboardInterrupt:
             print("Bye!")
             sys.exit(0)
 
-        logger.info(f"move from chessboard { move }")
+        logger.info(f"move from chessboard {move}")
 
         # make the move on the nl gameboard
         self.nl_inst.opponent_moved(move)
@@ -118,7 +119,7 @@ have a nice day."
 
         # get stockfishes move
         fish_move = self.fish.get_best_move()
-        logger.info(f"Fish's move { fish_move }")
+        logger.info(f"Fish's move {fish_move}")
 
         # make move on the niclink internal board
         self.nl_inst.make_move_game_board(fish_move)

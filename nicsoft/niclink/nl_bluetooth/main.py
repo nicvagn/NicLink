@@ -40,7 +40,7 @@ def printBoard(data):
     """
     for counterColum in range(0, 8):
         print(8 - counterColum, " ", end=" ")
-        row = reversed(data[counterColum * 4 : counterColum * 4 + 4])
+        row = reversed(data[counterColum * 4: counterColum * 4 + 4])
         for b in row:
             print(convertDict[b >> 4], convertDict[b & MASKLOW], end=" ")
         print("")
@@ -75,9 +75,10 @@ async def leds(data):
             v |= mask  # If x was True, set the bit indicated by the mask.
         return v  # Return the result, we're done.
 
-    led = bytearray([0x0A, 0x08, 0x1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
+    led = bytearray([0x0A, 0x08, 0x1, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x00, 0x00])
     for counterColum in range(0, 8):
-        row = data[counterColum * 4 : counterColum * 4 + 4]
+        row = data[counterColum * 4: counterColum * 4 + 4]
         for counter, b in enumerate(row):
             v = led[counterColum + 2]
             n1 = convertDict[b & MASKLOW]
@@ -118,13 +119,13 @@ async def run(connect, debug=False):
         await client.write_gatt_char(
             WRITECHARACTERISTICS, INITIALIZASION_CODE
         )  # send initialisation string
-        await asyncio.sleep(100.0)  ## wait 100 seconds
+        await asyncio.sleep(100.0)  # wait 100 seconds
         await client.stop_notify(READDATA)  # stop the notification handler
 
 
-##connect = GetChessnutAirDevices()
-## get device
+# connect = GetChessnutAirDevices()
+# get device
 # asyncio.run(connect.discover())
-## connect to device
+# connect to device
 # asyncio.run(run(connect))
 #

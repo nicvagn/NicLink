@@ -2,7 +2,8 @@
 #
 #  NicLink is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #
-#  You should have received a copy of the GNU General Public License along with NicLink. If not, see <https://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along
+# with NicLink. If not, see <https://www.gnu.org/licenses/>.
 
 import sys
 import time
@@ -34,7 +35,7 @@ def test():
         # show the internal board state
         # nl_inst.show_game_board()
 
-        print(f"\n==== { move } ====\n")
+        print(f"\n==== {move} ====\n")
         print("leave? 'n' for no, != 'n' yes: ")
         leave = readchar.readkey()
 

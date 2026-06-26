@@ -4,7 +4,8 @@
 #
 #  NicLink is distributed in the hope that it will be useful, but without any warranty; without even the implied warranty of merchantability or fitness for a particular purpose. see the gnu general public license for more details.
 #
-#  you should have received a copy of the gnu general public license along with NicLink. if not, see <https://www.gnu.org/licenses/>.
+# you should have received a copy of the gnu general public license along
+# with NicLink. if not, see <https://www.gnu.org/licenses/>.
 
 
 class LightBoard:
@@ -58,9 +59,9 @@ class LightBoard:
         s2_cords = square_cords(s2)
 
         # set 1st square
-        led_map[s1_cords[1]] = zeros[: s1_cords[0]] + "1" + zeros[s1_cords[0] :]
+        led_map[s1_cords[1]] = zeros[: s1_cords[0]] + "1" + zeros[s1_cords[0]:]
         # set second square
-        led_map[s2_cords[1]] = zeros[: s2_cords[0]] + "1" + zeros[s2_cords[0] :]
+        led_map[s2_cords[1]] = zeros[: s2_cords[0]] + "1" + zeros[s2_cords[0]:]
         logger.info("led map made for move: %s\n", move)
         log_led_map(led_map)
 

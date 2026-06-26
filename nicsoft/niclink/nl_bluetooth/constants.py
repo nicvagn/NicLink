@@ -1,10 +1,12 @@
 """ Constant used in the program"""
 
-# When the board is first connected it is necessary to send it a three byte initialisation code:
+# When the board is first connected it is necessary to send it a three
+# byte initialisation code:
 INITIALIZASION_CODE = b"\x21\x01\x00"
 # The board will then send back a three byte confirmation code:
 CONFIRMATION_CHARACTERISTICS = b"\x21\x01\x00"
-# The signals from the board consist of a sequence of 38 bytes. The first two are:
+# The signals from the board consist of a sequence of 38 bytes. The first
+# two are:
 HEAD_BUFFER = b"\x01\x24"
 #  Communications using BLE
 DEVICELIST = ["Chessnut Air", "Smart Chess"]

@@ -4,21 +4,21 @@
 #
 #  NicLink is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #
-#  You should have received a copy of the GNU General Public License along with NicLink. If not, see <https://www.gnu.org/licenses/>.
-
-print("NicLink: Running all tests")
-import logging
-import time
-
-import chess
-import numpy as np
-import readchar
-import test_niclink_board_compairison as nlbc
-import test_niclink_FEN as nlf
-import test_niclink_lights as nll
-import test_niclink_move_parsing as nlmv
+# You should have received a copy of the GNU General Public License along
+# with NicLink. If not, see <https://www.gnu.org/licenses/>.
 
 from niclink import NicLinkManager
+import test_niclink_move_parsing as nlmv
+import test_niclink_lights as nll
+import test_niclink_FEN as nlf
+import test_niclink_board_compairison as nlbc
+import readchar
+import numpy as np
+import chess
+import time
+import logging
+print("NicLink: Running all tests")
+
 
 ONES = np.array(
     [

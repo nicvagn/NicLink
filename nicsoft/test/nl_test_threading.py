@@ -2,7 +2,8 @@
 #
 #  niclink is distributed in the hope that it will be useful, but without any warranty; without even the implied warranty of merchantability or fitness for a particular purpose. see the gnu general public license for more details.
 #
-#  you should have received a copy of the gnu general public license along with niclink. if not, see <https://www.gnu.org/licenses/>.
+# you should have received a copy of the gnu general public license along
+# with niclink. if not, see <https://www.gnu.org/licenses/>.
 
 import logging
 import threading

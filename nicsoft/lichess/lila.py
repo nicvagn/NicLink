@@ -281,7 +281,8 @@ class Game(threading.Thread):
                 logger.info("\n\n +++ Game Full got +++\n\n")
                 self.game_done()
             elif event["type"] == "opponentGone":
-                logger.info(">>> opponentGone <<< received event: %s \n", event)
+                logger.info(
+                    ">>> opponentGone <<< received event: %s \n", event)
                 print(">>> opponentGone <<<")
                 for x in range(0, 2):
                     nl_inst.signal_lights(3)
@@ -314,7 +315,8 @@ class Game(threading.Thread):
          5 - cross in center
         """
         global logger, nl_inst
-        logger.info("\nGame.game_done(GameState) entered.\n GameState %s", game_state)
+        logger.info(
+            "\nGame.game_done(GameState) entered.\n GameState %s", game_state)
         # signal the side that won on the board by lighting up that side
         # if there is an external clock, display gameover message
         if game_state is not None:
@@ -383,7 +385,8 @@ and setting moved event",
             log_handled_exception(err)
             raise NoMove("ResponseError in Game.await_move_thread thread.")
         else:
-            logger.info("Game.await_move_thread(...) Thread got move: %s", move)
+            logger.info(
+                "Game.await_move_thread(...) Thread got move: %s", move)
             raise SystemExit(
                 "exiting Game.await_move_thread thread, everything is good."
             )
@@ -409,11 +412,12 @@ and setting moved event",
                 nl_inst.make_move_game_board(move)
                 logger.debug("move sent to lichess: %s", move)
 
-                # once move has been made set self.response_error_on_last_attempt to false and return
+                # once move has been made set
+                # self.response_error_on_last_attempt to false and return
                 self.response_error_on_last_attempt = False
 
                 if self.chess_clock:
-                    self.logger.info("self.chess_clock.move_made() called")
+                    logger.info("self.chess_clock.move_made() called")
                     self.chess_clock.move_made()
 
                 # exit function on success
@@ -473,7 +477,8 @@ Will only try twice before calling game_done"
             tmp_chessboard.fen(),
             nl_inst.get_fen(),
         )
-        # the move_fetch_list is for getting the move and await_move_thread in a thread is it does not block
+        # the move_fetch_list is for getting the move and await_move_thread in
+        # a thread is it does not block
         move_fetch_list = []
         get_move_thread = threading.Thread(
             target=self.await_move_thread, args=(move_fetch_list,), daemon=True
@@ -482,7 +487,8 @@ Will only try twice before calling game_done"
         get_move_thread.start()
         # wait for a move on chessboard
         while not nl_inst.game_over.is_set() or self.check_for_game_over(
-            GameState(self.current_state["state"])  # TODO: FIND MORE EFFICIENT WAY
+            # TODO: FIND MORE EFFICIENT WAY
+            GameState(self.current_state["state"])
         ):
             if self.has_moved.is_set():
                 move = move_fetch_list[0]
@@ -514,7 +520,8 @@ Will only try twice before calling game_done"
         @param: game_state: the gamestate containing the move
         """
         logger.info(
-            "\n" + "Opponent_moved(self, game_state) entered with GameState: %s",
+            "\n" +
+            "Opponent_moved(self, game_state) entered with GameState: %s",
             game_state,
         )
 
@@ -557,11 +564,12 @@ Will only try twice before calling game_done"
                 winner = "Black"
 
             print(
-                f"\n--- GAME OVER ---\nreason: {result.termination}\nwinner: {winner}"
+                f"\n--- GAME OVER ---\nreason: {
+                    result.termination}\nwinner: {winner}"
             )
             logger.info(
                 "game done detected, calling game_done(). | result: %s | winner: %s\n",
-                result,
+                Result,
                 winner,
             )
             # stop the thread (this does some cleanup and throws an exception)
@@ -569,9 +577,6 @@ Will only try twice before calling game_done"
 
         # a move was made
         self.opponent_moved(game_state)
-
-        if self.chess_clock:
-            self.chess_clock.handle_game_state(game_state)
 
         # is it our turn?
         if tmp_chessboard.turn == self.playing_white:
@@ -619,7 +624,8 @@ def show_fen_on_board(fen) -> None:
     print(f"show_fen_on_board: \n{tmp_chessboard}")
 
 
-def handle_game_start(game_start: GameStart, chess_clock: bool = False) -> None:
+def handle_game_start(game_start: GameStart,
+                      chess_clock: bool = False) -> None:
     """handle game start event
     @param game_start: Typed Dict containing the game start info
     @param chess_clock: ase we using an external chess clock?
@@ -682,7 +688,8 @@ def handle_game_start(game_start: GameStart, chess_clock: bool = False) -> None:
         )
         game.daemon = True
 
-        logger.info("|| starting Game thread for game with id: %s\n", game_data.id)
+        logger.info(
+            "|| starting Game thread for game with id: %s\n", game_data.id)
         game.start()  # start the game thread
 
     except ResponseError as e:
@@ -773,7 +780,8 @@ The berserk lichess client will not work with simplejson.
 
     try:
         if DEBUG:
-            berserk_client = berserk.Client(session, base_url="https://lichess.dev")
+            berserk_client = berserk.Client(
+                session, base_url="https://lichess.dev")
         else:
             berserk_client = berserk.Client(session)
     except KeyboardInterrupt as err:
@@ -855,4 +863,5 @@ The berserk lichess client will not work with simplejson.
 if __name__ == "__main__":
     main()
 
-#  LocalWords:  btime wtime chatLine gameFull opponentGone nNew ngame nl simplejson
+# LocalWords:  btime wtime chatLine gameFull opponentGone nNew ngame nl
+# simplejson

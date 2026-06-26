@@ -2,7 +2,8 @@
 #
 #  NicLink is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #
-#  You should have received a copy of the GNU General Public License along with NicLink. If not, see <https://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along
+# with NicLink. If not, see <https://www.gnu.org/licenses/>.
 
 # sys stuff
 import sys
@@ -71,7 +72,7 @@ class Game(threading.Thread):
         else:
             winner = "White"
         print(
-            f"Winner: { winner } reason: {over_state['reason']} \n \
+            f"Winner: {winner} reason: {over_state['reason']} \n \
 have a nice day."
         )
 
@@ -86,12 +87,12 @@ have a nice day."
             move = (
                 self.nl_inst.await_move()
             )  # await move from e-board the move from niclink
-            print(f"move from board: { move }")
+            print(f"move from board: {move}")
         except KeyboardInterrupt:
             print("Bye!")
             sys.exit(0)
 
-        logger.info(f"move from chessboard { move }")
+        logger.info(f"move from chessboard {move}")
 
         # check if the game is done
         self.check_for_game_over()

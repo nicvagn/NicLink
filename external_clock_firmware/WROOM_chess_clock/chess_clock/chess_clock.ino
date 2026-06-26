@@ -2,15 +2,15 @@
 #include <LiquidCrystal_I2C.h>
 #include <Wire.h>
 
-//define DEBUG T
+#define DEBUG T
 // messages
 #define WHITE_BLACK "|white|-|black| "
 #define BLACK_TURN "|white|>|black| "
 #define WHITE_TURN "|white|<|black| "
-#define WHITE_WIN "  WHITE  Wins!   "
-#define BLACK_WIN "  BLACK  Wins!   "
+#define WHITE_WIN "  WHITE  WINS!   "
+#define BLACK_WIN "  BLACK  WINS!   "
 #define DRAW "  0.5/1  DRAW  "
-#define GAMEOVER "   GAME  OVER   "
+#define GAME_OVER "   GAME  OVER   "
 #define TIME_UP "   TIME'S UP!   "
 // buttons
 #define DEBOUNCE_DELAY 10
@@ -132,26 +132,26 @@ void blackTimeOut() {
   Serial.println("Game Over: White wins on time");
 }
 
-void whiteCheckmated() {
+void whiteWon() {
   gameOver = true;
   clockRunning = false;
   lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print("   CHECKMATE   ");
+  lcd.print(GAME_OVER);
   lcd.setCursor(0, 1);
-  lcd.print(BLACK_WIN);
-  Serial.println("Game over: black wins by checkmate.");
+  lcd.print(WHITE_WIN);
+  Serial.println("Game over: White wins.");
 }
 
-void blackCheckmated() {
+void blackWon() {
   gameOver = true;
   clockRunning = false;
   lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print("   CHECKMATE   ");
+  lcd.print(GAME_OVER);
   lcd.setCursor(0, 1);
-  lcd.print("  White Wins!   ");
-  Serial.println("Game over: white wins by checkmate.");
+  lcd.print(BLACK_WIN);
+  Serial.println("Game over: Black wins.");
 }
 
 void draw() {
@@ -174,9 +174,9 @@ void gameDone() {
   clockRunning = false;
   lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print(GAMEOVER);
+  lcd.print(GAME_OVER);
   lcd.setCursor(0, 1);
-  lcd.print(GAMEOVER);
+  lcd.print(GAME_OVER);
   Serial.println("GAME_OVER:UNKNOWN");
 }
 
@@ -237,14 +237,14 @@ void moveMade() {
 
   if (!clockRunning) {
     startClock();
-    return;
   }
   if (whiteToPlay) {
     whiteMoved();
-  } else if (!gameOver) {
+  } else {
     blackMoved();
   }
 }
+
 
 void reset() {
   whiteTimeMs = W_START_TIME;
@@ -308,6 +308,10 @@ void processSerialCommand(String cmd) {
   // simple move command. The player to move is tracked
   if (cmd == "m") {
     moveMade();
+  } else if (cmd == "B") {
+    blackMoved();
+  } else if (cmd == "W") {
+    whiteMoved();
     // set time for both players
   } else if (cmd.startsWith("TIME:")) {
     // Format: TIME:300+5        (both players: 300s + 5s increment)
@@ -367,10 +371,10 @@ void processSerialCommand(String cmd) {
     } else {
       Serial.println("ERROR: Invalid time");
     }
-  } else if (cmd == "BMATE") {
-    blackCheckmated();
-  } else if (cmd == "WMATE") {
-    whiteCheckmated();
+  } else if (cmd == "BWON") {
+    blackWon();
+  } else if (cmd == "WWON") {
+    whiteWon();
   } else if (cmd == "DRAW") {
     draw();
   } else if (cmd == "STOP" || cmd == "PAUSE") {
@@ -466,7 +470,11 @@ void loop() {
     String cmd = Serial.readStringUntil('\n');
     processSerialCommand(cmd);
   }
-
+#ifdef DEBUG_TICK
+  bool cr = clockRunning && !gameOver;
+  Serial.print("clockRunning && !gameOver is ");
+  Serial.println(cr);
+#endif
   // Update time only if clock is running and game not over
   if (clockRunning && !gameOver) {
     uint32_t currentTime = millis();
@@ -498,5 +506,5 @@ void loop() {
   checkButton(resetBtn);
 }
 
-//  LocalWords:  BMATE commaIndex addr greenBtn outTime outInc
+//  LocalWords:  BWON commaIndex addr greenBtn outTime outInc BWON
 //  LocalWords:  whiteTime blackTime parseTime
