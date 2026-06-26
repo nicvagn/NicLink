@@ -472,12 +472,13 @@ void loop() {
     processSerialCommand(cmd);
   }
 #ifdef DEBUG_TICK
-  bool cr = clockRunning && !gameOver;
-  Serial.print("clockRunning && !gameOver is ");
-  Serial.println(cr);
+  Serial.print("clockRunning is: ");
+  Serial.println(clockRunning);
+  Serial.print("!gameOver is: ");
+  Serial.println(!gameOver);
 #endif
   // Update time only if clock is running and game not over
-  if (clockRunning && !gameOver) {
+  if (clockRunning) {
     uint32_t currentTime = millis();
 
     if (currentTime - lastUpdate >= 50) {

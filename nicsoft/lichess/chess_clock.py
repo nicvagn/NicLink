@@ -254,8 +254,10 @@ class ChessClock:
 
         if self.white_to_move:
             self.send_command("W")
+            self.white_to_move = False
         else:
             self.send_command("B")
+            self.white_to_move = True
 
     def handle_game_state(self, game_state):
         """Process game state and set clock."""
