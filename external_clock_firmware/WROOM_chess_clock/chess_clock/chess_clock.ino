@@ -2,7 +2,7 @@
 #include <LiquidCrystal_I2C.h>
 #include <Wire.h>
 
-#define DEBUG T
+//#define DEBUG T
 //#define DEBUG_TICK T
 // messages
 #define WHITE_BLACK "|white|-|black| "
@@ -98,7 +98,7 @@ void secondsToHMS(uint32_t seconds, uint16_t &h, uint16_t &m, uint16_t &s) {
 }
 
 void blackMoved() {
-  clockRunning=true;
+  clockRunning = true;
   whiteToPlay = true;
   lcd.setCursor(0, 0);
   lcd.print(WHITE_TURN);
@@ -106,7 +106,7 @@ void blackMoved() {
 }
 
 void whiteMoved() {
-  clockRunning=true;
+  clockRunning = true;
   whiteToPlay = false;
   lcd.setCursor(0, 0);
   lcd.print(BLACK_TURN);
@@ -309,10 +309,7 @@ void processSerialCommand(String cmd) {
   Serial.println("]");
 #endif
 
-  // simple move command. The player to move is tracked
-  if (cmd == "m") {
-    moveMade();
-  } else if (cmd == "B") {
+  if (cmd == "B") {
     blackMoved();
   } else if (cmd == "W") {
     whiteMoved();
