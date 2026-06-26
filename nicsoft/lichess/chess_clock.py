@@ -90,9 +90,6 @@ class ChessClock:
             self.logger.info("failed to connect.")
             raise RuntimeError("could not connect to chess clock")
 
-        if game_state:
-            self.handle_game_state(game_state)
-
     def connect_to_clock(self) -> bool:
         """Connect to chess clock port. udev rule is needed for the /dev symlink
 
@@ -249,9 +246,9 @@ class ChessClock:
     def move_made(self, game_state=None):
         """Send move signal to chess clock."""
         self.logger.info("move_made entered, game_state: %s", game_state)
+
         if game_state:
             self.handle_game_state(game_state)
-
         if self.white_to_move:
             self.send_command("W")
             self.white_to_move = False
@@ -271,10 +268,7 @@ class ChessClock:
             self.white_won()
             return
 
-        if game_state:
-            self.white_to_move = game_state.white_to_move()
-        else:
-            self.white_to_move = not self.white_to_move
+        self.white_to_move = len(game_state.moves) % 2 == 0
 
         self.logger.info("chess_clock.white_to_move set to: %s", self.white_to_move)
 
