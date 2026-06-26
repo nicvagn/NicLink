@@ -281,8 +281,7 @@ class Game(threading.Thread):
                 logger.info("\n\n +++ Game Full got +++\n\n")
                 self.game_done()
             elif event["type"] == "opponentGone":
-                logger.info(
-                    ">>> opponentGone <<< received event: %s \n", event)
+                logger.info(">>> opponentGone <<< received event: %s \n", event)
                 print(">>> opponentGone <<<")
                 for x in range(0, 2):
                     nl_inst.signal_lights(3)
@@ -315,8 +314,7 @@ class Game(threading.Thread):
          5 - cross in center
         """
         global logger, nl_inst
-        logger.info(
-            "\nGame.game_done(GameState) entered.\n GameState %s", game_state)
+        logger.info("\nGame.game_done(GameState) entered.\n GameState %s", game_state)
         # signal the side that won on the board by lighting up that side
         # if there is an external clock, display gameover message
         if game_state is not None:
@@ -385,8 +383,7 @@ and setting moved event",
             log_handled_exception(err)
             raise NoMove("ResponseError in Game.await_move_thread thread.")
         else:
-            logger.info(
-                "Game.await_move_thread(...) Thread got move: %s", move)
+            logger.info("Game.await_move_thread(...) Thread got move: %s", move)
             raise SystemExit(
                 "exiting Game.await_move_thread thread, everything is good."
             )
@@ -520,8 +517,7 @@ Will only try twice before calling game_done"
         @param: game_state: the gamestate containing the move
         """
         logger.info(
-            "\n" +
-            "Opponent_moved(self, game_state) entered with GameState: %s",
+            "\n" + "Opponent_moved(self, game_state) entered with GameState: %s",
             game_state,
         )
 
@@ -624,8 +620,7 @@ def show_fen_on_board(fen) -> None:
     print(f"show_fen_on_board: \n{tmp_chessboard}")
 
 
-def handle_game_start(game_start: GameStart,
-                      chess_clock: bool = False) -> None:
+def handle_game_start(game_start: GameStart, chess_clock: bool = False) -> None:
     """handle game start event
     @param game_start: Typed Dict containing the game start info
     @param chess_clock: ase we using an external chess clock?
@@ -654,7 +649,7 @@ def handle_game_start(game_start: GameStart,
 
     # configure chess clock if chess clock
     if chess_clock:
-        chess_clock = ChessClock()
+        chess_clock = ChessClock(logger=logger)
     # handle 960 and regular
     game_fen = game_data.fen
 
@@ -688,8 +683,7 @@ def handle_game_start(game_start: GameStart,
         )
         game.daemon = True
 
-        logger.info(
-            "|| starting Game thread for game with id: %s\n", game_data.id)
+        logger.info("|| starting Game thread for game with id: %s\n", game_data.id)
         game.start()  # start the game thread
 
     except ResponseError as e:
@@ -780,8 +774,7 @@ The berserk lichess client will not work with simplejson.
 
     try:
         if DEBUG:
-            berserk_client = berserk.Client(
-                session, base_url="https://lichess.dev")
+            berserk_client = berserk.Client(session, base_url="https://lichess.dev")
         else:
             berserk_client = berserk.Client(session)
     except KeyboardInterrupt as err:

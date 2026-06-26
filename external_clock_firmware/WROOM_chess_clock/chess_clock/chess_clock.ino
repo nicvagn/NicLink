@@ -2,7 +2,7 @@
 #include <LiquidCrystal_I2C.h>
 #include <Wire.h>
 
-#define DEBUG T
+#define DEBUG_TICK T
 // messages
 #define WHITE_BLACK "|white|-|black| "
 #define BLACK_TURN "|white|>|black| "
@@ -264,6 +264,7 @@ void reset() {
 }
 
 bool parseTime(String token, uint32_t &outTime, uint32_t &outInc) {
+
   // The string token will be in seconds, we will convert to ms for use with
   // millis
 #ifdef DEBUG

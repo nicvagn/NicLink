@@ -271,11 +271,10 @@ class ChessClock:
 
         if game_state:
             self.white_to_move = game_state.white_to_move()
-            self.logger.info("chess_clock.white_to_move set to: %s", self.white_to_move)
         else:
-            # sane default
-            self.white_to_move = True
-            self.logger.info("chess_clock.white_to_move set as default True")
+            self.white_to_move = not self.white_to_move
+
+        self.logger.info("chess_clock.white_to_move set to: %s", self.white_to_move)
 
         # send time to clock
         self.set_time(
@@ -301,10 +300,10 @@ class ChessClock:
 
         # sometimes it is an int of elapsed milliseconds?
         if not isinstance(winit, timedelta):
-            winit = timdelta(milliseconds=winit)
-            binit = timdelta(milliseconds=binit)
-            winc = timdelta(milliseconds=winc)
-            binc = timdelta(milliseconds=binc)
+            winit = timdelta(seconds=winit)
+            binit = timdelta(seconds=binit)
+            winc = timdelta(seconds=winc)
+            binc = timdelta(seconds=binc)
 
         self.set_time(winit, winc, binit, binc)
         return self.start()
