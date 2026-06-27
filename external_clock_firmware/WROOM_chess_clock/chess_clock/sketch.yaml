@@ -1,2 +1,0 @@
-default_fqbn: esp32:esp32:esp32s3
-default_port: /dev/ttyACM0
