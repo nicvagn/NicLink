@@ -169,7 +169,12 @@ class ChessClock:
         self.send_command("BWON")
 
     def set_time(
-        self, wtime: timedelta, winc: timedelta, btime: timedelta, binc: timedelta
+        self,
+        wtime: timedelta,
+        winc: timedelta,
+        btime: timedelta,
+        binc: timedelta,
+        white_to_play: bool,
     ):
         """Set the time displayed on LCD
 
@@ -195,8 +200,12 @@ class ChessClock:
             btime,
             binc,
         )
+        if white_to_play:
+            turn = "W"
+        else:
+            turn = "B"
         # firmware depends on this format and that the unit is seconds
-        cmd = f"TIME:{wtime.total_seconds()}+{winc.total_seconds()},{btime.total_seconds()}+{binc.total_seconds()}"
+        cmd = f"TIME:{wtime.total_seconds()}+{winc.total_seconds()},{btime.total_seconds()}+{binc.total_seconds()}:{turn}"
         self.logger.info("time_set w: %s", cmd)
         self.send_command(cmd)
 
@@ -243,19 +252,6 @@ class ChessClock:
         else:
             self.logger.warning("Clock did not respond to STATUS:")
 
-    def move_made(self, game_state=None):
-        """Send move signal to chess clock."""
-        self.logger.info("move_made entered, game_state: %s", game_state)
-
-        if game_state:
-            self.handle_game_state(game_state)
-        if self.white_to_move:
-            self.send_command("W")
-            self.white_to_move = False
-        else:
-            self.send_command("B")
-            self.white_to_move = True
-
     def handle_game_state(self, game_state):
         """Process game state and set clock."""
         if not hasattr(game_state, "moves"):
@@ -268,13 +264,14 @@ class ChessClock:
             self.white_won()
             return
 
-        self.white_to_move = len(game_state.moves) % 2 == 0
-
-        self.logger.info("chess_clock.white_to_move set to: %s", self.white_to_move)
-
+        white_to_play = len(game_state.moves) % 2 == 0
         # send time to clock
         self.set_time(
-            game_state.wtime, game_state.winc, game_state.btime, game_state.binc
+            game_state.wtime,
+            game_state.winc,
+            game_state.btime,
+            game_state.binc,
+            white_to_play,
         )
 
     def configure_for_game(self, game_start):

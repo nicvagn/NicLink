@@ -413,10 +413,6 @@ and setting moved event",
                 # self.response_error_on_last_attempt to false and return
                 self.response_error_on_last_attempt = False
 
-                if self.chess_clock:
-                    logger.info("self.chess_clock.move_made() called")
-                    self.chess_clock.move_made()
-
                 # exit function on success
                 return
             except ResponseError as err:
@@ -511,13 +507,13 @@ Will only try twice before calling game_done"
 
         return tmp_chessboard
 
-    def opponent_moved(self, game_state: GameState) -> None:
-        """signal that the opponent moved, signal the external clock
+    def handle_move(self, game_state: GameState) -> None:
+        """signal there was a move in game, signal the external clock
         and NicLink
-        @param: game_state: the gamestate containing the move
+        @param: game_state: the GameState containing the move
         """
         logger.info(
-            "\n" + "Opponent_moved(self, game_state) entered with GameState: %s",
+            "\n" + "handle_moved(self, game_state) entered with GameState: %s",
             game_state,
         )
 
@@ -532,7 +528,7 @@ Will only try twice before calling game_done"
 
         # if chess_clock, signal move
         if self.chess_clock:
-            self.chess_clock.move_made(game_state)
+            self.chess_clock.handle_game_state(game_state)
 
     def handle_state_change(self, game_state: GameState) -> None:
         """Handle a state change in the lichess game.
@@ -572,7 +568,7 @@ Will only try twice before calling game_done"
             self.game_done(game_state=game_state)
 
         # a move was made
-        self.opponent_moved(game_state)
+        self.handle_move(game_state)
 
         # is it our turn?
         if tmp_chessboard.turn == self.playing_white:
@@ -856,5 +852,5 @@ The berserk lichess client will not work with simplejson.
 if __name__ == "__main__":
     main()
 
-# LocalWords:  btime wtime chatLine gameFull opponentGone nNew ngame nl
+# LocalWords:  btime wtime chatLine gameFull opponentGone nNew ngame nl nreason
 # simplejson
