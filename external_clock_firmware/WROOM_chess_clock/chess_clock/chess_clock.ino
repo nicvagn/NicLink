@@ -120,6 +120,26 @@ void reset() {
   Serial.println("CLOCK RESET");
 }
 
+
+void displayWhiteTurn() {
+  lcd.setCursor(0, 0);
+  lcd.print(WHITE_TURN);
+}
+void doWhiteTurn() {
+  displayBlackTurn();
+  whiteTimeMs += whiteIncMs;
+  whiteToPlay = false;
+}
+void displayBlackTurn() {
+  lcd.setCursor(0, 0);
+  lcd.print(BLACK_TURN);
+}
+void doBlackTurn() {
+  displayWhiteTurn();
+  blackTimeMs += blackIncMs;
+  whiteToPlay = true;
+}
+
 void gameDone() {
   clockRunning = false;
   lcd.clear();
@@ -129,7 +149,6 @@ void gameDone() {
   lcd.print(GAME_OVER);
   Serial.println("GAME_OVER");
 }
-
 
 void checkButton(Button &btn) {
   int reading = digitalRead(btn.pin);
@@ -270,17 +289,13 @@ void processSerialCommand(String cmd) {
 
     // figure out who is to play, W or B
     char toPlay = cmd.charAt(semiCommaIdx + 1);
-
+    // increment does not need to be added
     if (toPlay == 'W') {
+      displayWhiteTurn();
       whiteToPlay = true;
-      lcd.setCursor(0, 0);
-      lcd.print(WHITE_TURN);
-    }
-    else
-    {
+    } else if (toPlay == 'B') {
+      displayBlackTurn();
       whiteToPlay = false;
-      lcd.setCursor(0, 0);
-      lcd.print(BLACK_TURN);
     }
 
     if (commaIdx > 0) {
@@ -329,14 +344,24 @@ void processSerialCommand(String cmd) {
     } else {
       Serial.println("ERROR: Invalid time");
     }
+  } else if (cmd == "m") {
+    clockRunning = true;
+    if (whiteToPlay) {
+      doWhiteTurn();
+    } else {
+      doBlackTurn();
+    }
   } else if (cmd == "START") {
     reset();
+    displayWhiteTurn();
     clockRunning = true;
   } else if (cmd == "BWON") {
     gameDone();
   } else if (cmd == "WWON") {
     gameDone();
   } else if (cmd == "DRAW") {
+    gameDone();
+  } else if (cmd == "OVER") {
     gameDone();
   } else if (cmd == "STOP" || cmd == "PAUSE") {
     clockRunning = false;
@@ -355,12 +380,10 @@ void processSerialCommand(String cmd) {
     Serial.print(blackTimeMs / 1000UL);
     Serial.print("+");
     Serial.print(blackIncMs / 1000UL);
-    Serial.print(":");
-    Serial.print(clockRunning ? "RUNNING" : "STOPPED");
-    Serial.print(":");
-    Serial.println(whiteToPlay ? "WHITE" : "BLACK");
-  } else if (cmd == "OVER") {
-    gameDone();
+    Serial.print(";");
+    Serial.println(whiteToPlay ? "W" : "B");
+    Serial.print("clock is: ");
+    Serial.println(clockRunning ? "RUNNING" : "STOPPED");
   }
 #ifdef DEBUG
   else {
@@ -384,7 +407,7 @@ void loop() {
   Serial.print("!gameOver is: ");
   Serial.println(!gameOver);
 
-  Serial.println("delay 50");
+  Serial.println("delay 5000");
   delay(5000);
   Serial.println("delay out");
 #endif
