@@ -197,9 +197,9 @@ class ChessClock:
             binc,
         )
         if white_to_play:
-            turn = "W"
-        else:
             turn = "B"
+        else:
+            turn = "W"
         # firmware depends on this format and that the unit is seconds
         cmd = f"TIME:{wtime.total_seconds()}+{winc.total_seconds()},{btime.total_seconds()}+{binc.total_seconds()};{turn}"
         self.logger.info("time_set w: %s", cmd)
@@ -294,8 +294,8 @@ class ChessClock:
             winc = timdelta(milliseconds=winc)
             binc = timdelta(milliseconds=binc)
 
-        self.set_time(winit, winc, binit, binc)
-        return self.start()
+        self.set_time(winit, winc, binit, binc, white_to_play=True)
+        self.clock_running = True
 
     def disconnect(self):
         """Close serial connection to chess clock."""
