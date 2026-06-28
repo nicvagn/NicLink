@@ -160,13 +160,9 @@ class ChessClock:
         """Display the game over and reset clock."""
         self.send_command("OVER")
 
-    def white_won(self):
-        """Display white won by mate."""
-        self.send_command("WWON")
-
-    def black_won(self):
-        """Display black won by mate."""
-        self.send_command("BWON")
+    def move_made(self):
+        """Signal that a move was made."""
+        self.send_command("m")
 
     def set_time(
         self,
@@ -205,7 +201,7 @@ class ChessClock:
         else:
             turn = "B"
         # firmware depends on this format and that the unit is seconds
-        cmd = f"TIME:{wtime.total_seconds()}+{winc.total_seconds()},{btime.total_seconds()}+{binc.total_seconds()}:{turn}"
+        cmd = f"TIME:{wtime.total_seconds()}+{winc.total_seconds()},{btime.total_seconds()}+{binc.total_seconds()};{turn}"
         self.logger.info("time_set w: %s", cmd)
         self.send_command(cmd)
 
@@ -258,10 +254,10 @@ class ChessClock:
             self.logger.warning("GameState has no moves attribute")
             return
         if game_state.winner == "black":
-            self.black_won()
+            self.game_over()
             return
         if game_state.winner == "white":
-            self.white_won()
+            self.game_over()
             return
 
         white_to_play = len(game_state.moves) % 2 == 0
@@ -293,10 +289,10 @@ class ChessClock:
 
         # sometimes it is an int of elapsed milliseconds?
         if not isinstance(winit, timedelta):
-            winit = timdelta(seconds=winit)
-            binit = timdelta(seconds=binit)
-            winc = timdelta(seconds=winc)
-            binc = timdelta(seconds=binc)
+            winit = timdelta(milliseconds=winit)
+            binit = timdelta(milliseconds=binit)
+            winc = timdelta(milliseconds=winc)
+            binc = timdelta(milliseconds=binc)
 
         self.set_time(winit, winc, binit, binc)
         return self.start()
@@ -328,12 +324,15 @@ def test():
     wInc = datetime.timedelta(seconds=30)
     bInc = datetime.timedelta(seconds=30)
 
+    whiteToPlay = True
     while True:
         exit = input("EOF to exit")
-        whiteTime = whiteTime - wInc
-        blackTime = blackTime - bInc
-        cc.set_time(whiteTime, wInc, blackTime, bInc)
-        cc.move_made()
+        if whiteTime:
+            whiteTime = whiteTime + wInc
+        else:
+            blackTime = blackTime + bInc
+        cc.set_time(whiteTime, wInc, blackTime, bInc, whiteToPlay)
+        whiteToPlay = not whiteToPlay
 
 
 if __name__ == "__main__":

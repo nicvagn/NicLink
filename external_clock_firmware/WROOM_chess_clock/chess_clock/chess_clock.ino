@@ -125,18 +125,22 @@ void displayWhiteTurn() {
   lcd.setCursor(0, 0);
   lcd.print(WHITE_TURN);
 }
-void doWhiteTurn() {
+void doWhiteTurn(bool addInc) {
   displayBlackTurn();
-  whiteTimeMs += whiteIncMs;
+  if (addInc) {
+    whiteTimeMs += whiteIncMs;
+  }
   whiteToPlay = false;
 }
 void displayBlackTurn() {
   lcd.setCursor(0, 0);
   lcd.print(BLACK_TURN);
 }
-void doBlackTurn() {
+void doBlackTurn(bool addInc) {
   displayWhiteTurn();
-  blackTimeMs += blackIncMs;
+  if (addInc) {
+    blackTimeMs += blackIncMs;
+  }
   whiteToPlay = true;
 }
 
@@ -291,11 +295,9 @@ void processSerialCommand(String cmd) {
     char toPlay = cmd.charAt(semiCommaIdx + 1);
     // increment does not need to be added
     if (toPlay == 'W') {
-      displayWhiteTurn();
-      whiteToPlay = true;
+      doWhiteTurn(false);
     } else if (toPlay == 'B') {
-      displayBlackTurn();
-      whiteToPlay = false;
+      doBlackTurn(false);
     }
 
     if (commaIdx > 0) {
@@ -334,7 +336,6 @@ void processSerialCommand(String cmd) {
       whiteIncMs = wInc;
       blackIncMs = bInc;
 
-      lcd.setCursor(0, 0);
       displayTime();
 #ifdef DEBUG
       Serial.print("valid token: (");
@@ -347,9 +348,9 @@ void processSerialCommand(String cmd) {
   } else if (cmd == "m") {
     clockRunning = true;
     if (whiteToPlay) {
-      doWhiteTurn();
+      doWhiteTurn(true);
     } else {
-      doBlackTurn();
+      doBlackTurn(true);
     }
   } else if (cmd == "START") {
     reset();
@@ -441,3 +442,5 @@ void loop() {
   checkButton(moveBtn);
   checkButton(resetBtn);
 }
+
+//  LocalWords:  WWON BWON
