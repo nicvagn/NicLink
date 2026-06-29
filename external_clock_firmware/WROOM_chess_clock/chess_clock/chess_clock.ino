@@ -2,7 +2,7 @@
 #include <LiquidCrystal_I2C.h>
 #include <Wire.h>
 
-#define DEBUG T
+//#define DEBUG T
 //#define DEBUG_TICK T
 // messages
 #define WHITE_BLACK "|white|-|black| "
@@ -96,9 +96,7 @@ void setup() {
   reset();
   displayTime();
   lastUpdate = millis();
-#ifdef DEBUG
   Serial.println("CLOCK READY");
-#endif
   // button pins
   pinMode(moveBtn.pin, INPUT_PULLUP);
   pinMode(resetBtn.pin, INPUT_PULLUP);

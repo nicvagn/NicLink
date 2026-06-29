@@ -320,17 +320,11 @@ class Game(threading.Thread):
         if game_state is not None:
             if game_state.winner:
                 if game_state.winner == "white":
-                    if self.chess_clock:
-                        self.chess_clock.white_won()
                     nl_inst.signal_lights(3)
                 elif game_state.winner == "black":
-                    if self.chess_clock:
-                        self.chess_clock.black_won()
                     nl_inst.signal_lights(2)
             else:
                 # if no winner
-                if self.chess_clock:
-                    self.chess_clock.stop()
                 nl_inst.signal_lights(4)
         else:
             # if no game state was given
@@ -338,6 +332,9 @@ class Game(threading.Thread):
                 self.chess_clock.game_over()
             # signal we dont know wtf with a cross
             nl_inst.signal_lights(5)
+
+        if self.chess_clock:
+            self.chess_clock.game_over()
 
         print("\n[--- %%%%% GAME DONE %%%%% ---]\n")
         # tell the user and NicLink the game is through
@@ -561,7 +558,7 @@ Will only try twice before calling game_done"
             )
             logger.info(
                 "game done detected, calling game_done(). | result: %s | winner: %s\n",
-                Result,
+                result,
                 winner,
             )
             # stop the thread (this does some cleanup and throws an exception)
