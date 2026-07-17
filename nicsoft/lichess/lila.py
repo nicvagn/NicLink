@@ -100,6 +100,7 @@ POLL_DELAY = 10
 # === lichess token parsing ===
 TOKEN_FILE = os.path.join(script_dir, "lichess_token/nrv773_token")
 
+## Want debug with default token
 if DEBUG:
     TOKEN_FILE = os.path.join(script_dir, "lichess_token/dev_token")
 
@@ -146,7 +147,7 @@ if args.correspondence:
 
 # === exception logging and except hook ===
 def log_except_hook(excType, excValue, traceback):
-    """Log unhandled exceptions to the log file."""
+    """Log unhandled exceptions."""
     logger.error("Uncaught exception", exc_info=(excType, excValue, traceback))
 
 
@@ -167,7 +168,7 @@ logger.info("NicLink Lichess startup\n")
 
 
 class Game(threading.Thread):
-    """a game on lichess."""
+    """Game on lichess."""
 
     def __init__(
         self,
@@ -386,7 +387,7 @@ and setting moved event",
             )
 
     def make_move(self, move: str) -> None:
-        """make a move in a lichess game with self.gameId
+        """Make a move in a lichess game with self.gameId.
         @param - move: UCI move string ie: e4e5
         @side_effect: talkes to lichess, sending the move
         """
@@ -410,6 +411,9 @@ and setting moved event",
                 # self.response_error_on_last_attempt to false and return
                 self.response_error_on_last_attempt = False
 
+                if self.chess_clock:
+                    self.chess_clock.move_made()
+
                 # exit function on success
                 return
             except ResponseError as err:
@@ -424,7 +428,7 @@ and setting moved event",
 
                 # if not, try again
                 print(
-                    f"ResponseError: {err}trying again after three seconds.  \
+                    f"ResponseError: [{err}] trying again after three seconds.  \
 Will only try twice before calling game_done"
                 )
                 sleep(3)
@@ -599,14 +603,14 @@ Will only try twice before calling game_done"
         """
         print(chat_line)
         # signal_lights set's lights on the chess board
-        nl_inst.signal_lights(5)
         nl_inst.beep()
+        nl_inst.signal_lights(5)
         nl_inst.beep()
 
 
 # === helper functions ===
 def show_fen_on_board(fen) -> None:
-    """show board fen on an ascii chessboard
+    """Display board fen on an ascii chessboard.
     @param fen - the fed to display on a board"""
     tmp_chessboard = chess.Board()
     tmp_chessboard.set_fen(fen)
@@ -614,7 +618,8 @@ def show_fen_on_board(fen) -> None:
 
 
 def handle_game_start(game_start: GameStart, chess_clock: bool = False) -> None:
-    """handle game start event
+    """Handle game start event.
+
     @param game_start: Typed Dict containing the game start info
     @param chess_clock: ase we using an external chess clock?
     @global berserk_client: client made for ous session with lila
@@ -712,7 +717,7 @@ def handle_resign(event=None) -> None:
 
 # entry point
 def main():
-    """handle startup, and initiation of stuff"""
+    """Handle startup, and initiation of stuff."""
     global berserk_client, nl_inst, REFRESH_DELAY, logger
 
     print("=== NicLink lichess main entered ===")
@@ -802,6 +807,7 @@ The berserk lichess client will not work with simplejson.
                 logger.debug("==== lichess event loop start ====\n")
                 print("=== Waiting for lichess event ===")
                 for event in berserk_client.board.stream_incoming_events():
+                    logger.debug("boartdeven recieved from lila: %s", str(event))
                     if event["type"] == "challenge":
                         logger.info("challenge received: %s", event)
                         print("\n==== Challenge received ====\n")
@@ -818,6 +824,7 @@ The berserk lichess client will not work with simplejson.
 
                     # check for kill switch
                     if nl_inst.kill_switch.is_set():
+                        logger.info("killed by nl_inst kill switch")
                         sys.exit(0)
 
                 logger.info("berserk stream exited")
