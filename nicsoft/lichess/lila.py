@@ -807,7 +807,7 @@ The berserk lichess client will not work with simplejson.
                 logger.debug("==== lichess event loop start ====\n")
                 print("=== Waiting for lichess event ===")
                 for event in berserk_client.board.stream_incoming_events():
-                    logger.debug("boartdeven recieved from lila: %s", str(event))
+                    logger.debug("board event received: %s", str(event))
                     if event["type"] == "challenge":
                         logger.info("challenge received: %s", event)
                         print("\n==== Challenge received ====\n")

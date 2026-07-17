@@ -732,7 +732,7 @@ it is white's turn? %s =====\n board we are using to check for moves:\n%s\n",
         @returns: bool - if there is a diff
         """
         self.logger.debug(
-            "man.show_board_diff entered w board's \n%s\nand\n%s",
+            "man.show_board_diff LIVE board: \n%s\n CORRECT board:\n%s",
             board1,
             board2,
         )
@@ -741,7 +741,6 @@ it is white's turn? %s =====\n board we are using to check for moves:\n%s\n",
         # misplaced
         diff = False
         # for building the diff array that work's for the way we set led's
-        zeros = "00000000"
         diff_squares = []  # what squares are the diff's on
 
         diff_map = np.copy(ZEROS)
