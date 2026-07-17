@@ -766,6 +766,7 @@ it is white's turn? %s =====\n board we are using to check for moves:\n%s\n",
                     diff_cords = square_cords(square)
                     diff_squares.append(square)
 
+                    # add diff square without removing other diffs on the row
                     row = str(diff_map[diff_cords[1]])
 
                     diff_map[diff_cords[1]] = (
